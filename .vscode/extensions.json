@@ -1,8 +1,8 @@
 {
   "recommendations": [
-    "biomejs.biome",
-    "editorconfig.editorconfig",
     "usernamehw.errorlens",
-    "prettier.prettier-vscode"
+    "editorconfig.editorconfig",
+    "junstyle.php-cs-fixer",
+    "devsense.phptools-vscode"
   ]
 }

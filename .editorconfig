@@ -12,12 +12,16 @@ end_of_line = lf
 
 [*.{ts, js}]
 indent_size = 4
-quote_type = single
+quote_type = double
 
 [*.md]
 indent_style = tab
 max_line_length = off
 trim_trailing_whitespace = false
+
+[*.sql]
+indent_style = space
+indent_size = 2
 
 {*,{yml,yaml,cff}}
 indent_size = 2
