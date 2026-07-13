@@ -3,12 +3,10 @@
   <img src="./logo.png" alt="LinqPHP" width="228" />
 
   <a href="https://navto.me/heliomarpm" target="_blank"><img src="https://navto.me/assets/navigatetome-brand.png" width="32"/></a>
-  [![DeepScan grade][url-deepscan-badge]][url-deepscan]
-  [![CodeFactor][url-codefactor-badge]][url-codefactor]
-
-  [![Packagist Downloads][url-packagist-downloads-badge]][url-packagist]
-  [![Packagist Version][url-packagist-badge]][url-packagist]
   ![CI Status](https://github.com/heliomarpm/linq-php/actions/workflows/ci.yml/badge.svg?branch=main)
+  [![CodeFactor][url-codefactor-badge]][url-codefactor]	
+  [![Packagist Version][url-packagist-badge]][url-packagist]
+  [![Packagist Downloads][url-packagist-downloads-badge]][url-packagist]
 </h1>
 
 <div class="badges">
