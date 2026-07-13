@@ -27,6 +27,10 @@ Uma biblioteca leve, de alta performance e sem dependências externas para manip
 
 O LinqPHP permite filtrar, agrupar, ordenar e unir arrays multidimensionais de forma fluida e elegante, sendo ideal para processamento de relatórios, formatação de dados para APIs e refatoração de sistemas legados.
 
+> Benchmark v1.0
+
+<img src="./bench-20260713.png" alt="Benchmark" width="100%" />
+
 ## Requisitos
 
 - PHP 8.1 ou superior.
@@ -118,7 +122,7 @@ $courses = [
 ];
 
 $result = LinqPHP::from($users)
-    ->join($courses, 'INNER', ['course_id' => 'id_course'])
+    ->join($courses, JoinType::INNER, ['course_id' => 'id_course'])
     ->toArray();
 ```
 
