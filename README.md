@@ -38,7 +38,7 @@ O LinqPHP permite filtrar, agrupar, ordenar e unir arrays multidimensionais de f
 Você pode instalar o pacote via Composer:
 
 ```bash
-composer require heliomarpm/linqphp
+composer require heliomarpm/linq-php
 ```
 
 ## Como usar
