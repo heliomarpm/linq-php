@@ -8,7 +8,7 @@
 
   [![Packagist Downloads][url-packagist-downloads-badge]][url-packagist]
   [![Packagist Version][url-packagist-badge]][url-packagist]
-
+  ![CI Status](https://github.com/heliomarpm/linq-php/actions/workflows/ci.yml/badge.svg?branch=main)
 </h1>
 
 <div class="badges">
