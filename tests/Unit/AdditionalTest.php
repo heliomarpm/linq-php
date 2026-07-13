@@ -2,6 +2,7 @@
 
 use PHPUnit\Framework\TestCase;
 use HeliomarPM\LinqPHP\LinqPHP;
+use HeliomarPM\LinqPHP\JoinType;
 
 class AdditionalTest extends TestCase
 {
@@ -214,11 +215,11 @@ class AdditionalTest extends TestCase
       ['id' => 2],
     ];
 
-    $right = LinqPHP::from($a)->join($b, 'RIGHT', ['id'])->toArray();
+    $right = LinqPHP::from($a)->join($b, JoinType::RIGHT, ['id'])->toArray();
     $this->assertCount(1, $right);
     $this->assertSame(['id' => 2], $right[0]);
 
-    $full = LinqPHP::from($a)->join($b, 'FULL', ['id'])->toArray();
+    $full = LinqPHP::from($a)->join($b, JoinType::FULL, ['id'])->toArray();
     $this->assertCount(2, $full);
     $this->assertContains(['id' => 1], $full);
     $this->assertContains(['id' => 2], $full);

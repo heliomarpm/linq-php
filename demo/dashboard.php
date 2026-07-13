@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use HeliomarPM\LinqPHP\LinqPHP;
-// use HeliomarPM\LinqPHP\JoinType;
+use HeliomarPM\LinqPHP\JoinType;
 
 // ==========================================
 // 1. MASSA DE DADOS (3 Tabelas Relacionais)
@@ -49,8 +49,8 @@ $cenarios = [
 PHP,
     'run' => fn() => LinqPHP::from($vendas)
       ->where(['status', '=', 'concluido'])
-      ->join($produtos, 'INNER', ['produto_id' => 'id_produto'])
-      ->join($clientes, 'INNER', ['cliente_id' => 'id_cliente'])
+      ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+      ->join($clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
       ->where(['vip', '=', true])
       ->select(['id_venda', 'nome_cliente', 'nome_produto', 'qtd', 'preco'])
       ->orderByKey('id_venda', 'asc')
@@ -73,7 +73,7 @@ PHP,
     ->toObject();
 PHP,
     'run' => fn() => LinqPHP::from($vendas)
-      ->join($produtos, 'INNER', ['produto_id' => 'id_produto'])
+      ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
       ->groupBy(['categoria'], [
         'sum' => ['qtd'],
         'count' => ['id_venda'],
@@ -94,7 +94,7 @@ PHP,
     ->toObject();
 PHP,
     'run' => fn() => LinqPHP::from($vendas)
-      ->join($produtos, 'FULL', ['produto_id' => 'id_produto'])
+      ->join($produtos, JoinType::FULL, ['produto_id' => 'id_produto'])
       ->select(['id_venda', 'produto_id', 'nome_produto', 'qtd'])
       ->toObject()
   ],
@@ -109,7 +109,7 @@ PHP,
     ->toObject();
 PHP,
     'run' => fn() => LinqPHP::from($vendas)
-      ->join($clientes, 'RIGHT', ['cliente_id' => 'id_cliente'])
+      ->join($clientes, JoinType::RIGHT, ['cliente_id' => 'id_cliente'])
       ->select(['id_cliente', 'nome_cliente', 'id_venda', 'status'])
       ->toObject()
   ],
@@ -127,8 +127,8 @@ PHP,
     ->toObject();
 PHP,
     'run' => fn() => LinqPHP::from($vendas)
-      ->join($produtos, 'INNER', ['produto_id' => 'id_produto'])
-      ->join($clientes, 'INNER', ['cliente_id' => 'id_cliente'])
+      ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+      ->join($clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
       ->where(['categoria', '=', 'Peça'])
       ->select(['uf'])
       ->distinct()
@@ -150,7 +150,7 @@ PHP,
     ->toObject();
 PHP,
     'run' => fn() => LinqPHP::from($vendas)
-      ->join($produtos, 'INNER', ['produto_id' => 'id_produto'])
+      ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
       ->where(function ($row) {
         if ($row['categoria'] !== 'Insumo')
           return false;

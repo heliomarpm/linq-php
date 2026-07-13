@@ -2,6 +2,7 @@
 
 use PHPUnit\Framework\TestCase;
 use HeliomarPM\LinqPHP\LinqPHP;
+use HeliomarPM\LinqPHP\JoinType;
 
 class JoinTest extends TestCase
 {
@@ -53,7 +54,7 @@ class JoinTest extends TestCase
     $right = $this->generateRightData(200);
 
     $result = LinqPHP::from($left)
-      ->join($right, 'INNER', ['id', 'group_id'])
+      ->join($right, JoinType::INNER, ['id', 'group_id'])
       ->toArray();
 
     // apenas ids existentes em ambos
@@ -74,7 +75,7 @@ class JoinTest extends TestCase
     $right = $this->generateRightData(100); // metade não casa
 
     $result = LinqPHP::from($left)
-      ->join($right, 'LEFT', ['id', 'group_id'])
+      ->join($right, JoinType::LEFT, ['id', 'group_id'])
       ->toArray();
 
     // LEFT sempre preserva todos
@@ -100,7 +101,7 @@ class JoinTest extends TestCase
     $right = $this->generateRightData(200);
 
     $result = LinqPHP::from($left)
-      ->join($right, 'RIGHT', ['id', 'group_id'])
+      ->join($right, JoinType::RIGHT, ['id', 'group_id'])
       ->toArray();
 
     // RIGHT preserva todos do lado direito
@@ -123,7 +124,7 @@ class JoinTest extends TestCase
     $right = $this->generateRightData(200);
 
     $result = LinqPHP::from($left)
-      ->join($right, 'FULL', ['id', 'group_id'])
+      ->join($right, JoinType::FULL, ['id', 'group_id'])
       ->toArray();
 
     // FULL = LEFT + RIGHT únicos
@@ -163,7 +164,7 @@ class JoinTest extends TestCase
     ];
 
     $result = LinqPHP::from($a)
-      ->join($b, 'INNER', ['course_id'])
+      ->join($b, JoinType::INNER, ['course_id'])
       ->toArray();
 
     $this->assertCount(1, $result);
@@ -182,7 +183,7 @@ class JoinTest extends TestCase
     $expected = $a;
 
     $result = LinqPHP::from($a)
-      ->join($b, 'LEFT', ['course_id'])
+      ->join($b, JoinType::LEFT, ['course_id'])
       ->toArray();
 
     $this->assertCount(1, $result);
@@ -201,7 +202,7 @@ class JoinTest extends TestCase
     $expected = $b;
 
     $result = LinqPHP::from($a)
-      ->join($b, 'RIGHT', ['course_id'])
+      ->join($b, JoinType::RIGHT, ['course_id'])
       ->toArray();
 
     $this->assertCount(2, $result);
@@ -230,7 +231,7 @@ class JoinTest extends TestCase
     ];
 
     $instance = new LinqPHP($data);
-    $instance->join($array2, 'INNER', ['id', 'id_course' => 'course_id']);
+    $instance->join($array2, JoinType::INNER, ['id', 'id_course' => 'course_id']);
     $result = $instance->toArray();
 
     $this->assertEquals($expectedResult, $result);
@@ -255,7 +256,7 @@ class JoinTest extends TestCase
     ];
 
     $instance = new LinqPHP($data);
-    $instance->join($array2, 'LEFT', ['id', 'id_course' => 'course_id']);
+    $instance->join($array2, JoinType::LEFT, ['id', 'id_course' => 'course_id']);
     $result = $instance->toArray();
 
     $this->assertEquals($expectedResult, $result);
@@ -281,7 +282,7 @@ class JoinTest extends TestCase
     ];
 
     $instance = new LinqPHP($a);
-    $instance->join($b, 'RIGHT', ['id', 'id_course' => 'course_id']);
+    $instance->join($b, JoinType::RIGHT, ['id', 'id_course' => 'course_id']);
     $result = $instance->toArray();
 
     $this->assertEquals($expectedResult, $result);
@@ -308,7 +309,7 @@ class JoinTest extends TestCase
     ];
 
     $instance = new LinqPHP($data);
-    $instance->join($array2, 'FULL', ['id', 'id_course' => 'course_id'])
+    $instance->join($array2, JoinType::FULL, ['id', 'id_course' => 'course_id'])
       ->orderBy(['id' => 'asc', 'course_id' => 'asc']);
     $result = $instance->toArray();
 
