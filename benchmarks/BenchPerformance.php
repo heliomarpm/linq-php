@@ -3,7 +3,7 @@
 namespace HeliomarPM\LinqPHP\Benchmark;
 
 use HeliomarPM\LinqPHP\LinqPHP;
-// use Heliomarpm\LinqPHP\JoinType;
+use Heliomarpm\LinqPHP\JoinType;
 
 class BenchPerformance
 {
@@ -101,7 +101,7 @@ class BenchPerformance
   public function benchInnerJoin(array $params): void
   {
     LinqPHP::from($this->vendas)
-      ->join($this->produtos, 'INNER', ['produto_id' => 'id_produto'])
+      ->join($this->produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
       ->toArray();
   }
 

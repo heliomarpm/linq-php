@@ -77,7 +77,7 @@ class BenchmarkRunner
   // 2. Método auxiliar para decidir a cor baseado na velocidade
   private function getColorForTime(float $seconds): string
   {
-    if ($seconds < 0.3)
+    if ($seconds < 0.5)
       return self::COLOR_GREEN;
     if ($seconds < 1.4)
       return self::COLOR_YELLOW;
@@ -92,7 +92,7 @@ class BenchmarkRunner
     echo self::COLOR_CYAN . self::COLOR_BOLD . $title . self::COLOR_RESET;
 
     foreach ($dataSizes as $size) {
-      $colText = sprintf("%-" . self::COL_WIDTH . "s", $size);
+      $colText = sprintf("%-" . self::COL_WIDTH . "s", number_format($size, 0, '', '.'));
       // Mantém a barra vertical em cinza e o texto em ciano
       echo self::COLOR_DARK_GRAY . "| " . self::COLOR_RESET . self::COLOR_CYAN . $colText . self::COLOR_RESET;
     }

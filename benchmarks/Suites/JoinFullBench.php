@@ -4,6 +4,7 @@ namespace Benchmarks\Suites;
 
 use Benchmarks\BenchmarkSuite;
 use HeliomarPM\LinqPHP\LinqPHP;
+use HeliomarPM\LinqPHP\JoinType;
 
 class JoinFullBench extends BenchmarkSuite
 {
@@ -16,7 +17,7 @@ class JoinFullBench extends BenchmarkSuite
   {
     [$sales, $products] = $data;
     LinqPHP::from($sales)
-      ->join($products, "FULL", ['product_id' => 'id'])
+      ->join($products, JoinType::FULL, ['product_id' => 'id'])
       ->toArray();
   }
 }

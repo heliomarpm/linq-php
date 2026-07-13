@@ -4,6 +4,7 @@ namespace Benchmarks\Suites;
 
 use Benchmarks\BenchmarkSuite;
 use HeliomarPM\LinqPHP\LinqPHP;
+use HeliomarPM\LinqPHP\JoinType;
 
 class JoinLeftBench extends BenchmarkSuite
 {
@@ -16,7 +17,7 @@ class JoinLeftBench extends BenchmarkSuite
   {
     [$sales, $products] = $data;
     LinqPHP::from($sales)
-      ->join($products, "LEFT", ['product_id'=> 'id'])
+      ->join($products, JoinType::LEFT, ['product_id'=> 'id'])
       ->toArray();
 
   }
