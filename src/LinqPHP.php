@@ -4,39 +4,26 @@ namespace HeliomarPM\LinqPHP;
 
 use InvalidArgumentException;
 
+enum JoinType: string
+{
+  case INNER = 'INNER';
+  case LEFT = 'LEFT';
+  case RIGHT = 'RIGHT';
+  case FULL = 'FULL';
+}
+
 class LinqPHP
 {
   private array $data = [];
-  private $startTime;
-  private $startMemory;
-
-  protected function setData(array $data, $context = 'setData'): void
-  {
-    $this->data = $this->assertJsonCollection($data, $context);
-  }
-
-  /**
-   * Garante um array tabular (array de arrays)
-   *
-   * @throws InvalidArgumentException
-   */
-  protected function assertJsonCollection(mixed $data, string $context = ''): array
-  {
-    if (!is_array($data)) {
-      throw new InvalidArgumentException($context . ' deve ser um array');
-    }
-
-    if (!array_is_list($data)) {
-      throw new InvalidArgumentException($context . ' deve ser um array indexado (lista)');
-    }
-
-    return $data;
-  }
+  private float $startTime;
+  private float $endTime;
+  private int $startMemory;
 
   public function __construct(array $data)
   {
     // $this->startTime = round(microtime(true) * 1000); //tempo em milisegundos
     $this->startTime = microtime(true); //tempo em micros
+    $this->endTime = $this->startTime;
     $this->startMemory = memory_get_usage(true);
     $this->setData($data);
   }
@@ -45,7 +32,7 @@ class LinqPHP
    * Cria uma nova instância da classe usando os dados fornecidos.
    *
    * @param array<int, array<string, mixed>> $data Os dados para inicializar o objeto.
-   * @return self O objeto recém-criado.
+   * @return LinqPHP O objeto recém-criado.
    *
    * * Exemplo de uso:
    *
@@ -68,11 +55,30 @@ class LinqPHP
     return new self($data);
   }
 
+  protected function setData(array $data, string $context = 'setData'): void
+  {
+    $this->data = $this->assertJsonCollection($data, $context);
+  }
+
+  protected function assertJsonCollection(mixed $data, string $context = ''): array
+  {
+    if (!is_array($data)) {
+      throw new InvalidArgumentException($context . ' deve ser um array');
+    }
+
+    if (!array_is_list($data)) {
+      throw new InvalidArgumentException($context . ' deve ser um array indexado (lista)');
+    }
+
+    return $data;
+  }
+
+
   /**
    * Concatena dois arrays em um único array preservando todos os elementos e chaves.
    *
    * @param array<int, array<string, mixed>>$unionData O array a ser concatenado com o array atual.
-   * @return $this Retorna a instância atual da classe.
+   * @return LinqPHP Retorna a instância atual da classe.
    *
    *
    * * Exemplo de uso:
@@ -128,13 +134,14 @@ class LinqPHP
     $allKeys = array_keys($allKeys);
 
     // Normaliza cada linha para conter todas as chaves
-    $normalize = static fn(array $row) =>
-      array_replace(array_fill_keys($allKeys, null), $row);
+    $normalize = static fn(array $row) => array_replace(array_fill_keys($allKeys, null), $row);
 
     $this->data = array_merge(
       array_map($normalize, $this->data),
       array_map($normalize, $unionData)
     );
+
+    $this->endTime = microtime(true);
     return $this;
   }
 
@@ -144,22 +151,22 @@ class LinqPHP
     if ($this->isAssoc($data)) {
       return [$data];
     }
-
     return $data;
   }
 
   private function isAssoc(array $array): bool
   {
-    return array_keys($array) !== range(0, count($array) - 1);
+    // return array_keys($array) !== range(0, count($array) - 1);
+    return !array_is_list($array);
   }
 
   /**
    * Junta o array atual com outro array com base em campos relacionados.
    *
    * @param array<int, array<string, mixed>>$joinData O array a ser unido.
-   * @param string $joinType O tipo de união a ser realizada. Os valores válidos são "INNER", "LEFT", "RIGHT" ou "FULL". O padrão é "INNER".
+   * @param JoinType $joinType O tipo de união a ser realizada. Os valores válidos são "INNER", "LEFT", "RIGHT" ou "FULL". O padrão é "INNER".
    * @param array<int, array<string, mixed>>$relatedFields Os campos usados para determinar a relação entre os arrays. O padrão é um array vazio.
-   * @return $this O objeto atual com o array unido.
+   * @return LinqPHP O objeto atual com o array unido.
    *
    * * Exemplo de uso:
    * ```php
@@ -174,16 +181,18 @@ class LinqPHP
    *     ['id' => 3, 'age' => 30, 'course_id' => 1],
    * ];
    *
-   * $result = LinqPHP::from($data)->join($array2, 'INNER', ['id', 'id_course'=>'course_id'])->toArray();;
+   * $result = LinqPHP::from($data)->join($array2, JoinType::INNER, ['id', 'id_course'=>'course_id'])->toArray();;
    *
    * Resultado: [
    *     ['id' => 1, 'name' => 'John', 'id_course' => 1, 'age' => 25, 'course_id' => 1],
    * ]
    * ```
    */
-  public function join(array $joinData, string $joinType = "INNER" | "LEFT" | "RIGHT" | "FULL", array $relatedFields = []): self
+  public function join(array $joinData, JoinType $joinType, array $relatedFields = []): self
   {
-    $joinType = strtoupper($joinType);
+    // if (!in_array($joinType, ['INNER', 'LEFT', 'RIGHT', 'FULL'])) {
+    //   throw new InvalidArgumentException('Invalid join type.');
+    // }
 
     if (empty($relatedFields)) {
       throw new InvalidArgumentException('Join requires related fields.');
@@ -216,7 +225,7 @@ class LinqPHP
     $matchedRightKeys = [];
 
     // ============================
-    // LEFT / INNER
+    // INNER / LEFT / FULL
     // ============================
     foreach ($this->data as $l) {
       $key = $this->buildJoinKey($l, $leftFields);
@@ -226,42 +235,35 @@ class LinqPHP
           $result[] = array_merge($l, $r);
         }
         $matchedRightKeys[$key] = true;
-      } elseif ($joinType === 'LEFT' || $joinType === 'FULL') {
-        $result[] = array_merge(
-          $l,
-          $this->nullFillRightOnly($l, $joinData)
-        );
+      } elseif (in_array($joinType, [JoinType::LEFT, JoinType::FULL])) {
+        $result[] = array_merge($l, $this->nullFillRightOnly($l, $joinData));
       }
     }
 
     // ============================
     // RIGHT / FULL
     // ============================
-    if ($joinType === 'RIGHT' || $joinType === 'FULL') {
+    if (in_array($joinType, [JoinType::RIGHT, JoinType::FULL])) {
       foreach ($joinData as $r) {
         $key = $this->buildJoinKey($r, $rightFields);
 
         if (!isset($matchedRightKeys[$key])) {
-          $result[] = array_merge(
-            $this->nullFillRightOnly($r, $this->data),
-            $r
-          );
+          $result[] = array_merge($this->nullFillRightOnly($r, $this->data), $r);
         }
       }
     }
 
     $this->data = $result;
+    $this->endTime = microtime(true);
     return $this;
   }
 
   private function buildJoinKey(array $item, array $fields): string
   {
     $values = [];
-
     foreach ($fields as $field) {
       $values[] = $item[$field] ?? null;
     }
-
     return implode("\0", $values);
   }
 
@@ -270,20 +272,18 @@ class LinqPHP
     if (empty($rightSample)) {
       return [];
     }
-
     $rightKeys = array_keys($rightSample[0]);
 
     // Remove chaves que já existem no LEFT
     $keysToNull = array_diff($rightKeys, array_keys($leftItem));
-
     return array_fill_keys($keysToNull, null);
   }
 
   /**
-   * Filtra os elementos do array de dados com base nas condições fornecidas.
+   * Aceita arrays de condições simples ou funções (closures) para filtros complexos.
    *
    * @param array<int, array<string, mixed>>|callable $conditions As condições para filtrar o array de dados. Pode ser um array simples, uma função, ou um array de arrays/funções.
-   * @return $this O array de dados filtrado.
+   * @return LinqPHP O array de dados filtrado.
    *
    * * Exemplo de uso:
    * ```php
@@ -293,7 +293,7 @@ class LinqPHP
    *     ['id' => 3, 'name' => 'John', 'age' => 35, 'status' => 'inactive', 'city' => 'Paris'],
    * ];
    *
-   * \// Usando múltiplas condições incluindo funções
+   * // Usando múltiplas condições incluindo funções
    * $conditions = [
    *     ['age', '>', 18],
    *     ['city', '=', 'New York'],
@@ -304,12 +304,26 @@ class LinqPHP
    * ];
    *
    * $result = LinqPHP::from($data)->where($conditions)->toArray();
+	 *
+	 * // Múltiplos filtros e operadores (startswith, endswith, contains, in)
+	 * $result = LinqPHP::from($data)
+	 *     ->where([
+	 * 	      ['age', '>=', 25],
+	 *        ['status', 'in', ['active', 'pending']],
+	 *        ['name', 'startswith', 'J']
+	 *     ])
+	 *     ->toArray();
+	 *
+	 * // Usando Closures (funções anônimas)
+	 * $result = LinqPHP::from($data)
+	 *     ->where(fn($item) => $item['id'] % 2 !== 0)
+	 *     ->toArray();
    *
-   * \// Usando um array simples
+   * // Usando um array simples
    * $condition = ['age', '>', 30];
    * $result = LinqPHP::from($data)->where($conditions)->toArray();
    *
-   * \// Usando uma função
+   * // Usando uma função
    * $condition = fn($item) => $item['id'] % 2 == 0;
    * $result = LinqPHP::from($data)->where($conditions)->toArray();
    * ```
@@ -326,103 +340,79 @@ class LinqPHP
     } elseif (!is_array($conditions)) {
       $conditions = [$conditions];
     } else {
-      foreach ($conditions as $condition) {
-        if (!is_callable($condition) && !is_array($condition)) {
-          $conditions = [$conditions];
-        }
-        break;
+      $first = reset($conditions);
+      if (!is_array($first) && !is_callable($first)) {
+        $conditions = [$conditions];
       }
     }
 
-    $resultadosFiltrados = array_filter($this->data, function ($item) use ($conditions) {
-      foreach ($conditions as $condition) {
-        // Se a condição é um array, assumimos que é um critério de filtro comum
-        if (is_array($condition)) {
-          list($key, $operator, $value) = $condition;
+    // Pré-processa as condições uma única vez
+    $normalizedConditions = [];
+    foreach ($conditions as $cond) {
+      if (is_array($cond) && count($cond) === 3) {
+        $normalizedConditions[] = [
+          $cond[0],
+          strtolower($cond[1]), // Operador em minúsculo
+          is_string($cond[2]) ? strtolower($cond[2]) : $cond[2]
+        ];
+      } else {
+        $normalizedConditions[] = $cond;
+      }
+    }
 
-          //Normaliza case-insensitive
-          $item[$key] = strtolower($item[$key]);
-          if (is_string($value)) {
-            $value = strtolower($value);
-          }
-
-          switch ($operator) {
-            case '>':
-              if (!($item[$key] > $value)) {
-                return false;
-              }
-              break;
-            case '>=':
-              if (!($item[$key] >= $value)) {
-                return false;
-              }
-              break;
-            case '<':
-              if (!($item[$key] < $value)) {
-                return false;
-              }
-              break;
-            case '<=':
-              if (!($item[$key] <= $value)) {
-                return false;
-              }
-              break;
-            case '=':
-              if (!($item[$key] == $value)) {
-                return false;
-              }
-              break;
-            case 'in':
-              if (!in_array($item[$key], $value)) {
-                return false;
-              }
-              break;
-            case 'startswith':
-              if (strpos($item[$key], $value) !== 0) {
-                return false;
-              }
-              break;
-            case 'endswith':
-              $length = strlen($value);
-              if ($length == 0 || substr($item[$key], -$length) !== $value) {
-                return false;
-              }
-              break;
-            case 'contains':
-              if (strpos($item[$key], $value) === false) {
-                return false;
-              }
-              break;
-            default:
-              throw new InvalidArgumentException("Unsupported operator: $operator");
-          }
-        } elseif (is_callable($condition)) {
-          // Se a condição é uma função, chamamos a função passando o item
-          // Se a função retornar false, o item é removido
+    $resultadosFiltrados = array_filter($this->data, function ($item) use ($normalizedConditions) {
+      foreach ($normalizedConditions as $condition) {
+        // Se a condição é uma função, chamamos a função passando o item
+        // Se a função retornar false, o item é removido
+        if (is_callable($condition)) {
           if (!$condition($item)) {
             return false;
           }
-        } else {
-          // Se a condição não é um array nem uma função, não podemos processá-la
-          return false;
+          continue;
+        }
+
+        // Se a condição é um array, assumimos que é um critério de filtro comum
+        if (is_array($condition)) {
+          [$key, $operator, $value] = $condition;
+
+          $itemValue = $item[$key] ?? null;
+          if (is_string($itemValue)) {
+            $itemValue = strtolower($itemValue);
+          }
+
+          $isMatch = match ($operator) {
+            '>' => $itemValue > $value,
+            '>=' => $itemValue >= $value,
+            '<' => $itemValue < $value,
+            '<=' => $itemValue <= $value,
+            '=' => $itemValue == $value,
+            'in' => is_array($value) && in_array($itemValue, $value),
+            'startswith' => is_string($itemValue) && is_string($value) && str_starts_with($itemValue, $value),
+            'endswith' => is_string($itemValue) && is_string($value) && str_ends_with($itemValue, $value),
+            'contains' => is_string($itemValue) && is_string($value) && str_contains($itemValue, $value),
+            default => throw new InvalidArgumentException("Unsupported operator: $operator"),
+          };
+
+          if (!$isMatch) {
+            return false;
+          }
         }
       }
-
       return true;
     });
 
-    // Reindexa o array resultante para começar de 0
     $this->data = array_values($resultadosFiltrados);
+    $this->endTime = microtime(true);
     return $this;
   }
 
   /**
-   * Agrupa os dados com base nos campos especificados e realiza agregações.
+   * Agrupa os dados com base nos campos especificados e realiza agregações (sum, count, max, min, avg).
    *
    * @param array<int, array<string, mixed>>$groupingFields Os campos para agrupar os dados.
    * @param array<int, array<string, mixed>>$aggregations As agregações a serem realizadas nos dados.
-   * @throws
-   * @return $this A instância atual da classe.
+   *
+   * @return LinqPHP A instância atual da classe.
    *
    * * Exemplo de uso:
    * ```php
@@ -478,9 +468,8 @@ class LinqPHP
       }
     }
 
-    // Resultado Final
     $this->data = array_values($groupedResult);
-
+    $this->endTime = microtime(true);
     return $this;
   }
 
@@ -513,13 +502,11 @@ class LinqPHP
     $valueCounts = array_count_values(array_merge(...array_values($aggregations)));
 
     // Filtra e retorna todos os valores que se repetem
-    $aggregationsKeyDuplicated = array_keys(array_filter($valueCounts, function ($count) {
-      return $count > 1;
-    }));
+    $aggregationsKeyDuplicated = array_keys(array_filter($valueCounts, fn($count) => $count > 1));
 
     foreach ($aggregations as $operation => $fields) {
       $operation = strtolower($operation);
-      
+
       foreach ($fields as $field) {
         $fieldName = $field;
 
@@ -557,19 +544,17 @@ class LinqPHP
     }
   }
 
-
   /**
    * Seleciona os elementos do array de dados com base nas chaves fornecidas.
-   * Se o modo estrito (strict = true) estiver ativado, uma exceção será lançada
+   * Use `strict: true` para garantir que os dados existam. Uma exceção será lançada
    * caso alguma das chaves solicitadas não exista em pelo menos um item.
    *
    * @param array<int, array<string, mixed>>$selectors Lista de chaves a serem selecionadas, array vazio retorna todas.
-   * @param bool $distinct   Se verdadeiro, retorna apenas os itens únicos.
    * @param bool $strict     Define o comportamento estrito da seleção.
    *                         - false (padrão): chaves inexistentes retornam `null`
    *                         - true: lança InvalidArgumentException se alguma chave não existir
    *
-   * @return $this Retorna a instãncia atual para encadeamento (fluent interface).
+   * @return LinqPHP Retorna a instãncia atual para encadeamento (fluent interface).
    * @throws InvalidArgumentException Quando strict = true e uma ou mais chaves não existem.
    *
    * * Exemplo de uso:
@@ -594,10 +579,13 @@ class LinqPHP
    *     ->toArray(); // lança InvalidArgumentException
    * ```
    */
-  public function select(array $selectors = [], bool $distinct = false, bool $strict = false): self
+  public function select(array $selectors = [], bool $strict = false): self
   {
     $seenItems = [];
     $resultItems = [];
+
+    $selectorKeys = array_flip($selectors);
+    $nullTemplate = array_fill_keys($selectors, null);
 
     foreach ($this->data as $item) {
       if (empty($selectors)) {
@@ -605,75 +593,48 @@ class LinqPHP
       } else {
         if ($strict) {
           // verifica se todas as chaves solicitadas existem em cada item
-          $missingKeys = array_diff($selectors, array_keys($item));
+          $missingKeys = array_diff_key($selectorKeys, $item);
           if (!empty($missingKeys)) {
             throw new InvalidArgumentException(
-              'Select strict mode error. Missing keys: ' . implode(', ', $missingKeys)
+              'Select strict mode error. Missing keys: ' . implode(', ', array_keys($missingKeys))
             );
           }
         }
 
-        // seleciona apenas as chaves solicitadas
-        $selectedItem = array_fill_keys($selectors, null);
-        foreach ($selectors as $selector) {
-          if (array_key_exists($selector, $item)) {
-            $selectedItem[(string) $selector] = $item[$selector];
-          }
-        }
-      }
-
-      if ($distinct) {
-        // verifica se o item já foi visto antes
-        // $itemHash = implode("\0", $selectedItem);
-        $itemHash = json_encode($selectedItem, JSON_UNESCAPED_UNICODE);
-
-        if (isset($seenItems[$itemHash])) {
-          continue;
-        }
-
-        $seenItems[$itemHash] = true;
+        $selectedItem = array_replace($nullTemplate, array_intersect_key($item, $selectorKeys));
       }
 
       $resultItems[] = $selectedItem;
     }
 
     $this->data = $resultItems;
+    $this->endTime = microtime(true);
     return $this;
   }
 
   /**
    * Remove os elementos duplicados do array de dados.
    *
-   * @return $this A instância atual da classe após a remoção dos elementos duplicados.
+   * @return LinqPHP A instância atual da classe após a remoção dos elementos duplicados.
    *
    * * Exemplo de uso:
    * ```php
    * $data = [
    *     ['id' => 1, 'name' => 'John', 'age' => 25],
    *     ['id' => 2, 'name' => 'Jane', 'age' => 30],
-   *     ['id' => 1, 'name' => 'John', 'age' => 25],
+   *     ['id' => 3, 'name' => 'John', 'age' => 35],
    * ];
    *
    * $result = LinqPHP::from($data)->distinct()->toArray();
-   * // Resultado:
-   * // [
-   * //   ['id' => 1, 'name' => 'John', 'age' => 25],
-   * //   ['id' => 2, 'name' => 'Jane', 'age' => 30]
-   * // ]
    * ```
    */
   public function distinct(): self
   {
-    // $this->data = array_map('unserialize', array_unique(array_map('serialize', $this->data)));
-    // return $this;
-
     $seenItems = [];
     $resultItems = [];
 
     foreach ($this->data as $item) {
-      // verifica se o item já foi visto antes
-      // $itemHash = implode("\0", $selectedItem);
-      $itemHash = json_encode($item, JSON_UNESCAPED_UNICODE);
+      $itemHash = serialize($item);
 
       if (isset($seenItems[$itemHash])) {
         continue;
@@ -684,6 +645,7 @@ class LinqPHP
     }
 
     $this->data = $resultItems;
+    $this->endTime = microtime(true);
     return $this;
   }
 
@@ -691,7 +653,7 @@ class LinqPHP
    * Obtém um número especificado de itens do array de dados.
    *
    * @param int $maxItens O número máximo de itens a serem obtidos.
-   * @return $this A instância atual da classe.
+   * @return LinqPHP A instância atual da classe.
    *
    * * Exemplo de uso:
    * ```php
@@ -712,6 +674,7 @@ class LinqPHP
     }
 
     $this->data = array_splice($this->data, 0, $maxItens);
+    $this->endTime = microtime(true);
     return $this;
   }
 
@@ -721,7 +684,7 @@ class LinqPHP
    * @param string $key A chave pela qual os dados devem ser ordenados.
    * @param string $order A ordem na qual os dados devem ser ordenados. Padrão é 'asc'.
    *                     Valores válidos são 'asc' para ordem ascendente e 'desc' para ordem descendente.
-   * @return $this O objeto atual.
+   * @return LinqPHP O objeto atual.
    *
    * * Exemplo de uso:
    * ```php
@@ -734,43 +697,33 @@ class LinqPHP
    * $result = LinqPHP::from($data)->orderByKey('id', 'desc')->toArray();
    * ```
    */
-  public function orderByKey(string $key, string $ordem = 'asc'): self
+  public function orderByKey(string $key, string $order = 'asc'): self
   {
-    $order = array_column($this->data, $key);
+    $data = array_column($this->data, $key);
 
-    if (empty($order)) {
+    if (empty($data)) {
       throw new InvalidArgumentException("This field does not exist for sorting.");
     }
 
-    if ($ordem === 'asc') {
-      array_multisort($order, $this->data);
+    if (strtolower($order) === 'asc') {
+      array_multisort($data, $this->data);
     } else {
-      array_multisort($order, SORT_DESC, $this->data);
+      array_multisort($data, SORT_DESC, $this->data);
     }
+    $this->endTime = microtime(true);
     return $this;
   }
+
 
   /**
    * Ordena o array de dados de acordo com a ordem fornecida.
    *
-   * @param array<int, array<string, mixed>>$order A ordem na qual ordenar o array de dados.
-   * @return $this O objeto atual.
-   *
-   * * Exemplo de uso:
-   * ```php
-   * $data = [
-   *     ['id' => 1, 'name' => 'John', 'age' => 25],
-   *     ['id' => 2, 'name' => 'Jane', 'age' => 30],
-   *     ['id' => 3, 'name' => 'John', 'age' => 35],
-   * ];
-   * $order = ['name' => 'asc', 'age' => 'desc'];
-   *
-   * $result = LinqPHP::from($data)->orderBy($order)->toArray();
-   * ```
+   * @param array $fields
+   * @return LinqPHP
    */
   public function orderBy(array $fields): self
   {
-    $sortOrders = array();
+    $sortOrders = [];
     foreach ($fields as $field => $sortType) {
       $field = is_numeric($field) ? $sortType : $field;
       $column = array_column($this->data, $field);
@@ -779,29 +732,28 @@ class LinqPHP
     }
 
     $sortOrders[] = &$this->data;
-    call_user_func_array('array_multisort', $sortOrders);
+    array_multisort(...$sortOrders); // Substituído call_user_func_array pelo spread operator (...)
+
+    $this->endTime = microtime(true);
     return $this;
   }
 
-  private function statisticUsage()
+  private function statisticUsage(): array
   {
-    $result = [
-      'elapsedTime' => number_format(microtime(true) - $this->startTime, 6),
+    return [
+      'elapsedTime' => number_format($this->endTime - $this->startTime, 6),
       'memoryUsed' => sprintf("%5.2f MB", (memory_get_peak_usage(true) - $this->startMemory) / 1024 / 1024),
     ];
-
-    return $result;
   }
 
   /**
    * Summary of toArray
    * @return array
    */
-  public function toArray()
+  public function toArray(): array
   {
     return $this->data;
   }
-
 
   /**
    * Converte o objeto atual em um objeto stdClass.
@@ -817,7 +769,7 @@ class LinqPHP
    * echo $result->data; // Output: array<int, array<string, mixed>>
    * ```
    */
-  public function toObject()
+  public function toObject(): \stdClass
   {
     $statistic = $this->statisticUsage();
 
