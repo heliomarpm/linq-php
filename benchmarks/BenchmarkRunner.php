@@ -3,8 +3,8 @@ namespace Benchmarks;
 
 class BenchmarkRunner
 {
-	private const NAME_WIDTH = 45;
-	private const COL_WIDTH = 20;
+  private const NAME_WIDTH = 45;
+  private const COL_WIDTH = 20;
 
 
   // 1. Defina as constantes de cor no topo da sua classe
@@ -16,67 +16,70 @@ class BenchmarkRunner
   private const COLOR_RED = "\e[31m";
   private const COLOR_DARK_GRAY = "\e[90m";
 
+  private array $githubAnnotations = [];
 
-	public function run(array $suites, array $dataSizes): void
-	{
-		// Captura a versão do PHP
-		$phpVersion = PHP_VERSION;
+  public function run(array $suites, array $dataSizes): void
+  {
+    // Captura a versão do PHP
+    $phpVersion = PHP_VERSION;
 
-		// Verifica se a extensão do Xdebug está carregada
-		$xdebugStatus = extension_loaded('xdebug') ? '✔' : '❌';
+    // Verifica se a extensão do Xdebug está carregada
+    $xdebugStatus = extension_loaded('xdebug') ? '✔' : '❌';
 
-		// O OPcache no terminal depende de uma diretiva específica do CLI
-		$opcacheLoaded = extension_loaded('Zend OPcache');
-		$opcacheCliEnabled = filter_var(ini_get('opcache.enable_cli'), FILTER_VALIDATE_BOOLEAN);
-		$opcacheStatus = ($opcacheLoaded && $opcacheCliEnabled) ? '✔' : '❌';
+    // O OPcache no terminal depende de uma diretiva específica do CLI
+    $opcacheLoaded = extension_loaded('Zend OPcache');
+    $opcacheCliEnabled = filter_var(ini_get('opcache.enable_cli'), FILTER_VALIDATE_BOOLEAN);
+    $opcacheStatus = ($opcacheLoaded && $opcacheCliEnabled) ? '✔' : '❌';
 
-		// Imprime a linha formatada
-		echo "Running benchmarks...\n";
-		echo "with PHP version {$phpVersion}, xdebug {$xdebugStatus}, opcache {$opcacheStatus}\n\n";
+    // Imprime a linha formatada
+    echo "Running benchmarks...\n";
+    echo "with PHP version {$phpVersion}, xdebug {$xdebugStatus}, opcache {$opcacheStatus}\n\n";
 
-		$this->printHeader($dataSizes);
+    $this->printHeader($dataSizes);
 
-		foreach ($suites as $suite) {
-			$this->runBenchmark($suite, $dataSizes);
-		}
+    foreach ($suites as $suite) {
+      $this->runBenchmark($suite, $dataSizes);
+    }
 
-		echo PHP_EOL;
-	}
+    echo PHP_EOL;
+  }
 
-	private function runBenchmark(BenchmarkSuite $suite, array $dataSizes): void
-	{
-		$results = [];
+  private function runBenchmark(BenchmarkSuite $suite, array $dataSizes): void
+  {
+    $results = [];
 
-		// imprime linha inicial vazia
-		$this->printRow($suite->name(), $results, $dataSizes);
+    // imprime linha inicial vazia
+    $this->printRow($suite->name(), $results, $dataSizes);
 
-		foreach ($dataSizes as $dataSize) {
-			$data = \Benchmarks\Data\DataFactory::generate($dataSize);
+    foreach ($dataSizes as $dataSize) {
+      $data = \Benchmarks\Data\DataFactory::generate($dataSize);
 
-			$startTime = microtime(true);
-			$startMemory = memory_get_usage(true);
+      $startTime = microtime(true);
+      $startMemory = memory_get_usage(true);
 
-			$suite->run($data);
+      $suite->run($data);
 
-			$results[$dataSize] = [
-				'time' => microtime(true) - $startTime,
-				'memory' => (memory_get_peak_usage(true) - $startMemory) / 1024 / 1024,
-			];
+      $results[$dataSize] = [
+        'time' => microtime(true) - $startTime,
+        'memory' => (memory_get_peak_usage(true) - $startMemory) / 1024 / 1024,
+      ];
 
-			// reimprime a MESMA linha, agora com mais uma coluna preenchida
-			$this->printRow($suite->name(), $results, $dataSizes);
-		}
+      // reimprime a MESMA linha, agora com mais uma coluna preenchida
+      $this->printRow($suite->name(), $results, $dataSizes);
+    }
 
-		echo PHP_EOL;
-	}
+    $this->printGithubAnnotations();
+
+    echo PHP_EOL;
+  }
 
 
   // 2. Método auxiliar para decidir a cor baseado na velocidade
   private function getColorForTime(float $seconds): string
   {
-    if ($seconds < 0.2)
+    if ($seconds < 0.3)
       return self::COLOR_GREEN;
-    if ($seconds < 0.9)
+    if ($seconds < 1.4)
       return self::COLOR_YELLOW;
     return self::COLOR_RED;
   }
@@ -103,8 +106,8 @@ class BenchmarkRunner
 
   private function printRow(string $name, array $results, array $dataSizes): void
   {
-    // \e[2K apaga a linha inteira no terminal; \r volta o cursor para a coluna 0
-    echo "\e[2K\r";
+    //volta o cursor para a coluna 0
+    echo "\r";
 
     // Nome do teste em negrito
     $nameText = sprintf("%-" . self::NAME_WIDTH . "s", $name);
@@ -113,6 +116,9 @@ class BenchmarkRunner
     foreach ($dataSizes as $size) {
       if (!isset($results[$size])) {
         $emptyText = sprintf("%-" . self::COL_WIDTH . "s", '...');
+
+        // \e[2K apaga a linha inteira no terminal; \r volta o cursor para a coluna 0
+        echo "\e[2K\r";
         echo self::COLOR_DARK_GRAY . "| " . $emptyText . self::COLOR_RESET;
         continue;
       }
@@ -131,8 +137,29 @@ class BenchmarkRunner
 
       // Imprime a barra em cinza e o texto no formato "Semáforo"
       echo self::COLOR_DARK_GRAY . "| " . self::COLOR_RESET . $color . $resultStr . self::COLOR_RESET;
+
+      if ($time > 1.5) {
+        // Monta a string no formato exato que o GitHub exige
+        $this->githubAnnotations[] = "::warning title=Gargalo de Performance (🚨 {$name})::O método '{$name}' processando {$size} registros demorou {$time} segundos, o que está acima do limite aceitável de 1.5s.";
+      }
     }
 
     flush(); // Empurra a saída para o terminal
+  }
+
+  private function printGithubAnnotations(): void
+  {
+    // Verifica se o script está rodando dentro do GitHub Actions
+    if (getenv('GITHUB_ACTIONS') === 'true') {
+      if (!empty($this->githubAnnotations)) {
+        echo "\n\n🔔 Emitindo Annotations para o GitHub Actions...\n";
+        foreach ($this->githubAnnotations as $annotation) {
+          echo $annotation . PHP_EOL;
+        }
+      } else {
+        // Se tudo foi rápido, emite um Notice de sucesso!
+        echo "\n\n::notice title=Performance Excelente 🚀::Todos os benchmarks rodaram abaixo de 1.5 segundos!\n";
+      }
+    }
   }
 }
