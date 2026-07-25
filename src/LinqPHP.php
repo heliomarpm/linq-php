@@ -188,16 +188,8 @@ class LinqPHP
    * ]
    * ```
    */
-  public function join(array $joinData, JoinType $joinType, array $relatedFields = []): self
+  public function join(array $joinData, JoinType $joinType, array $relatedFields): self
   {
-    // if (!in_array($joinType, ['INNER', 'LEFT', 'RIGHT', 'FULL'])) {
-    //   throw new InvalidArgumentException('Invalid join type.');
-    // }
-
-    if (empty($relatedFields)) {
-      throw new InvalidArgumentException('Join requires related fields.');
-    }
-
     // Normaliza: ['id', 'x' => 'y'] → ['id'=>'id','x'=>'y']
     $leftFields = [];
     $rightFields = [];
