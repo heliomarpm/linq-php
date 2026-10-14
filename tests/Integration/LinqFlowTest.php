@@ -20,7 +20,7 @@ class LinqFlowTest extends TestCase
 
         $result = LinqPHP::from($users)
             ->join($orders, JoinType::LEFT, ['id' => 'user_id'])
-            ->where(fn($x) => $x['total'] !== null)
+            ->where(fn ($x) => $x['total'] !== null)
             ->groupBy(['id'], ['sum' => ['total']])
             ->toArray();
 

@@ -7,21 +7,21 @@ use HeliomarPM\LinqPHP\LinqPHP;
 
 class AggregateSumBench extends BenchmarkSuite
 {
-  public function name(): string
-  {
-    return 'Agregations (sum)';
-  }
+    public function name(): string
+    {
+        return 'Agregations (sum)';
+    }
 
-  public function run(array $data): void
-  {
-    [$sales] = $data;
-    LinqPHP::from($sales)
-      ->groupBy(
-        ['status'],
-        [
-          'sum' => ['value']
+    public function run(array $data): void
+    {
+        [$sales] = $data;
+        LinqPHP::from($sales)
+          ->groupBy(
+              ['status'],
+              [
+              'sum' => ['value']
         ]
-      )
-      ->toArray();
-  }
+          )
+          ->toArray();
+    }
 }

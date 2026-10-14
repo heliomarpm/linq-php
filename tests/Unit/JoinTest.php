@@ -6,313 +6,313 @@ use HeliomarPM\LinqPHP\JoinType;
 
 class JoinTest extends TestCase
 {
-  private function generateLeftData(int $size): array
-  {
-    $data = [];
+    private function generateLeftData(int $size): array
+    {
+        $data = [];
 
-    for ($i = 1; $i <= $size; $i++) {
-      $data[] = [
-        'id' => $i,
-        'user_name' => 'User ' . $i,
-        'group_id' => $i % 10
-      ];
+        for ($i = 1; $i <= $size; $i++) {
+            $data[] = [
+              'id' => $i,
+              'user_name' => 'User ' . $i,
+              'group_id' => $i % 10
+            ];
+        }
+
+        return $data;
     }
 
-    return $data;
-  }
+    private function generateRightData(int $size): array
+    {
+        $data = [];
 
-  private function generateRightData(int $size): array
-  {
-    $data = [];
+        for ($i = 1; $i <= $size; $i++) {
+            $data[] = [
+              'id' => $i,
+              'group_id' => $i % 10,
+              'score' => rand(0, 100)
+            ];
+        }
 
-    for ($i = 1; $i <= $size; $i++) {
-      $data[] = [
-        'id' => $i,
-        'group_id' => $i % 10,
-        'score' => rand(0, 100)
-      ];
+        // adiciona registros sem match no LEFT
+        for ($i = $size + 1; $i <= $size + 20; $i++) {
+            $data[] = [
+              'id' => $i,
+              'group_id' => $i % 10,
+              'score' => rand(0, 100)
+            ];
+        }
+
+        return $data;
     }
 
-    // adiciona registros sem match no LEFT
-    for ($i = $size + 1; $i <= $size + 20; $i++) {
-      $data[] = [
-        'id' => $i,
-        'group_id' => $i % 10,
-        'score' => rand(0, 100)
-      ];
+    // ==========================================================
+    // INNER JOIN
+    // ==========================================================
+    public function testInnerJoinWithLargeDataset(): void
+    {
+        $left = $this->generateLeftData(200);
+        $right = $this->generateRightData(200);
+
+        $result = LinqPHP::from($left)
+          ->join($right, JoinType::INNER, ['id', 'group_id'])
+          ->toArray();
+
+        // apenas ids existentes em ambos
+        $this->assertCount(200, $result);
+
+        foreach ($result as $row) {
+            $this->assertNotNull($row['user_name']);
+            $this->assertNotNull($row['score']);
+        }
     }
 
-    return $data;
-  }
+    // ==========================================================
+    // LEFT JOIN
+    // ==========================================================
+    public function testLeftJoinPreservesAllLeftRows(): void
+    {
+        $left = $this->generateLeftData(200);
+        $right = $this->generateRightData(100); // metade não casa
 
-  // ==========================================================
-  // INNER JOIN
-  // ==========================================================
-  public function testInnerJoinWithLargeDataset(): void
-  {
-    $left = $this->generateLeftData(200);
-    $right = $this->generateRightData(200);
+        $result = LinqPHP::from($left)
+          ->join($right, JoinType::LEFT, ['id', 'group_id'])
+          ->toArray();
 
-    $result = LinqPHP::from($left)
-      ->join($right, JoinType::INNER, ['id', 'group_id'])
-      ->toArray();
+        // LEFT sempre preserva todos
+        $this->assertCount(200, $result);
 
-    // apenas ids existentes em ambos
-    $this->assertCount(200, $result);
+        $nullCount = 0;
 
-    foreach ($result as $row) {
-      $this->assertNotNull($row['user_name']);
-      $this->assertNotNull($row['score']);
-    }
-  }
+        foreach ($result as $row) {
+            if ($row['score'] === null) {
+                $nullCount++;
+            }
+        }
 
-  // ==========================================================
-  // LEFT JOIN
-  // ==========================================================
-  public function testLeftJoinPreservesAllLeftRows(): void
-  {
-    $left = $this->generateLeftData(200);
-    $right = $this->generateRightData(100); // metade não casa
-
-    $result = LinqPHP::from($left)
-      ->join($right, JoinType::LEFT, ['id', 'group_id'])
-      ->toArray();
-
-    // LEFT sempre preserva todos
-    $this->assertCount(200, $result);
-
-    $nullCount = 0;
-
-    foreach ($result as $row) {
-      if ($row['score'] === null) {
-        $nullCount++;
-      }
+        $this->assertGreaterThan(0, $nullCount);
     }
 
-    $this->assertGreaterThan(0, $nullCount);
-  }
+    // ==========================================================
+    // RIGHT JOIN
+    // ==========================================================
+    public function testRightJoinPreservesAllRightRows(): void
+    {
+        $left = $this->generateLeftData(100);
+        $right = $this->generateRightData(200);
 
-  // ==========================================================
-  // RIGHT JOIN
-  // ==========================================================
-  public function testRightJoinPreservesAllRightRows(): void
-  {
-    $left = $this->generateLeftData(100);
-    $right = $this->generateRightData(200);
+        $result = LinqPHP::from($left)
+          ->join($right, JoinType::RIGHT, ['id', 'group_id'])
+          ->toArray();
 
-    $result = LinqPHP::from($left)
-      ->join($right, JoinType::RIGHT, ['id', 'group_id'])
-      ->toArray();
+        // RIGHT preserva todos do lado direito
+        $this->assertCount(220, $result);
 
-    // RIGHT preserva todos do lado direito
-    $this->assertCount(220, $result);
+        $rightOnlyRows = array_filter(
+            $result,
+            fn ($r) => $r['user_name'] === null
+        );
 
-    $rightOnlyRows = array_filter(
-      $result,
-      fn($r) => $r['user_name'] === null
-    );
-
-    $this->assertGreaterThan(0, count($rightOnlyRows));
-  }
-
-  // ==========================================================
-  // FULL JOIN
-  // ==========================================================
-  public function testFullJoinIncludesAllRowsFromBothSides(): void
-  {
-    $left = $this->generateLeftData(150);
-    $right = $this->generateRightData(200);
-
-    $result = LinqPHP::from($left)
-      ->join($right, JoinType::FULL, ['id', 'group_id'])
-      ->toArray();
-
-    // FULL = LEFT + RIGHT únicos
-    $this->assertGreaterThanOrEqual(200, count($result));
-
-    $hasLeftOnly = false;
-    $hasRightOnly = false;
-
-    foreach ($result as $row) {
-      if ($row['user_name'] === null && $row['score'] !== null) {
-        $hasRightOnly = true;
-      }
-
-      if ($row['user_name'] !== null && $row['score'] === null) {
-        $hasLeftOnly = true;
-      }
+        $this->assertGreaterThan(0, count($rightOnlyRows));
     }
 
-    $this->assertFalse($hasLeftOnly);
-    $this->assertTrue($hasRightOnly);
-  }
+    // ==========================================================
+    // FULL JOIN
+    // ==========================================================
+    public function testFullJoinIncludesAllRowsFromBothSides(): void
+    {
+        $left = $this->generateLeftData(150);
+        $right = $this->generateRightData(200);
 
-  public function testInnerJoin()
-  {
-    $a = [
-      ['id' => 1, 'course_id' => 10],
-      ['id' => 2, 'course_id' => 20],
-    ];
+        $result = LinqPHP::from($left)
+          ->join($right, JoinType::FULL, ['id', 'group_id'])
+          ->toArray();
 
-    $b = [
-      ['course_id' => 10, 'name' => 'Math'],
-      ['course_id' => 30, 'name' => 'Physics'],
-    ];
+        // FULL = LEFT + RIGHT únicos
+        $this->assertGreaterThanOrEqual(200, count($result));
 
-    $expected = [
-      ['id' => 1, 'course_id' => 10, 'name' => 'Math']
-    ];
+        $hasLeftOnly = false;
+        $hasRightOnly = false;
 
-    $result = LinqPHP::from($a)
-      ->join($b, JoinType::INNER, ['course_id'])
-      ->toArray();
+        foreach ($result as $row) {
+            if ($row['user_name'] === null && $row['score'] !== null) {
+                $hasRightOnly = true;
+            }
 
-    $this->assertCount(1, $result);
-    $this->assertEquals('Math', $result[0]['name']);
-    $this->assertEquals($expected, $result);
-  }
+            if ($row['user_name'] !== null && $row['score'] === null) {
+                $hasLeftOnly = true;
+            }
+        }
 
-  public function testLeftJoin()
-  {
-    $a = [
-      ['id' => 1, 'course_id' => 10, 'name' => 'Math'],
-    ];
+        $this->assertFalse($hasLeftOnly);
+        $this->assertTrue($hasRightOnly);
+    }
 
-    $b = [];
+    public function testInnerJoin()
+    {
+        $a = [
+          ['id' => 1, 'course_id' => 10],
+          ['id' => 2, 'course_id' => 20],
+        ];
 
-    $expected = $a;
+        $b = [
+          ['course_id' => 10, 'name' => 'Math'],
+          ['course_id' => 30, 'name' => 'Physics'],
+        ];
 
-    $result = LinqPHP::from($a)
-      ->join($b, JoinType::LEFT, ['course_id'])
-      ->toArray();
+        $expected = [
+          ['id' => 1, 'course_id' => 10, 'name' => 'Math']
+        ];
 
-    $this->assertCount(1, $result);
-    $this->assertArrayHasKey('id', $result[0]);
-    $this->assertEquals($expected, $result);
-  }
+        $result = LinqPHP::from($a)
+          ->join($b, JoinType::INNER, ['course_id'])
+          ->toArray();
 
-  public function testRightJoin()
-  {
-    $a = [];
-    $b = [
-      ['course_id' => 10, 'name' => 'Math'],
-      ['course_id' => 30, 'name' => 'Physics'],
-    ];
+        $this->assertCount(1, $result);
+        $this->assertEquals('Math', $result[0]['name']);
+        $this->assertEquals($expected, $result);
+    }
 
-    $expected = $b;
+    public function testLeftJoin()
+    {
+        $a = [
+          ['id' => 1, 'course_id' => 10, 'name' => 'Math'],
+        ];
 
-    $result = LinqPHP::from($a)
-      ->join($b, JoinType::RIGHT, ['course_id'])
-      ->toArray();
+        $b = [];
 
-    $this->assertCount(2, $result);
-    $this->assertArrayHasKey('course_id', $result[0]);
-    $this->assertContains(['course_id' => 10, 'name' => 'Math'], $result);
-    $this->assertContains(['course_id' => 30, 'name' => 'Physics'], $result);
+        $expected = $a;
 
-    $this->assertEquals($expected, $result);
-  }
+        $result = LinqPHP::from($a)
+          ->join($b, JoinType::LEFT, ['course_id'])
+          ->toArray();
 
-  public function testJoinWithInnerJoin()
-  {
-    $data = [
-      ['id' => 1, 'name' => 'John', 'id_course' => 1],
-      ['id' => 2, 'name' => 'Jane', 'id_course' => 1],
-    ];
+        $this->assertCount(1, $result);
+        $this->assertArrayHasKey('id', $result[0]);
+        $this->assertEquals($expected, $result);
+    }
 
-    $array2 = [
-      ['id' => 1, 'age' => 25, 'course_id' => 1],
-      ['id' => 1, 'age' => 25, 'course_id' => 2],
-      ['id' => 3, 'age' => 30, 'course_id' => 1],
-    ];
+    public function testRightJoin()
+    {
+        $a = [];
+        $b = [
+          ['course_id' => 10, 'name' => 'Math'],
+          ['course_id' => 30, 'name' => 'Physics'],
+        ];
 
-    $expectedResult = [
-      ['id' => 1, 'name' => 'John', 'id_course' => 1, 'age' => 25, 'course_id' => 1]
-    ];
+        $expected = $b;
 
-    $instance = new LinqPHP($data);
-    $instance->join($array2, JoinType::INNER, ['id', 'id_course' => 'course_id']);
-    $result = $instance->toArray();
+        $result = LinqPHP::from($a)
+          ->join($b, JoinType::RIGHT, ['course_id'])
+          ->toArray();
 
-    $this->assertEquals($expectedResult, $result);
-  }
+        $this->assertCount(2, $result);
+        $this->assertArrayHasKey('course_id', $result[0]);
+        $this->assertContains(['course_id' => 10, 'name' => 'Math'], $result);
+        $this->assertContains(['course_id' => 30, 'name' => 'Physics'], $result);
 
-  public function testJoinWithLeftJoin()
-  {
-    $data = [
-      ['id' => 1, 'name' => 'John', 'id_course' => 1],
-      ['id' => 2, 'name' => 'Jane', 'id_course' => 1],
-    ];
+        $this->assertEquals($expected, $result);
+    }
 
-    $array2 = [
-      ['id' => 1, 'age' => 25, 'course_id' => 1],
-      ['id' => 1, 'age' => 25, 'course_id' => 2],
-      ['id' => 3, 'age' => 30, 'course_id' => 1],
-    ];
+    public function testJoinWithInnerJoin()
+    {
+        $data = [
+          ['id' => 1, 'name' => 'John', 'id_course' => 1],
+          ['id' => 2, 'name' => 'Jane', 'id_course' => 1],
+        ];
 
-    $expectedResult = [
-      ['id' => 1, 'name' => 'John', 'id_course' => 1, 'age' => 25, 'course_id' => 1],
-      ['id' => 2, 'name' => 'Jane', 'id_course' => 1, 'age' => null, 'course_id' => null],
-    ];
+        $array2 = [
+          ['id' => 1, 'age' => 25, 'course_id' => 1],
+          ['id' => 1, 'age' => 25, 'course_id' => 2],
+          ['id' => 3, 'age' => 30, 'course_id' => 1],
+        ];
 
-    $instance = new LinqPHP($data);
-    $instance->join($array2, JoinType::LEFT, ['id', 'id_course' => 'course_id']);
-    $result = $instance->toArray();
+        $expectedResult = [
+          ['id' => 1, 'name' => 'John', 'id_course' => 1, 'age' => 25, 'course_id' => 1]
+        ];
 
-    $this->assertEquals($expectedResult, $result);
-  }
+        $instance = new LinqPHP($data);
+        $instance->join($array2, JoinType::INNER, ['id', 'id_course' => 'course_id']);
+        $result = $instance->toArray();
 
-  public function testJoinWithRightJoin()
-  {
-    $a = [
-      ['id' => 1, 'name' => 'John', 'id_course' => 1],
-      ['id' => 2, 'name' => 'Jane', 'id_course' => 1],
-    ];
+        $this->assertEquals($expectedResult, $result);
+    }
 
-    $b = [
-      ['id' => 1, 'age' => 25, 'course_id' => 1],
-      ['id' => 1, 'age' => 25, 'course_id' => 2],
-      ['id' => 3, 'age' => 30, 'course_id' => 1],
-    ];
+    public function testJoinWithLeftJoin()
+    {
+        $data = [
+          ['id' => 1, 'name' => 'John', 'id_course' => 1],
+          ['id' => 2, 'name' => 'Jane', 'id_course' => 1],
+        ];
 
-    $expectedResult = [
-      ['id' => 1, 'name' => 'John', 'id_course' => 1, 'age' => 25, 'course_id' => 1],
-      ['id' => 1, 'name' => null, 'id_course' => null, 'age' => 25, 'course_id' => 2],
-      ['id' => 3, 'name' => null, 'id_course' => null, 'age' => 30, 'course_id' => 1],
-    ];
+        $array2 = [
+          ['id' => 1, 'age' => 25, 'course_id' => 1],
+          ['id' => 1, 'age' => 25, 'course_id' => 2],
+          ['id' => 3, 'age' => 30, 'course_id' => 1],
+        ];
 
-    $instance = new LinqPHP($a);
-    $instance->join($b, JoinType::RIGHT, ['id', 'id_course' => 'course_id']);
-    $result = $instance->toArray();
+        $expectedResult = [
+          ['id' => 1, 'name' => 'John', 'id_course' => 1, 'age' => 25, 'course_id' => 1],
+          ['id' => 2, 'name' => 'Jane', 'id_course' => 1, 'age' => null, 'course_id' => null],
+        ];
 
-    $this->assertEquals($expectedResult, $result);
-  }
+        $instance = new LinqPHP($data);
+        $instance->join($array2, JoinType::LEFT, ['id', 'id_course' => 'course_id']);
+        $result = $instance->toArray();
 
-  public function testJoinWithFullJoin()
-  {
-    $data = [
-      ['id' => 1, 'name' => 'John', 'id_course' => 1],
-      ['id' => 2, 'name' => 'Jane', 'id_course' => 1],
-    ];
+        $this->assertEquals($expectedResult, $result);
+    }
 
-    $array2 = [
-      ['id' => 1, 'age' => 25, 'course_id' => 1],
-      ['id' => 1, 'age' => 25, 'course_id' => 2],
-      ['id' => 3, 'age' => 30, 'course_id' => 1],
-    ];
+    public function testJoinWithRightJoin()
+    {
+        $a = [
+          ['id' => 1, 'name' => 'John', 'id_course' => 1],
+          ['id' => 2, 'name' => 'Jane', 'id_course' => 1],
+        ];
 
-    $expectedResult = [
-      ['id' => 1, 'name' => 'John', 'id_course' => 1, 'age' => 25, 'course_id' => 1],
-      ['id' => 1, 'name' => null, 'id_course' => null, 'age' => 25, 'course_id' => 2],
-      ['id' => 2, 'name' => 'Jane', 'id_course' => 1, 'age' => null, 'course_id' => null],
-      ['id' => 3, 'name' => null, 'id_course' => null, 'age' => 30, 'course_id' => 1],
-    ];
+        $b = [
+          ['id' => 1, 'age' => 25, 'course_id' => 1],
+          ['id' => 1, 'age' => 25, 'course_id' => 2],
+          ['id' => 3, 'age' => 30, 'course_id' => 1],
+        ];
 
-    $instance = new LinqPHP($data);
-    $instance->join($array2, JoinType::FULL, ['id', 'id_course' => 'course_id'])
-      ->orderBy(['id' => 'asc', 'course_id' => 'asc']);
-    $result = $instance->toArray();
+        $expectedResult = [
+          ['id' => 1, 'name' => 'John', 'id_course' => 1, 'age' => 25, 'course_id' => 1],
+          ['id' => 1, 'name' => null, 'id_course' => null, 'age' => 25, 'course_id' => 2],
+          ['id' => 3, 'name' => null, 'id_course' => null, 'age' => 30, 'course_id' => 1],
+        ];
 
-    $this->assertEquals($expectedResult, $result);
-  }
+        $instance = new LinqPHP($a);
+        $instance->join($b, JoinType::RIGHT, ['id', 'id_course' => 'course_id']);
+        $result = $instance->toArray();
+
+        $this->assertEquals($expectedResult, $result);
+    }
+
+    public function testJoinWithFullJoin()
+    {
+        $data = [
+          ['id' => 1, 'name' => 'John', 'id_course' => 1],
+          ['id' => 2, 'name' => 'Jane', 'id_course' => 1],
+        ];
+
+        $array2 = [
+          ['id' => 1, 'age' => 25, 'course_id' => 1],
+          ['id' => 1, 'age' => 25, 'course_id' => 2],
+          ['id' => 3, 'age' => 30, 'course_id' => 1],
+        ];
+
+        $expectedResult = [
+          ['id' => 1, 'name' => 'John', 'id_course' => 1, 'age' => 25, 'course_id' => 1],
+          ['id' => 1, 'name' => null, 'id_course' => null, 'age' => 25, 'course_id' => 2],
+          ['id' => 2, 'name' => 'Jane', 'id_course' => 1, 'age' => null, 'course_id' => null],
+          ['id' => 3, 'name' => null, 'id_course' => null, 'age' => 30, 'course_id' => 1],
+        ];
+
+        $instance = new LinqPHP($data);
+        $instance->join($array2, JoinType::FULL, ['id', 'id_course' => 'course_id'])
+          ->orderBy(['id' => 'asc', 'course_id' => 'asc']);
+        $result = $instance->toArray();
+
+        $this->assertEquals($expectedResult, $result);
+    }
 }

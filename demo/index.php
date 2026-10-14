@@ -47,7 +47,7 @@ $cenarios = [
     ->orderByKey('id_venda', 'asc')
     ->toObject();
 PHP,
-    'run' => fn() => LinqPHP::from($vendas)
+    'run' => fn () => LinqPHP::from($vendas)
       ->where(['status', '=', 'concluido'])
       ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
       ->join($clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
@@ -72,7 +72,7 @@ PHP,
     ])
     ->toObject();
 PHP,
-    'run' => fn() => LinqPHP::from($vendas)
+    'run' => fn () => LinqPHP::from($vendas)
       ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
       ->groupBy(['categoria'], [
         'sum' => ['qtd'],
@@ -93,7 +93,7 @@ PHP,
     ->select(['id_venda', 'produto_id', 'nome_produto', 'qtd'])
     ->toObject();
 PHP,
-    'run' => fn() => LinqPHP::from($vendas)
+    'run' => fn () => LinqPHP::from($vendas)
       ->join($produtos, JoinType::FULL, ['produto_id' => 'id_produto'])
       ->select(['id_venda', 'produto_id', 'nome_produto', 'qtd'])
       ->toObject()
@@ -108,7 +108,7 @@ PHP,
     ->select(['id_cliente', 'nome_cliente', 'id_venda', 'status'])
     ->toObject();
 PHP,
-    'run' => fn() => LinqPHP::from($vendas)
+    'run' => fn () => LinqPHP::from($vendas)
       ->join($clientes, JoinType::RIGHT, ['cliente_id' => 'id_cliente'])
       ->select(['id_cliente', 'nome_cliente', 'id_venda', 'status'])
       ->toObject()
@@ -126,7 +126,7 @@ PHP,
     ->distinct()
     ->toObject();
 PHP,
-    'run' => fn() => LinqPHP::from($vendas)
+    'run' => fn () => LinqPHP::from($vendas)
       ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
       ->join($clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
       ->where(['categoria', '=', 'Peça'])
@@ -149,13 +149,14 @@ PHP,
     ->select(['nome_produto', 'qtd', 'preco'])
     ->toObject();
 PHP,
-    'run' => fn() => LinqPHP::from($vendas)
+    'run' => fn () => LinqPHP::from($vendas)
       ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
       ->where(function ($row) {
-        if ($row['categoria'] !== 'Insumo')
-          return false;
-        $faturamento = $row['qtd'] * $row['preco'];
-        return $faturamento > 100.00;
+          if ($row['categoria'] !== 'Insumo') {
+              return false;
+          }
+          $faturamento = $row['qtd'] * $row['preco'];
+          return $faturamento > 100.00;
       })
       ->select(['nome_produto', 'qtd', 'preco'])
       ->toObject()
@@ -165,7 +166,7 @@ PHP,
 // Identifica o cenário atual pela URL
 $cenarioAtual = $_GET['cenario'] ?? 'join_triplo';
 if (!array_key_exists($cenarioAtual, $cenarios)) {
-  $cenarioAtual = 'join_triplo';
+    $cenarioAtual = 'join_triplo';
 }
 
 $dadosCenario = $cenarios[$cenarioAtual];
@@ -177,32 +178,34 @@ $resultado = $linq->data;
 // ==========================================
 function renderGrid(string $titulo, array $dados, string $corHeader = 'bg-primary')
 {
-  if (empty($dados)) {
-    return "<div class='alert alert-warning'>Nenhum dado retornado para este cenário.</div>";
-  }
-  $colunas = array_keys($dados[0]);
-  $html = "<div class='card shadow-sm mb-4'>";
-  $html .= "<div class='card-header text-white {$corHeader}'><h6 class='mb-0'>{$titulo}</h6></div>";
-  $html .= "<div class='card-body p-0'><div class='table-responsive'><table class='table table-sm table-striped table-hover mb-0' style='font-size: 0.9rem;'>";
-  $html .= "<thead><tr>";
-  foreach ($colunas as $col) {
-    $html .= "<th>" . strtoupper($col) . "</th>";
-  }
-  $html .= "</tr></thead><tbody>";
-  foreach ($dados as $linha) {
-    $html .= "<tr>";
-    foreach ($colunas as $col) {
-      $valor = $linha[$col] ?? '<em class="text-muted">null</em>';
-      if (is_bool($valor))
-        $valor = $valor ? 'Sim' : 'Não';
-      if (is_float($valor))
-        $valor = number_format($valor, 2, ',', '.');
-      $html .= "<td>{$valor}</td>";
+    if (empty($dados)) {
+        return "<div class='alert alert-warning'>Nenhum dado retornado para este cenário.</div>";
     }
-    $html .= "</tr>";
-  }
-  $html .= "</tbody></table></div></div></div>";
-  return $html;
+    $colunas = array_keys($dados[0]);
+    $html = "<div class='card shadow-sm mb-4'>";
+    $html .= "<div class='card-header text-white {$corHeader}'><h6 class='mb-0'>{$titulo}</h6></div>";
+    $html .= "<div class='card-body p-0'><div class='table-responsive'><table class='table table-sm table-striped table-hover mb-0' style='font-size: 0.9rem;'>";
+    $html .= "<thead><tr>";
+    foreach ($colunas as $col) {
+        $html .= "<th>" . strtoupper($col) . "</th>";
+    }
+    $html .= "</tr></thead><tbody>";
+    foreach ($dados as $linha) {
+        $html .= "<tr>";
+        foreach ($colunas as $col) {
+            $valor = $linha[$col] ?? '<em class="text-muted">null</em>';
+            if (is_bool($valor)) {
+                $valor = $valor ? 'Sim' : 'Não';
+            }
+            if (is_float($valor)) {
+                $valor = number_format($valor, 2, ',', '.');
+            }
+            $html .= "<td>{$valor}</td>";
+        }
+        $html .= "</tr>";
+    }
+    $html .= "</tbody></table></div></div></div>";
+    return $html;
 }
 ?>
 
