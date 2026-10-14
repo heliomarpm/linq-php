@@ -34,10 +34,17 @@
     }
   },
   "scripts": {
+    "format:test": "pint --preset psr12 --test",
+    "format:fix": "pint --preset psr12",
+    "lint": "phpstan analyse",
     "test": "./vendor/bin/phpunit --configuration phpunit.xml --colors=always",
     "test:v": "./vendor/bin/phpunit --configuration phpunit.xml --colors=always --debug",
     "bench": "php ./benchmarks/run.php",
     "perform": "vendor/bin/phpbench run --report=aggregate",
+    "check": [
+      "@format:test",
+      "@lint"
+    ],
     "qa": [
       "@test",
       "@bench",
@@ -54,6 +61,8 @@
   },
   "require-dev": {
     "phpunit/phpunit": "^13.2",
-    "phpbench/phpbench": "^1.7"
+    "phpbench/phpbench": "^1.7",
+    "phpstan/phpstan": "*",
+    "laravel/pint": "^1.32"
   }
 }

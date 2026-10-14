@@ -161,9 +161,9 @@ class LinqPHP
   /**
    * Junta o array atual com outro array com base em campos relacionados.
    *
-   * @param array<int, array<string, mixed>>$joinData O array a ser unido.
+   * @param array<int, array<string, mixed>> $joinData O array a ser unido.
    * @param JoinType $joinType O tipo de união a ser realizada. Os valores válidos são "INNER", "LEFT", "RIGHT" ou "FULL". O padrão é "INNER".
-   * @param array<int, array<string, mixed>>$relatedFields Os campos usados para determinar a relação entre os arrays. O padrão é um array vazio.
+   * @param array<int|string, string> $relatedFields Os campos usados para determinar a relação entre os arrays. O padrão é um array vazio.
    * @return LinqPHP O objeto atual com o array unido.
    *
    * * Exemplo de uso:
@@ -272,7 +272,7 @@ class LinqPHP
   /**
    * Aceita arrays de condições simples ou funções (closures) para filtros complexos.
    *
-   * @param array<int, array<string, mixed>>|callable $conditions As condições para filtrar o array de dados. Pode ser um array simples, uma função, ou um array de arrays/funções.
+   * @param mixed $conditions As condições para filtrar o array de dados. Pode ser um array simples, uma função, ou um array de arrays/funções.
    * @return LinqPHP O array de dados filtrado.
    *
    * * Exemplo de uso:
@@ -405,8 +405,8 @@ class LinqPHP
   /**
    * Agrupa os dados com base nos campos especificados e realiza agregações (sum, count, max, min, avg).
    *
-   * @param array<int, array<string, mixed>>$groupingFields Os campos para agrupar os dados.
-   * @param array<int, array<string, mixed>>$aggregations As agregações a serem realizadas nos dados.
+   * @param array<int, string> $groupingFields Os campos para agrupar os dados.
+   * @param array<string, array<int, string>> $aggregations As agregações a serem realizadas nos dados.
    *
    * @return LinqPHP A instância atual da classe.
    *
@@ -564,7 +564,7 @@ class LinqPHP
    * Use `strict: true` para garantir que os dados existam. Uma exceção será lançada
    * caso alguma das chaves solicitadas não exista em pelo menos um item.
    *
-   * @param array<int, array<string, mixed>>$selectors Lista de chaves a serem selecionadas, array vazio retorna todas.
+   * @param array<int, string> $selectors Lista de chaves a serem selecionadas, array vazio retorna todas.
    * @param bool $strict     Define o comportamento estrito da seleção.
    *                         - false (padrão): chaves inexistentes retornam `null`
    *                         - true: lança InvalidArgumentException se alguma chave não existir
