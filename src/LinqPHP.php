@@ -21,8 +21,7 @@ class LinqPHP
 
   public function __construct(array $data)
   {
-    // $this->startTime = round(microtime(true) * 1000); //tempo em milisegundos
-    $this->startTime = microtime(true); //tempo em micros
+    $this->startTime = microtime(true); // tempo em micros
     $this->endTime = $this->startTime;
     $this->startMemory = memory_get_usage(true);
     $this->setData($data);
@@ -79,7 +78,6 @@ class LinqPHP
    *
    * @param array<int, array<string, mixed>>$unionData O array a ser concatenado com o array atual.
    * @return LinqPHP Retorna a instância atual da classe.
-   *
    *
    * * Exemplo de uso:
    * ```php
@@ -322,14 +320,21 @@ class LinqPHP
    */
   public function where(mixed $conditions): self
   {
-    // Se a condição é um array simples ou uma função, transforme-a em um array de arrays
-    // if (!is_array(reset($conditions)) && !is_callable(reset($conditions))) {
-    //     $conditions = [$conditions];
-    // }
+    $normalizedConditions = $this->normalizeWhereConditions($conditions);
 
-    if (is_callable($conditions)) {
-      $conditions = [$conditions];
-    } elseif (!is_array($conditions)) {
+    $resultadosFiltrados = array_filter(
+      $this->data,
+      fn(array $item): bool => $this->matchesConditions($item, $normalizedConditions)
+    );
+
+    $this->data = array_values($resultadosFiltrados);
+    $this->endTime = microtime(true);
+    return $this;
+  }
+
+  private function normalizeWhereConditions(mixed $conditions): array
+  {
+    if (is_callable($conditions) || !is_array($conditions)) {
       $conditions = [$conditions];
     } else {
       $first = reset($conditions);
@@ -338,64 +343,63 @@ class LinqPHP
       }
     }
 
-    // Pré-processa as condições uma única vez
     $normalizedConditions = [];
     foreach ($conditions as $cond) {
       if (is_array($cond) && count($cond) === 3) {
         $normalizedConditions[] = [
           $cond[0],
-          strtolower($cond[1]), // Operador em minúsculo
-          is_string($cond[2]) ? strtolower($cond[2]) : $cond[2]
+          strtolower((string) $cond[1]),
+          is_string($cond[2]) ? strtolower($cond[2]) : $cond[2],
         ];
       } else {
         $normalizedConditions[] = $cond;
       }
     }
 
-    $resultadosFiltrados = array_filter($this->data, function ($item) use ($normalizedConditions) {
-      foreach ($normalizedConditions as $condition) {
-        // Se a condição é uma função, chamamos a função passando o item
-        // Se a função retornar false, o item é removido
-        if (is_callable($condition)) {
-          if (!$condition($item)) {
-            return false;
-          }
-          continue;
+    return $normalizedConditions;
+  }
+
+  private function matchesConditions(array $item, array $normalizedConditions): bool
+  {
+    foreach ($normalizedConditions as $condition) {
+      if (is_callable($condition)) {
+        if (!$condition($item)) {
+          return false;
+        }
+        continue;
+      }
+
+      if (is_array($condition)) {
+        [$key, $operator, $value] = $condition;
+
+        $itemValue = $item[$key] ?? null;
+        if (is_string($itemValue)) {
+          $itemValue = strtolower($itemValue);
         }
 
-        // Se a condição é um array, assumimos que é um critério de filtro comum
-        if (is_array($condition)) {
-          [$key, $operator, $value] = $condition;
-
-          $itemValue = $item[$key] ?? null;
-          if (is_string($itemValue)) {
-            $itemValue = strtolower($itemValue);
-          }
-
-          $isMatch = match ($operator) {
-            '>' => $itemValue > $value,
-            '>=' => $itemValue >= $value,
-            '<' => $itemValue < $value,
-            '<=' => $itemValue <= $value,
-            '=' => $itemValue == $value,
-            'in' => is_array($value) && in_array($itemValue, $value),
-            'startswith' => is_string($itemValue) && is_string($value) && str_starts_with($itemValue, $value),
-            'endswith' => is_string($itemValue) && is_string($value) && str_ends_with($itemValue, $value),
-            'contains' => is_string($itemValue) && is_string($value) && str_contains($itemValue, $value),
-            default => throw new InvalidArgumentException("Unsupported operator: $operator"),
-          };
-
-          if (!$isMatch) {
-            return false;
-          }
+        if (!$this->evaluateOperatorMatch($itemValue, $operator, $value)) {
+          return false;
         }
       }
-      return true;
-    });
+    }
 
-    $this->data = array_values($resultadosFiltrados);
-    $this->endTime = microtime(true);
-    return $this;
+    return true;
+  }
+
+  private function evaluateOperatorMatch(mixed $itemValue, string $operator, mixed $value): bool
+  {
+    return match ($operator) {
+      '>' => $itemValue > $value,
+      '>=' => $itemValue >= $value,
+      '<' => $itemValue < $value,
+      '<=' => $itemValue <= $value,
+      '=' => $itemValue == $value,
+      'in' => is_array($value) && in_array($itemValue, $value),
+      'startswith' => is_string($itemValue) && is_string($value) && str_starts_with($itemValue, $value),
+      'endswith' => is_string($itemValue) && is_string($value) && str_ends_with($itemValue, $value),
+      'contains' => is_string($itemValue) && is_string($value) && str_contains($itemValue, $value),
+      default => throw new InvalidArgumentException("Unsupported operator: $operator"),
+    };
   }
 
   /**
@@ -423,41 +427,42 @@ class LinqPHP
   public function groupBy(array $groupingFields, array $aggregations = []): self
   {
     $groupedResult = [];
-    $aggregated = true;
+    $hasAggregations = !empty($aggregations);
+    $duplicatedFields = [];
+    $groupingFieldsFlip = array_flip($groupingFields);
+
+    if ($hasAggregations) {
+      $allAggFields = [];
+      foreach ($aggregations as $fields) {
+        if (is_array($fields)) {
+          foreach ($fields as $field) {
+            $allAggFields[] = $field;
+          }
+        }
+      }
+      $valueCounts = array_count_values($allAggFields);
+      $duplicatedFields = array_keys(array_filter($valueCounts, fn(int $count): bool => $count > 1));
+    }
 
     foreach ($this->data as $item) {
       // Gerar chave única para identificar o grupo
-      $groupKey = implode('_', array_intersect_key($item, array_flip($groupingFields)));
+      $groupKey = implode('_', array_intersect_key($item, $groupingFieldsFlip));
 
       // Inicializar grupo se ainda não existir
       if (!isset($groupedResult[$groupKey])) {
-        $groupedResult[$groupKey] = array_intersect_key($item, array_flip($groupingFields));
+        $groupedResult[$groupKey] = array_intersect_key($item, $groupingFieldsFlip);
       }
 
-      if (empty($aggregations)) {
-        if ($aggregated) {
-          $this->groupByDefaultAggregations($groupedResult, $groupKey, $groupingFields, $item);
-        }
+      if (!$hasAggregations) {
+        $this->groupByDefaultAggregations($groupedResult, $groupKey, $groupingFields, $item);
       } else {
-        $this->groupByCustomAggregations($groupedResult, $groupKey, $aggregations, $item);
+        $this->groupByCustomAggregations($groupedResult, $groupKey, $aggregations, $duplicatedFields, $item);
       }
     }
 
     // Calcular médias
-    foreach ($aggregations as $operation => $fields) {
-      if ($operation === 'avg') {
-        foreach ($groupedResult as &$group) {
-          foreach ($fields as $field) {
-            $avgField = $field;
-            if (array_key_exists($field . "_(avg)", $group)) {
-              $avgField .= "_(avg)";
-            }
-            $sum = array_sum($group[$avgField]);
-            $count = count($group[$avgField]);
-            $group[$avgField] = $count > 0 ? $sum / $count : null;
-          }
-        }
-      }
+    if ($hasAggregations) {
+      $this->resolveGroupAverages($groupedResult, $aggregations);
     }
 
     $this->data = array_values($groupedResult);
@@ -465,12 +470,14 @@ class LinqPHP
     return $this;
   }
 
-  private function groupByDefaultAggregations(&$groupedResult, $groupKey, $groupingFields, $item)
-  {
-    $aggregated = false;
+  private function groupByDefaultAggregations(
+    array &$groupedResult,
+    string $groupKey,
+    array $groupingFields,
+    array $item
+  ): void {
     foreach ($item as $key => $value) {
-      if (!in_array($key, $groupingFields)) {
-        $aggregated = true;
+      if (!in_array($key, $groupingFields, true)) {
         if (is_numeric($value)) {
           // Aplica a soma para as chaves que podem ser somadas
           $groupedResult[$groupKey][$key] = isset($groupedResult[$groupKey][$key])
@@ -484,28 +491,22 @@ class LinqPHP
         }
       }
     }
-
-    return $aggregated;
   }
 
-  private function groupByCustomAggregations(&$groupedResult, $groupKey, $aggregations, $item)
-  {
-    // Obtém todos os campos e conta a frequência de cada valor
-    $valueCounts = array_count_values(array_merge(...array_values($aggregations)));
-
-    // Filtra e retorna todos os valores que se repetem
-    $aggregationsKeyDuplicated = array_keys(array_filter($valueCounts, fn($count) => $count > 1));
-
+  private function groupByCustomAggregations(
+    array &$groupedResult,
+    string $groupKey,
+    array $aggregations,
+    array $duplicatedFields,
+    array $item
+  ): void {
     foreach ($aggregations as $operation => $fields) {
       $operation = strtolower($operation);
 
       foreach ($fields as $field) {
-        $fieldName = $field;
-
-        // Se chave vai se repetir então concatena com operador
-        if (in_array($field, $aggregationsKeyDuplicated)) {
-          $fieldName .= "_($operation)";
-        }
+        $fieldName = in_array($field, $duplicatedFields, true)
+          ? $field . "_($operation)"
+          : $field;
 
         switch ($operation) {
           case 'sum':
@@ -532,6 +533,28 @@ class LinqPHP
             $groupedResult[$groupKey][$fieldName][] = (float) $item[$field];
             break;
         }
+      }
+    }
+  }
+
+  private function resolveGroupAverages(array &$groupedResult, array $aggregations): void
+  {
+    foreach ($aggregations as $operation => $fields) {
+      if (strtolower($operation) === 'avg') {
+        foreach ($groupedResult as &$group) {
+          foreach ($fields as $field) {
+            $avgField = $field;
+            if (array_key_exists($field . "_(avg)", $group)) {
+              $avgField .= "_(avg)";
+            }
+            if (isset($group[$avgField]) && is_array($group[$avgField])) {
+              $sum = array_sum($group[$avgField]);
+              $count = count($group[$avgField]);
+              $group[$avgField] = $count > 0 ? $sum / $count : null;
+            }
+          }
+        }
+        unset($group);
       }
     }
   }
@@ -750,7 +773,7 @@ class LinqPHP
   /**
    * Converte o objeto atual em um objeto stdClass.
    *
-   * @return \stdClass {elapsedTime: float, count: int, rows: array} O objeto convertido.
+   * @return \stdClass {elapsedTime: float, memoryUsed: string, count: int, data: array} O objeto convertido.
    *
    * * Exemplo de saída:
    * ```php

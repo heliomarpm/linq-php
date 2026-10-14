@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Estabilizar governança, corrigir inconsistências documentais e aprimorar qualidade contínua (CI/QA)\
-> **Status:** em desenvolvimento | **Progresso:** 1/8 (12%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-13
+> **Status:** em desenvolvimento | **Progresso:** 3/8 (37%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-13
 
 ## Em progresso
 
@@ -54,25 +54,22 @@
     - [ ] Reescrever `docs/CODE_OF_CONDUCT.md` em português (Contributor Covenant em pt-BR)
     - [ ] Reescrever `docs/SUPPORT.md` em português alinhado aos canais do LinqPHP
     - [ ] Reescrever `docs/CONTRIBUTING.md` em português detalhando fluxo de contribuição e convenções
+		- [ ] Reescrever `.github/pull_request_template.md` em português
     - [ ] Traduzir todos os arquivos de `.github/ISSUE_TEMPLATE/` (`README.md`, `bug_report.yml`, `feature_request.yml`, `documentation.yml`, `support_question.yml`) e sanear referências obsoletas
 
 ### Baixa Prioridade
 
-- [ ] **T-006 · P3 · Avaliar código comentado de validação em `assertJsonCollection()`**
-  - Origem: discovery | Dep.: nenhuma
-  - Ref: [src/LinqPHP.php](../src/LinqPHP.php#L73-L79)
-  - DoD:
-    - [ ] Decidir se a validação profunda deve ser reativada condicionalmente ou removida
-    - [ ] Limpar bloco de código comentado morto se descartado
-
-- [ ] **T-007 · P3 · Avaliar viabilidade de Lazy Evaluation / Generators (`yield`)**
-  - Origem: discovery | Dep.: nenhuma
-  - Ref: [composer.json](../composer.json#L24), [docs/adr/ADR-002.md](../docs/adr/ADR-002.md)
-  - DoD:
-    - [ ] Definir se haverá suporte a pipeline preguiçoso via iterators
-    - [ ] Caso descartado, alinhar palavras-chave do `composer.json` e registrar decisão
+(nenhuma)
 
 ## Concluídas recentemente
+
+- [x] **T-006 · P3 · Avaliar código comentado de validação em `assertJsonCollection()`** (2026-10-13)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
+  - Evidência: Decidida a remoção definitiva da validação elemento a elemento no construtor para preservar a performance em coleções volumosas; código comentado morto removido; suíte de testes 100% verde (48 testes, 505 asserções).
+
+- [x] **T-007 · P3 · Avaliar viabilidade de Lazy Evaluation / Generators (`yield`)** (2026-10-13)
+  - Arquivos: [composer.json](../composer.json), [docs/adr/ADR-002.md](../docs/adr/ADR-002.md)
+  - Evidência: Avaliação concluída e registrada em ADR-002 descartando generators em favor de operações in-memory de alta performance; palavras-chave `iterator` e `yield` removidas do `composer.json`.
 
 - [x] **T-001 · P1 · Corrigir divergência documental e de implementação no método `toObject()`** (2026-10-13)
   - Arquivos: [README.md](../README.md), [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/AdditionalTest.php](../tests/Unit/AdditionalTest.php)

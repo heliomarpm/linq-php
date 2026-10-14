@@ -1,5 +1,6 @@
 {
   "name": "heliomarpm/linq-php",
+  "version": "0.1.0",
   "description": "Uma biblioteca leve, de alta performance e sem dependências externas para manipulação de coleções de dados (arrays) em PHP, inspirada na sintaxe do LINQ (Language Integrated Query)",
   "type": "library",
   "license": "MIT",
@@ -19,9 +20,7 @@
     "linq2objects",
     "php-library",
     "collection",
-    "array",
-    "iterator",
-    "yield"
+    "array"
   ],
   "autoload": {
     "psr-4": {
@@ -46,7 +45,6 @@
     ],
     "reset": [
       "rm -rf vendor composer.lock",
-      "composer install",
       "composer install"
     ]
   },

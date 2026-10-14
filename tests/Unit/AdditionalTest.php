@@ -199,11 +199,13 @@ class AdditionalTest extends TestCase
 
     $this->assertIsObject($obj);
     $this->assertTrue(property_exists($obj, 'elapsedTime'));
+    $this->assertTrue(property_exists($obj, 'memoryUsed'));
     $this->assertTrue(property_exists($obj, 'count'));
     $this->assertTrue(property_exists($obj, 'data'));
     $this->assertSame(2, $obj->count);
     $this->assertSame($data, $obj->data);
     $this->assertGreaterThanOrEqual(0, (float) $obj->elapsedTime);
+    $this->assertIsString($obj->memoryUsed);
   }
 
   public function testJoinRightAndFullOuter()
