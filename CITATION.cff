@@ -1,21 +1,20 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it using these metadata."
-title: "ion-calendar"
-abstract: "A date picker component for Ionic Framework (Ionic 6+) and Angular applications, using Luxon for date manipulation."
-version: 7.17.3
-date-released: 2025-11-17
+message: "Se você utilizar este software, por favor cite-o usando estes metadados."
+title: "linq-php"
+abstract: "Uma biblioteca leve, de alta performance e sem dependências externas para manipulação de coleções de dados (arrays) em PHP, inspirada na sintaxe do LINQ (Language Integrated Query)."
+version: 0.1.0
+date-released: 2026-10-13
 type: software
 authors:
   - family-names: Marques
     given-names: Heliomar
     alias: heliomarpm
-url: "https://github.com/heliomarpm/ion-calendar"
+url: "https://github.com/heliomarpm/linq-php"
 license: MIT
 keywords:
-  - ionic
-  - calendar
-  - datepicker
-  - angular
-  - component
-  - typescript
-  - luxon
+  - linqphp
+  - linq
+  - linq2objects
+  - php-library
+  - collection
+  - array
