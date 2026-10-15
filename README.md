@@ -19,15 +19,13 @@
 </div>
 </div>
 
-# LinqPHP
+LinqPHP é uma biblioteca leve, de alta performance e sem dependências externas para manipulação de coleções de dados (`arrays`) em PHP, inspirada na sintaxe do LINQ (Language Integrated Query).
 
-Uma biblioteca leve, de alta performance e sem dependências externas para manipulação de coleções de dados (`arrays`) em PHP, inspirada na sintaxe do LINQ (Language Integrated Query).
+Permite filtrar, agrupar, ordenar e unir arrays multidimensionais de forma fluida e elegante, sendo ideal para processamento de relatórios, formatação de dados para APIs e refatoração de sistemas legados.
 
-O LinqPHP permite filtrar, agrupar, ordenar e unir arrays multidimensionais de forma fluida e elegante, sendo ideal para processamento de relatórios, formatação de dados para APIs e refatoração de sistemas legados.
+> [Demo interativo](https://linq-php.vercel.app/)
 
-[Demo interativo](https://linq-php.vercel.app/)
-
-> Benchmark v2.0.0
+### Benchmark
 
 <img src="./bench-v2.0.0.png" alt="Benchmark" width="100%" />
 
