@@ -5,6 +5,13 @@ Todas as alterações notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+## [2.0.1](https://github.com/heliomarpm/linq-php/compare/v2.0.0...v2.0.1) (2026-10-15)
+
+
+### Bug Fixes
+
+* ⬆️ remover versão do composer.json ([18db83c](https://github.com/heliomarpm/linq-php/commit/18db83c114737297f45ba3692146785cdf36747f))
+
 # [2.0.0](https://github.com/heliomarpm/linq-php/compare/v1.0.0...v2.0.0) (2026-10-15)
 
 
