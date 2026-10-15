@@ -1,6 +1,6 @@
 {
   "name": "heliomarpm/linq-php",
-  "description": "Biblioteca fluida, de alta performance e zero dependências para manipulação e consultas relacionais (LINQ) em arrays PHP.",
+  "description": "Manipulação fluida de arrays em PHP inspirada no LINQ: filtros, joins relacionais, agrupamentos e projeções com alta performance e zero dependências.",
   "type": "library",
   "license": "MIT",
   "authors": [
