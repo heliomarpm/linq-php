@@ -564,12 +564,15 @@ class LinqPHP
      * Use `strict: true` para garantir que os dados existam. Uma exceção será lançada
      * caso alguma das chaves solicitadas não exista em pelo menos um item.
      *
-     * @param array<int, string> $selectors Lista de chaves a serem selecionadas, array vazio retorna todas.
+     * Suporta aliases no formato ['campo_origem' => 'alias_destino'] ou formato híbrido
+     * misturando chaves numéricas (sem alias) e associativas (com alias).
+     *
+     * @param array<int|string, string> $selectors Lista de chaves a serem selecionadas ou mapa ['origem' => 'alias'], array vazio retorna todas.
      * @param bool $strict     Define o comportamento estrito da seleção.
      *                         - false (padrão): chaves inexistentes retornam `null`
      *                         - true: lança InvalidArgumentException se alguma chave não existir
      *
-     * @return LinqPHP Retorna a instãncia atual para encadeamento (fluent interface).
+     * @return LinqPHP Retorna a instância atual para encadeamento (fluent interface).
      * @throws InvalidArgumentException Quando strict = true e uma ou mais chaves não existem.
      *
      * * Exemplo de uso:
@@ -577,37 +580,33 @@ class LinqPHP
      * $data = [
      *     ['id' => 1, 'name' => 'John', 'age' => 25],
      *     ['id' => 2, 'name' => 'Jane', 'age' => 30],
-     *     ['id' => 3, 'name' => 'John', 'age' => 35],
      * ];
      *
-     * $result = LinqPHP::from($data)->select(['name'], distinct: true)->toArray();
-     * // Resultado:
-     * // [ ['name' => 'John'], ['name' => 'Jane'] ]
+     * // Seleção simples:
+     * $result = LinqPHP::from($data)->select(['name'])->toArray();
      *
-     * $result = LinqPHP::from($data)->select(['name', 'gender'], distinct: true)->toArray();
-     * // Resultado:
-     * // [ ['name' => 'John', 'gender' => null], ['name' => 'Jane', 'gender' => null] ]
+     * // Seleção com aliases:
+     * $result = LinqPHP::from($data)->select(['id' => 'codigo', 'name' => 'nome_completo'])->toArray();
      *
-     * // Modo estrito
-     * $result = LinqPHP::from($data)
-     *     ->select(['name', 'gender'], strict: true)
-     *     ->toArray(); // lança InvalidArgumentException
+     * // Seleção híbrida:
+     * $result = LinqPHP::from($data)->select(['id' => 'codigo', 'name'])->toArray();
      * ```
      */
     public function select(array $selectors = [], bool $strict = false): self
     {
-        $seenItems = [];
-        $resultItems = [];
+        if (empty($selectors)) {
+            $this->endTime = microtime(true);
+            return $this;
+        }
 
-        $selectorKeys = array_flip($selectors);
-        $nullTemplate = array_fill_keys($selectors, null);
+        // Caminho ultra-rápido quando não há aliases (chaves indexadas numericamente)
+        if (array_is_list($selectors)) {
+            $selectorKeys = array_flip($selectors);
+            $nullTemplate = array_fill_keys($selectors, null);
+            $resultItems = [];
 
-        foreach ($this->data as $item) {
-            if (empty($selectors)) {
-                $selectedItem = $item;
-            } else {
+            foreach ($this->data as $item) {
                 if ($strict) {
-                    // verifica se todas as chaves solicitadas existem em cada item
                     $missingKeys = array_diff_key($selectorKeys, $item);
                     if (!empty($missingKeys)) {
                         throw new InvalidArgumentException(
@@ -616,9 +615,41 @@ class LinqPHP
                     }
                 }
 
-                $selectedItem = array_replace($nullTemplate, array_intersect_key($item, $selectorKeys));
+                $resultItems[] = array_replace($nullTemplate, array_intersect_key($item, $selectorKeys));
             }
 
+            $this->data = $resultItems;
+            $this->endTime = microtime(true);
+            return $this;
+        }
+
+        // Caminho com aliases: normaliza ['id_venda' => 'Id', 'nome_produto']
+        $mapping = [];
+        foreach ($selectors as $origKey => $aliasOrField) {
+            if (is_int($origKey)) {
+                $mapping[$aliasOrField] = $aliasOrField;
+            } else {
+                $mapping[$origKey] = $aliasOrField;
+            }
+        }
+
+        $origKeysFlip = array_flip(array_keys($mapping));
+        $resultItems = [];
+
+        foreach ($this->data as $item) {
+            if ($strict) {
+                $missingKeys = array_diff_key($origKeysFlip, $item);
+                if (!empty($missingKeys)) {
+                    throw new InvalidArgumentException(
+                        'Select strict mode error. Missing keys: ' . implode(', ', array_keys($missingKeys))
+                    );
+                }
+            }
+
+            $selectedItem = [];
+            foreach ($mapping as $origField => $aliasField) {
+                $selectedItem[$aliasField] = $item[$origField] ?? null;
+            }
             $resultItems[] = $selectedItem;
         }
 
