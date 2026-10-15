@@ -1,6 +1,6 @@
 {
   "name": "heliomarpm/linq-php",
-  "description": "Uma biblioteca leve, de alta performance e sem dependências externas para manipulação de coleções de dados (arrays) em PHP, inspirada na sintaxe do LINQ (Language Integrated Query)",
+  "description": "Biblioteca fluida, de alta performance e zero dependências para manipulação e consultas relacionais (LINQ) em arrays PHP.",
   "type": "library",
   "license": "MIT",
   "authors": [
