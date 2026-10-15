@@ -25,9 +25,9 @@ Uma biblioteca leve, de alta performance e sem dependências externas para manip
 
 O LinqPHP permite filtrar, agrupar, ordenar e unir arrays multidimensionais de forma fluida e elegante, sendo ideal para processamento de relatórios, formatação de dados para APIs e refatoração de sistemas legados.
 
-> Benchmark v1.0
+> Benchmark v2.0.0
 
-<img src="./bench-20260713.png" alt="Benchmark" width="100%" />
+<img src="./bench-v2.0.0.png" alt="Benchmark" width="100%" />
 
 ## Requisitos
 
@@ -89,26 +89,57 @@ $result = LinqPHP::from($data)
 
 ### `select()` e `distinct()` - Projeção de Dados
 
-Selecione apenas as colunas desejadas. Use `strict: true` para garantir que os dados existam.
+Selecione apenas as colunas desejadas, renomeie campos utilizando aliases ou misture ambos com a projeção híbrida.
 
 ```php
-// Seleciona colunas específicas
+// 1. Seleção simples de colunas
 $result = LinqPHP::from($data)
     ->select(['name', 'status'])
     ->toArray();
 
-// Retorna apenas os registros únicos
+// 2. Seleção com Aliases (renomeação de colunas)
+$result = LinqPHP::from($data)
+    ->select([
+        'id'   => 'codigo',
+        'name' => 'nome_completo',
+        'city' => 'cidade'
+    ])
+    ->toArray();
+
+// 3. Projeção Híbrida (mantém alguns campos originais e renomeia outros)
+$result = LinqPHP::from($data)
+    ->select([
+        'id',                      // mantém como 'id'
+        'name' => 'nome_completo', // renomeia para 'nome_completo'
+        'status'                   // mantém como 'status'
+    ])
+    ->toArray();
+
+// 4. Retorna apenas os registros únicos
 $result = LinqPHP::from($data)
     ->select(['name'])
     ->distinct()
     ->toArray();
 ```
 
+> [!TIP]
+> **Performance e Modo Estrito (`strict`)**:
+> - **Zero Performance Penalty**: Em seleções tradicionais indexadas numericamente (`['name', 'status']`), o LinqPHP utiliza internamente `array_is_list()` nativo do PHP 8.1+ e executa o caminho direto em C com `array_intersect_key`, garantindo **zero degradação de performance**.
+> - **Preservação de Ordem**: As colunas no array de saída seguem rigorosamente a ordem em que foram declaradas no `select()`.
+> - **Modo Estrito**: Por padrão (`strict: false`), campos inexistentes na fonte são preenchidos com `null`. Ao usar `select(['campo1', 'campo2'], strict: true)`, uma `InvalidArgumentException` será lançada caso alguma chave não exista no registro.
+
 ### `join()` - União Relacional
 
-Faça joins entre arrays como se estivesse em um banco de dados.
+Faça uniões relacionais entre arrays multidimensionais como se estivesse em um banco de dados relacional. Suporta os 4 tipos de join via enum nativo `JoinType`:
+
+- `JoinType::INNER`: Retorna apenas os registros com correspondência em ambas as coleções.
+- `JoinType::LEFT`: Retorna todos os registros da esquerda e os correspondentes da direita (ou `null`).
+- `JoinType::RIGHT`: Retorna todos os registros da direita e os correspondentes da esquerda (ou `null`).
+- `JoinType::FULL`: Retorna todos os registros de ambos os lados, preenchendo lacunas com `null`.
 
 ```php
+use HeliomarPM\LinqPHP\JoinType;
+
 $users = [
     ['id' => 1, 'name' => 'John', 'course_id' => 10],
     ['id' => 2, 'name' => 'Jane', 'course_id' => 20],
@@ -119,14 +150,39 @@ $courses = [
     ['id_course' => 20, 'course_name' => 'Clean Code'],
 ];
 
+// Inner Join simples
 $result = LinqPHP::from($users)
     ->join($courses, JoinType::INNER, ['course_id' => 'id_course'])
+    ->toArray();
+
+// Joins Múltiplos encadeados (Join Triplo)
+$result = LinqPHP::from($vendas)
+    ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+    ->join($clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
+    ->toArray();
+```
+
+### `unionAll()` - Concatenação de Coleções
+
+Consolida múltiplos arrays em uma única coleção, preenchendo automaticamente com `null` colunas ausentes em registros heterogêneos.
+
+```php
+$produtosRegulares = [
+    ['id' => 1, 'nome' => 'Filamento PLA', 'preco' => 90.0]
+];
+
+$produtosOutlet = [
+    ['id' => 2, 'nome' => 'Resina 3D', 'desconto' => 0.2] // coluna 'preco' ausente
+];
+
+$result = LinqPHP::from($produtosRegulares)
+    ->unionAll($produtosOutlet)
     ->toArray();
 ```
 
 ### `groupBy()` - Agrupamento e Agregação
 
-Agrupe dados e realize cálculos automáticos (sum, max, min, count, avg).
+Agrupe dados e realize cálculos automáticos (`sum`, `max`, `min`, `count`, `avg`).
 
 ```php
 $vendas = [
@@ -143,118 +199,161 @@ $result = LinqPHP::from($vendas)
 
 ### `orderBy()` e `orderByKey()` - Ordenação
 
+Ordene por uma chave simples (`orderByKey`) ou por múltiplos critérios com direções independentes (`orderBy`).
+
 ```php
 // Ordena por uma chave simples
 $result = LinqPHP::from($data)
     ->orderByKey('age', 'desc')
     ->toArray();
 
-// Ordenação múltipla
+// Ordenação múltipla com direções independentes
 $result = LinqPHP::from($data)
     ->orderBy(['name' => 'asc', 'age' => 'desc'])
     ->toArray();
 ```
 
+> [!IMPORTANT]
+> **Ciclo de Vida em Memória e Encadeamento com `select()` e Aliases**:
+>
+> O LinqPHP opera por **mutação in-memory** a cada chamada da cadeia fluente. Quando você utiliza o `select()` renomeando colunas para aliases, os nomes originais **são substituídos** nos dados internos:
+>
+> 1. **Boa Prática — Ordenar antes da projeção**:
+>    Ordene seus dados pela chave física de origem antes de renomeá-los para a saída:
+>    ```php
+>    $result = LinqPHP::from($vendas)
+>        ->where(['status', '=', 'concluido'])
+>        ->orderByKey('id_venda', 'asc') // ✅ Ordena pela chave original
+>        ->select(['id_venda' => 'Código Venda', 'valor' => 'Total'])
+>        ->toArray();
+>    ```
+>
+> 2. **Ordenando após a projeção**:
+>    Se chamar o `orderBy` após o `select()`, você deve referenciar o **alias gerado**, pois o nome antigo não existe mais no registro:
+>    ```php
+>    $result = LinqPHP::from($vendas)
+>        ->select(['id_venda' => 'Código Venda', 'valor' => 'Total'])
+>        ->orderByKey('Código Venda', 'asc') // ✅ Ordena pelo alias criado no select
+>        ->toArray();
+>    ```
+>
+> Caso tente ordenar por uma chave inexistente (como tentar usar `'id_venda'` após ele ter sido transformado em `'Código Venda'`), o LinqPHP disparará uma `InvalidArgumentException("This field does not exist for sorting.")`.
+
 ### Extração de Resultados (`toArray` e `toObject`)
 
-No final da cadeia de métodos, você deve chamar um método de saída para recuperar seus dados modificados.
+No final da cadeia fluente, invoque um método de saída terminal para extrair os dados processados.
 
 ```php
 $linq = LinqPHP::from($data)->where(['age', '>', 20]);
 
-// Retorna um array tradicional
-$array =$linq->toArray();
+// Retorna o array tradicional processado
+$array = $linq->toArray();
 
-// Retorna um stdClass contendo metadados de performance
-$obj =$linq->toObject();
-echo $obj->count; // Quantidade de registros
-echo $obj->elapsedTime; // Tempo de execução
-echo $obj->memoryUsed; // Memória gasta
-print_r($obj->rows); // Os dados em si
+// Retorna um stdClass contendo os dados e métricas de telemetria embutida
+$obj = $linq->toObject();
+echo $obj->count;       // Quantidade de registros resultantes
+echo $obj->elapsedTime; // Tempo total gasto na operação em segundos
+echo $obj->memoryUsed;  // Consumo de memória formatado (ex: 18.00 MB)
+print_r($obj->data);    // Coleção de dados processados
 ```
-
-## Desenvolvimento e Testes
-
-Este pacote foi desenhado para ser leve. O código-fonte principal encontra-se na pasta `src/`.
-Testes unitários e benchmarks não são exportados na instalação via Composer para economizar espaço e banda.
-
-Para rodar os testes localmente (após clonar o repositório):
-
-```bash
-composer install
-composer test
-```
-
-> [!NOTE]
-> O comando `composer du -o`, significa `composer dump-autoload -o`, que é uma opção para atualizar o autoload do Composer sem precisar de reiniciar o servidor web. Isso é útil quando você está trabalhando com muitos arquivos e você não quer reiniciar o servidor web a cada mudança. Isso também pode ajudar a evitar problemas com o autoload, especialmente em ambientes de desenvolvimento.
 
 ---
 
-## 🤝 Contribuição
+## 🧪 Laboratório Interativo (Demo)
 
-Aceitamos contribuições de bom grado! Seja relatando um bug, sugerindo uma nova funcionalidade, melhorando a documentação ou enviando um *pull request*, sua ajuda é muito apreciada.
+O projeto inclui uma interface web completa para experimentação e simulação de queries LINQ em tempo real, com dados de e-commerce e editor interativo de código:
 
-Por favor, certifique-se de ler o seguinte antes de enviar um *pull request*:
+```bash
+composer demo
+# Acesse http://localhost:8000 no seu navegador
+```
 
-- [Código de Conduta](.github/CODE_OF_CONDUCT.md)
-- [Guia de Contribuição](.github/CONTRIBUTING.md)
+Na demo interativa você pode simular cenários avançados como Join Triplo, Union All, agregações com GroupBy e testar expressões customizadas com telemetria instantânea de memória e tempo de execução.
 
-Agradecemos a todas as pessoas que já contribuíram para o projeto!
+---
 
-<a href="https://github.com/heliomarpm/linq-php/graphs/contributors" target="_blank">
-  <img src="https://contrib.nn.ci/api?repo=heliomarpm/linq-php&no_bot=true" />
-</a>
+## 🛠️ Desenvolvimento e Testes
 
-###### Made with [contrib.nn](https://contrib.nn.ci/?repo=heliomarpm/linq-php&no_bot=true).
+O código-fonte principal encontra-se na pasta `src/`. O projeto utiliza ferramentas de qualidade estrita (PHPStan e Laravel Pint) e suíte completa de testes unitários com PHPUnit 13.
 
-Dito isso, existem várias maneiras de contribuir para este projeto, como:
+Comandos disponíveis via Composer:
 
-⭐ Dando uma estrela (*star*) ao repositório \
-🐞 Relatando bugs \
-💡 Sugerindo funcionalidades \
-🧾 Melhorando a documentação \
-📢 Compartilhando este projeto e recomendando-o aos seus amigos
+```bash
+# Executa a suíte de testes unitários
+composer test
+
+# Executa testes com saída detalhada
+composer test:v
+
+# Executa benchmarks de performance (até 200.000 registros)
+composer bench
+
+# Executa análise estática de tipos (PHPStan nível 5)
+composer lint
+
+# Valida conformidade com PSR-12 (Laravel Pint)
+composer format:test
+
+# Corrige automaticamente estilo de código
+composer format:fix
+
+# Executa verificação completa de QA (Testes + Benchmarks + PHPStan)
+composer qa
+```
+
+---
+
+## 🤝 Contribuições e suporte
+
+Existem várias formas de contribuir:
+
+- ⭐ Marcar o repositório com uma estrela
+- 🐞 Relatar bugs
+- 💡 Sugerir funcionalidades ou novas stacks
+- 🧾 Melhorar a documentação
+- 📢 Compartilhar o projeto
+
+Para propor uma melhoria ou contribuição, veja o [Guia de Contribuição](https://github.com/heliomarpm/linq-php/blob/main/docs/CONTRIBUTING.md).\
+Se precisar de ajuda ou encontrou um problema, consulte o [Suporte](https://github.com/heliomarpm/linq-php/blob/main/docs/SUPPORT.md) ou abra uma [Issue](https://github.com/heliomarpm/linq-php/issues). Leia também o [Código de Conduta](https://github.com/heliomarpm/linq-php/blob/main/docs/CODE_OF_CONDUCT.md).
+
+Obrigado a todos que já contribuíram:
+
+[![Contribuidores](https://contrib.nn.ci/api?repo=heliomarpm/linq-php&no_bot=true)](https://github.com/heliomarpm/linq-php/graphs/contributors)
+
+###### Criado com [contrib.nn](https://contrib.nn.ci/?repo=heliomarpm/linq-php&no_bot=true)
 
 ## 💵 Apoie o Projeto
 
 Se você gosta do projeto, considere fazer uma doação ao desenvolvedor via GitHub Sponsors, Ko-fi, PayPal ou Liberapay — a escolha é sua. 😉
 
-<div class="badges">
-
-  [![GitHub Sponsors][url-github-sponsors-badge]][url-github-sponsors]
-  [![PayPal][url-paypal-badge]][url-paypal]
-  [![Ko-fi][url-kofi-badge]][url-kofi]
-  [![Liberapay][url-liberapay-badge]][url-liberapay]
-
-</div>
+[![GitHub Sponsors][url-github-sponsors-badge]][url-github-sponsors]
+[![PayPal][url-paypal-badge]][url-paypal]
+[![Ko-fi][url-kofi-badge]][url-kofi]
+[![Liberapay][url-liberapay-badge]][url-liberapay]
 
 ## 📝 Licença
 
-Este projeto está sob a licença MIT. Sinta-se livre para usá-lo e modificá-lo.
-
-[MIT © Heliomar P. Marques](https://github.com/heliomarpm/linqphp/blob/main/LICENSE) <a href="#top">🔝</a>
+Distribuído sob a licença [MIT](https://github.com/heliomarpm/linq-php/blob/main/LICENSE) © [Heliomar P. Marques](https://github.com/heliomarpm).\
+Sinta-se livre para utilizar, customizar e estender estas habilidades nos seus ambientes de desenvolvimento. [🔝](#top)
 
 ---
 <!-- Sponsor badges -->
-
-
-<!-- Packagist badges -->
-
-
-<!-- other badges -->
-
-[url-codefactor]: https://www.codefactor.io/repository/github/heliomarpm/linq-php
-[url-codefactor-badge]: https://www.codefactor.io/repository/github/heliomarpm/linq-php/badge
-[url-deepscan]: https://deepscan.io/dashboard#view=project&tid=19612&pid=32077&bid=1043083
-[url-deepscan-badge]: https://deepscan.io/api/teams/19612/projects/32077/branches/1043083/badge/grade.svg
 [url-github-sponsors]: https://github.com/sponsors/heliomarpm
 [url-github-sponsors-badge]: https://img.shields.io/badge/GitHub%20-Sponsor-1C1E26?style=for-the-badge&labelColor=1C1E26&color=db61a2
 [url-kofi]: https://ko-fi.com/heliomarpm
 [url-kofi-badge]: https://img.shields.io/badge/kofi-1C1E26?style=for-the-badge&labelColor=1C1E26&color=ff5f5f
 [url-liberapay]: https://liberapay.com/heliomarpm
 [url-liberapay-badge]: https://img.shields.io/badge/liberapay-1C1E26?style=for-the-badge&labelColor=1C1E26&color=f6c915
+[url-paypal]: https://bit.ly/paypal-sponsor-heliomarpm
+[url-paypal-badge]: https://img.shields.io/badge/donate%20on-paypal-1C1E26?style=for-the-badge&labelColor=1C1E26&color=0475fe
+
+<!-- Packagist badges -->
 [url-packagist]: https://packagist.org/packages/heliomarpm/linq-php
 [url-packagist-badge]: https://img.shields.io/packagist/v/heliomarpm/linq-php
 [url-packagist-downloads-badge]: https://img.shields.io/packagist/dt/heliomarpm/linq-php
-[url-paypal]: https://bit.ly/paypal-sponsor-heliomarpm
-[url-paypal-badge]: https://img.shields.io/badge/donate%20on-paypal-1C1E26?style=for-the-badge&labelColor=1C1E26&color=0475fe
+
+<!-- other badges -->
+[url-codefactor]: https://www.codefactor.io/repository/github/heliomarpm/linq-php
+[url-codefactor-badge]: https://www.codefactor.io/repository/github/heliomarpm/linq-php/badge
+[url-deepscan]: https://deepscan.io/dashboard#view=project&tid=19612&pid=32077&bid=1043083
+[url-deepscan-badge]: https://deepscan.io/api/teams/19612/projects/32077/branches/1043083/badge/grade.svg
