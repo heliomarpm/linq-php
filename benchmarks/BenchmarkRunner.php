@@ -121,7 +121,7 @@ class BenchmarkRunner
                 $emptyText = sprintf("%-" . self::COL_WIDTH . "s", '...');
 
                 // \e[2K apaga a linha inteira no terminal; \r volta o cursor para a coluna 0
-                // echo "\e[2K\r";
+                echo "\e[2K\r";
                 echo self::COLOR_DARK_GRAY . "| " . $emptyText . self::COLOR_RESET;
                 continue;
             }

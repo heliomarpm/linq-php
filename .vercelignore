@@ -1,0 +1,9 @@
+.git
+.github
+.agents
+tests
+benchmarks
+phpunit.xml
+phpstan.neon
+*.png
+docs/adr

@@ -1,66 +1,111 @@
 <?php
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use HeliomarPM\LinqPHP\LinqPHP;
 use HeliomarPM\LinqPHP\JoinType;
 
 // ==========================================
-// 1. MASSA DE DADOS (3 Tabelas Relacionais)
+// 1. MASSA DE DADOS (4 Coleções Relacionais)
 // ==========================================
 $clientes = [
-  ['id_cliente' => 1, 'nome_cliente' => 'Ana Sousa', 'uf' => 'MG', 'vip' => true],
-  ['id_cliente' => 2, 'nome_cliente' => 'Carlos Lima', 'uf' => 'SP', 'vip' => false],
-  ['id_cliente' => 3, 'nome_cliente' => 'Helio', 'uf' => 'MG', 'vip' => true],
-  ['id_cliente' => 4, 'nome_cliente' => 'Sem Compras', 'uf' => 'RJ', 'vip' => false], // Cliente sem compras
+    ['id_cliente' => 1, 'nome_cliente' => 'Ana Sousa',      'uf' => 'MG', 'cidade' => 'Belo Horizonte', 'vip' => true,  'saldo_credito' => 150.00],
+    ['id_cliente' => 2, 'nome_cliente' => 'Carlos Lima',     'uf' => 'SP', 'cidade' => 'Campinas',       'vip' => false, 'saldo_credito' => 0.00],
+    ['id_cliente' => 3, 'nome_cliente' => 'Helio Marques',   'uf' => 'MG', 'cidade' => 'Uberlândia',     'vip' => true,  'saldo_credito' => 320.50],
+    ['id_cliente' => 4, 'nome_cliente' => 'Cliente Ocioso',  'uf' => 'RJ', 'cidade' => 'Niterói',        'vip' => false, 'saldo_credito' => 0.00], // Sem compras (Right Join)
+    ['id_cliente' => 5, 'nome_cliente' => 'Beatriz Rocha',   'uf' => 'BA', 'cidade' => 'Salvador',       'vip' => true,  'saldo_credito' => 75.00],
+    ['id_cliente' => 6, 'nome_cliente' => 'Rodrigo Ramos',   'uf' => 'PR', 'cidade' => 'Curitiba',       'vip' => false, 'saldo_credito' => 50.00],
+    ['id_cliente' => 7, 'nome_cliente' => 'Fernanda Costa',  'uf' => 'RS', 'cidade' => 'Porto Alegre',   'vip' => true,  'saldo_credito' => 0.00],
+    ['id_cliente' => 8, 'nome_cliente' => 'Lucas Mendes',    'uf' => 'SP', 'cidade' => 'São Paulo',      'vip' => false, 'saldo_credito' => 110.00],
 ];
 
 $produtos = [
-  ['id_produto' => 101, 'nome_produto' => 'PLA Preto 1kg', 'categoria' => 'Insumo', 'preco' => 89.90],
-  ['id_produto' => 102, 'nome_produto' => 'PETG Branco 1kg', 'categoria' => 'Insumo', 'preco' => 95.50],
-  ['id_produto' => 103, 'nome_produto' => 'Bico Extrusor 0.4mm', 'categoria' => 'Peça', 'preco' => 35.00],
-  ['id_produto' => 104, 'nome_produto' => 'Mesa PEI Texturizada', 'categoria' => 'Peça', 'preco' => 120.00],
-  ['id_produto' => 105, 'nome_produto' => 'Resina 8K (Lançamento)', 'categoria' => 'Insumo', 'preco' => 180.00], // Produto sem vendas
+    ['id_produto' => 101, 'nome_produto' => 'PLA Preto 1kg',              'categoria' => 'Insumo',      'preco' => 89.90,   'estoque' => 45],
+    ['id_produto' => 102, 'nome_produto' => 'PETG Branco 1kg',            'categoria' => 'Insumo',      'preco' => 95.50,   'estoque' => 30],
+    ['id_produto' => 103, 'nome_produto' => 'Bico Extrusor 0.4mm',        'categoria' => 'Peça',        'preco' => 35.00,   'estoque' => 100],
+    ['id_produto' => 104, 'nome_produto' => 'Mesa PEI Texturizada',       'categoria' => 'Peça',        'preco' => 120.00,  'estoque' => 15],
+    ['id_produto' => 105, 'nome_produto' => 'Resina 8K (Lançamento)',     'categoria' => 'Insumo',      'preco' => 180.00,  'estoque' => 25], // Sem vendas (Full/Left Join)
+    ['id_produto' => 106, 'nome_produto' => 'Secador de Filamento',       'categoria' => 'Acessório',   'preco' => 299.90,  'estoque' => 12],
+    ['id_produto' => 107, 'nome_produto' => 'Sensor de Nivelamento Auto', 'categoria' => 'Peça',        'preco' => 149.00,  'estoque' => 20],
+    ['id_produto' => 108, 'nome_produto' => 'Filamento TPU Flexível 1kg', 'categoria' => 'Insumo',      'preco' => 139.90,  'estoque' => 8],
+    ['id_produto' => 109, 'nome_produto' => 'Alicate de Precisão',        'categoria' => 'Acessório',   'preco' => 28.50,   'estoque' => 50],
+    ['id_produto' => 110, 'nome_produto' => 'Impressora 3D CoreXY K1',    'categoria' => 'Equipamento', 'preco' => 3450.00, 'estoque' => 3],
+];
+
+$produtosOutlet = [
+    ['id_produto' => 201, 'nome_produto' => 'Filamento ABS Cinza (Outlet)',    'categoria' => 'Insumo',    'preco' => 59.90, 'motivo_outlet' => 'Caixa danificada'],
+    ['id_produto' => 202, 'nome_produto' => 'Cooler 4010 24V Recondicionado',  'categoria' => 'Peça',      'preco' => 18.00, 'motivo_outlet' => 'Sem embalagem original'],
+    ['id_produto' => 203, 'nome_produto' => 'Suporte Carretel c/ Rolamento',   'categoria' => 'Acessório', 'preco' => 45.00, 'motivo_outlet' => 'Mostruário'],
 ];
 
 $vendas = [
-  ['id_venda' => 1, 'produto_id' => 101, 'cliente_id' => 1, 'qtd' => 2, 'status' => 'concluido'],
-  ['id_venda' => 2, 'produto_id' => 103, 'cliente_id' => 3, 'qtd' => 5, 'status' => 'concluido'],
-  ['id_venda' => 3, 'produto_id' => 101, 'cliente_id' => 2, 'qtd' => 1, 'status' => 'pendente'],
-  ['id_venda' => 4, 'produto_id' => 102, 'cliente_id' => 1, 'qtd' => 3, 'status' => 'concluido'],
-  ['id_venda' => 5, 'produto_id' => 999, 'cliente_id' => 3, 'qtd' => 2, 'status' => 'concluido'], // Produto deletado (órfão)
+    ['id_venda' => 1,  'produto_id' => 101, 'cliente_id' => 1, 'qtd' => 2, 'canal' => 'online', 'status' => 'concluido'],
+    ['id_venda' => 2,  'produto_id' => 103, 'cliente_id' => 3, 'qtd' => 5, 'canal' => 'loja',   'status' => 'concluido'],
+    ['id_venda' => 3,  'produto_id' => 101, 'cliente_id' => 2, 'qtd' => 1, 'canal' => 'online', 'status' => 'pendente'],
+    ['id_venda' => 4,  'produto_id' => 102, 'cliente_id' => 1, 'qtd' => 3, 'canal' => 'online', 'status' => 'concluido'],
+    ['id_venda' => 5,  'produto_id' => 999, 'cliente_id' => 3, 'qtd' => 2, 'canal' => 'loja',   'status' => 'concluido'], // Produto 999 órfão
+    ['id_venda' => 6,  'produto_id' => 106, 'cliente_id' => 5, 'qtd' => 1, 'canal' => 'online', 'status' => 'concluido'],
+    ['id_venda' => 7,  'produto_id' => 107, 'cliente_id' => 6, 'qtd' => 2, 'canal' => 'loja',   'status' => 'concluido'],
+    ['id_venda' => 8,  'produto_id' => 108, 'cliente_id' => 7, 'qtd' => 4, 'canal' => 'online', 'status' => 'concluido'],
+    ['id_venda' => 9,  'produto_id' => 109, 'cliente_id' => 2, 'qtd' => 3, 'canal' => 'online', 'status' => 'cancelado'],
+    ['id_venda' => 10, 'produto_id' => 110, 'cliente_id' => 5, 'qtd' => 1, 'canal' => 'loja',   'status' => 'concluido'],
+    ['id_venda' => 11, 'produto_id' => 101, 'cliente_id' => 8, 'qtd' => 5, 'canal' => 'online', 'status' => 'concluido'],
+    ['id_venda' => 12, 'produto_id' => 103, 'cliente_id' => 1, 'qtd' => 2, 'canal' => 'online', 'status' => 'pendente'],
+    ['id_venda' => 13, 'produto_id' => 104, 'cliente_id' => 3, 'qtd' => 1, 'canal' => 'loja',   'status' => 'concluido'],
+    ['id_venda' => 14, 'produto_id' => 106, 'cliente_id' => 8, 'qtd' => 2, 'canal' => 'online', 'status' => 'cancelado'],
+    ['id_venda' => 15, 'produto_id' => 108, 'cliente_id' => 1, 'qtd' => 1, 'canal' => 'online', 'status' => 'concluido'],
+    ['id_venda' => 16, 'produto_id' => 107, 'cliente_id' => 5, 'qtd' => 1, 'canal' => 'loja',   'status' => 'concluido'],
 ];
 
 // ==========================================
 // 2. DEFINIÇÃO DOS CENÁRIOS DE TESTE AVANÇADOS
 // ==========================================
 $cenarios = [
-  'join_triplo' => [
-    'titulo' => 'Join Triplo + Multi-Filtros',
-    'desc' => 'Une Vendas, Produtos e Clientes, filtrando apenas clientes VIPs com vendas concluídas.',
-    'codigo' => <<<PHP
+    'join_triplo' => [
+        'titulo' => 'Join Triplo + Projeção com Aliases',
+        'tag'    => 'JOIN & ALIASES',
+        'cor'    => 'primary',
+        'desc'   => 'Une Vendas, Produtos e Clientes VIPs, demonstrando a nova feature de renomeação de colunas com aliases amigáveis e formato híbrido.',
+        'codigo' => <<<PHP
 \$linq = LinqPHP::from(\$vendas)
     ->where(['status', '=', 'concluido'])
     ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
     ->join(\$clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
     ->where(['vip', '=', true])
-    ->select(['id_venda', 'nome_cliente', 'nome_produto', 'qtd', 'preco'])
     ->orderByKey('id_venda', 'asc')
+    ->select([
+        'id_venda'     => 'Código Venda',
+        'nome_cliente' => 'Cliente VIP',
+        'uf', // formato híbrido: mantém o nome original
+        'nome_produto' => 'Produto',
+        'qtd'          => 'Quantidade',
+        'preco'        => 'Valor Unitário'
+    ])
     ->toObject();
 PHP,
-    'run' => fn () => LinqPHP::from($vendas)
-      ->where(['status', '=', 'concluido'])
-      ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
-      ->join($clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
-      ->where(['vip', '=', true])
-      ->select(['id_venda', 'nome_cliente', 'nome_produto', 'qtd', 'preco'])
-      ->orderByKey('id_venda', 'asc')
-      ->toObject()
-  ],
+        'run' => fn () => LinqPHP::from($vendas)
+            ->where(['status', '=', 'concluido'])
+            ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+            ->join($clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
+            ->where(['vip', '=', true])
+            ->orderByKey('id_venda', 'asc')
+            ->select([
+                'id_venda'     => 'Código Venda',
+                'nome_cliente' => 'Cliente VIP',
+                'uf',
+                'nome_produto' => 'Produto',
+                'qtd'          => 'Quantidade',
+                'preco'        => 'Valor Unitário'
+            ])
+            ->toObject()
+    ],
 
-  'todas_agregacoes' => [
-    'titulo' => 'Agregações Completas (GroupBy)',
-    'desc' => 'Agrupa produtos por categoria e extrai: Soma(qtd), Contagem(vendas), Max(preco), Min(preco) e Avg(preco).',
-    'codigo' => <<<PHP
+    'todas_agregacoes' => [
+        'titulo' => 'Agregações Completas (GroupBy)',
+        'tag'    => 'GROUP BY',
+        'cor'    => 'success',
+        'desc'   => 'Agrupa produtos vendidos por categoria e extrai: Soma(qtd), Contagem(vendas), Max(preco), Min(preco) e Avg(preco).',
+        'codigo' => <<<PHP
 \$linq = LinqPHP::from(\$vendas)
     ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
     ->groupBy(['categoria'], [
@@ -72,52 +117,152 @@ PHP,
     ])
     ->toObject();
 PHP,
-    'run' => fn () => LinqPHP::from($vendas)
-      ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
-      ->groupBy(['categoria'], [
-        'sum' => ['qtd'],
-        'count' => ['id_venda'],
-        'max' => ['preco'],
-        'min' => ['preco'],
-        'avg' => ['preco']
-      ])
-      ->toObject()
-  ],
+        'run' => fn () => LinqPHP::from($vendas)
+            ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+            ->groupBy(['categoria'], [
+                'sum'   => ['qtd'],
+                'count' => ['id_venda'],
+                'max'   => ['preco'],
+                'min'   => ['preco'],
+                'avg'   => ['preco']
+            ])
+            ->toObject()
+    ],
 
-  'full_join' => [
-    'titulo' => 'Full Outer Join (Orfãos)',
-    'desc' => 'Mostra TUDO. Revela o "Produto 999" que foi vendido mas não existe no catálogo, e a "Resina 8K" que existe mas não vendeu.',
-    'codigo' => <<<PHP
+    'totalizador_global' => [
+        'titulo' => 'Totalizador Global (KPI sem GroupBy)',
+        'tag'    => 'AGGREGATE',
+        'cor'    => 'info',
+        'desc'   => 'Calcula KPIs consolidados em uma única linha usando groupBy([], ...), somando itens vendidos e totalizando pedidos concluídos.',
+        'codigo' => <<<PHP
+\$linq = LinqPHP::from(\$vendas)
+    ->where(['status', '=', 'concluido'])
+    ->groupBy([], [
+        'sum'   => ['qtd'],
+        'count' => ['id_venda' => 'total_vendas']
+    ])
+    ->toObject();
+PHP,
+        'run' => fn () => LinqPHP::from($vendas)
+            ->where(['status', '=', 'concluido'])
+            ->groupBy([], [
+                'sum'   => ['qtd'],
+                'count' => ['id_venda' => 'total_vendas']
+            ])
+            ->toObject()
+    ],
+
+    'top_vendas' => [
+        'titulo' => 'Top N Mais Vendidos (Take + OrderByKey)',
+        'tag'    => 'SORT & TAKE',
+        'cor'    => 'danger',
+        'desc'   => 'Cruza vendas concluídas com produtos, ordena descrescente por quantidade e fatia os 4 maiores pedidos com take(4).',
+        'codigo' => <<<PHP
+\$linq = LinqPHP::from(\$vendas)
+    ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+    ->where(['status', '=', 'concluido'])
+    ->orderByKey('qtd', 'desc')
+    ->select(['id_venda', 'nome_produto', 'categoria', 'qtd', 'preco'])
+    ->take(4)
+    ->toObject();
+PHP,
+        'run' => fn () => LinqPHP::from($vendas)
+            ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+            ->where(['status', '=', 'concluido'])
+            ->orderByKey('qtd', 'desc')
+            ->select(['id_venda', 'nome_produto', 'categoria', 'qtd', 'preco'])
+            ->take(4)
+            ->toObject()
+    ],
+
+    'full_join' => [
+        'titulo' => 'Full Outer Join (Órfãos e Sem Vendas)',
+        'tag'    => 'FULL JOIN',
+        'cor'    => 'warning',
+        'desc'   => 'Mostra TUDO entre Vendas e Catálogo. Revela o "Produto 999" (órfão vendido sem cadastro) e produtos no catálogo sem nenhuma saída (ex: Resina 8K).',
+        'codigo' => <<<PHP
 \$linq = LinqPHP::from(\$vendas)
     ->join(\$produtos, JoinType::FULL, ['produto_id' => 'id_produto'])
-    ->select(['id_venda', 'produto_id', 'nome_produto', 'qtd'])
+    ->select(['id_venda', 'produto_id', 'nome_produto', 'categoria', 'qtd', 'preco'])
     ->toObject();
 PHP,
-    'run' => fn () => LinqPHP::from($vendas)
-      ->join($produtos, JoinType::FULL, ['produto_id' => 'id_produto'])
-      ->select(['id_venda', 'produto_id', 'nome_produto', 'qtd'])
-      ->toObject()
-  ],
+        'run' => fn () => LinqPHP::from($vendas)
+            ->join($produtos, JoinType::FULL, ['produto_id' => 'id_produto'])
+            ->select(['id_venda', 'produto_id', 'nome_produto', 'categoria', 'qtd', 'preco'])
+            ->toObject()
+    ],
 
-  'right_join' => [
-    'titulo' => 'Right Join (Clientes Ociosos)',
-    'desc' => 'Une Vendas com Clientes (RIGHT). Revela clientes cadastrados que nunca fizeram uma compra.',
-    'codigo' => <<<PHP
+    'right_join' => [
+        'titulo' => 'Right Join (Clientes Ociosos)',
+        'tag'    => 'RIGHT JOIN',
+        'cor'    => 'secondary',
+        'desc'   => 'Une Vendas com Clientes (RIGHT). Revela clientes cadastrados que nunca realizaram compras (como "Cliente Ocioso").',
+        'codigo' => <<<PHP
 \$linq = LinqPHP::from(\$vendas)
     ->join(\$clientes, JoinType::RIGHT, ['cliente_id' => 'id_cliente'])
-    ->select(['id_cliente', 'nome_cliente', 'id_venda', 'status'])
+    ->select(['id_cliente', 'nome_cliente', 'cidade', 'uf', 'id_venda', 'status'])
     ->toObject();
 PHP,
-    'run' => fn () => LinqPHP::from($vendas)
-      ->join($clientes, JoinType::RIGHT, ['cliente_id' => 'id_cliente'])
-      ->select(['id_cliente', 'nome_cliente', 'id_venda', 'status'])
-      ->toObject()
-  ],
+        'run' => fn () => LinqPHP::from($vendas)
+            ->join($clientes, JoinType::RIGHT, ['cliente_id' => 'id_cliente'])
+            ->select(['id_cliente', 'nome_cliente', 'cidade', 'uf', 'id_venda', 'status'])
+            ->toObject()
+    ],
 
-  'distinct_uf' => [
-    'titulo' => 'Distinct + Projeção Simples',
-    'desc' => 'Quais Estados (UF) já compraram produtos da categoria "Peça"?',
-    'codigo' => <<<PHP
+    'multi_where' => [
+        'titulo' => 'Filtro Multi-Critério em Matriz',
+        'tag'    => 'WHERE',
+        'cor'    => 'primary',
+        'desc'   => 'Aplica múltiplos filtros simultâneos no catálogo via array: Insumos com preço entre R$ 80 e R$ 150 e estoque acima de 10 unidades.',
+        'codigo' => <<<PHP
+\$linq = LinqPHP::from(\$produtos)
+    ->where([
+        ['preco', '>=', 80.0],
+        ['preco', '<=', 150.0],
+        ['categoria', '=', 'Insumo'],
+        ['estoque', '>', 10]
+    ])
+    ->select(['nome_produto', 'categoria', 'preco', 'estoque'])
+    ->orderByKey('preco', 'asc')
+    ->toObject();
+PHP,
+        'run' => fn () => LinqPHP::from($produtos)
+            ->where([
+                ['preco', '>=', 80.0],
+                ['preco', '<=', 150.0],
+                ['categoria', '=', 'Insumo'],
+                ['estoque', '>', 10]
+            ])
+            ->select(['nome_produto', 'categoria', 'preco', 'estoque'])
+            ->orderByKey('preco', 'asc')
+            ->toObject()
+    ],
+
+    'union_outlet' => [
+        'titulo' => 'Union All (Consolidação de Catálogos)',
+        'tag'    => 'UNION ALL',
+        'cor'    => 'dark',
+        'desc'   => 'Consolida o catálogo de produtos regulares com produtos de Outlet (schemas heterogêneos). O LinqPHP preenche colunas ausentes com null.',
+        'codigo' => <<<PHP
+\$linq = LinqPHP::from(\$produtos)
+    ->select(['id_produto', 'nome_produto', 'categoria', 'preco'])
+    ->unionAll(\$produtosOutlet)
+    ->orderByKey('preco', 'asc')
+    ->toObject();
+PHP,
+        'run' => fn () => LinqPHP::from($produtos)
+            ->select(['id_produto', 'nome_produto', 'categoria', 'preco'])
+            ->unionAll($produtosOutlet)
+            ->orderByKey('preco', 'asc')
+            ->toObject()
+    ],
+
+    'distinct_uf' => [
+        'titulo' => 'Distinct + Projeção Simples',
+        'tag'    => 'DISTINCT',
+        'cor'    => 'info',
+        'desc'   => 'Quais Estados (UF) já compraram produtos da categoria "Peça"? Elimina duplicidades e retorna valores únicos.',
+        'codigo' => <<<PHP
 \$linq = LinqPHP::from(\$vendas)
     ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
     ->join(\$clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
@@ -126,41 +271,47 @@ PHP,
     ->distinct()
     ->toObject();
 PHP,
-    'run' => fn () => LinqPHP::from($vendas)
-      ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
-      ->join($clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
-      ->where(['categoria', '=', 'Peça'])
-      ->select(['uf'])
-      ->distinct()
-      ->toObject()
-  ],
+        'run' => fn () => LinqPHP::from($vendas)
+            ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+            ->join($clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
+            ->where(['categoria', '=', 'Peça'])
+            ->select(['uf'])
+            ->distinct()
+            ->toObject()
+    ],
 
-  'complex_closure' => [
-    'titulo' => 'Filtro Complexo (Closure)',
-    'desc' => 'Usa função anônima para regras matemáticas: Vendas de Insumos cujo Faturamento (qtd * preco) foi maior que R$ 100,00.',
-    'codigo' => <<<PHP
+    'complex_closure' => [
+        'titulo' => 'Filtro Dinâmico com Closure',
+        'tag'    => 'CLOSURE',
+        'cor'    => 'success',
+        'desc'   => 'Executa lógica de negócio em PHP puro: pedidos concluídos de Insumos cujo faturamento da linha (qtd * preco) foi maior que R$ 200,00.',
+        'codigo' => <<<PHP
 \$linq = LinqPHP::from(\$vendas)
+    ->where(['status', '=', 'concluido'])
     ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
-    ->where(function(\$row) {
-        if (\$row['categoria'] !== 'Insumo') return false;
+    ->where(function (\$row) {
+        if (\$row['categoria'] !== 'Insumo') {
+            return false;
+        }
         \$faturamento = \$row['qtd'] * \$row['preco'];
-        return \$faturamento > 100.00;
+        return \$faturamento > 200.00;
     })
-    ->select(['nome_produto', 'qtd', 'preco'])
+    ->select(['id_venda', 'nome_produto', 'qtd', 'preco'])
     ->toObject();
 PHP,
-    'run' => fn () => LinqPHP::from($vendas)
-      ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
-      ->where(function ($row) {
-          if ($row['categoria'] !== 'Insumo') {
-              return false;
-          }
-          $faturamento = $row['qtd'] * $row['preco'];
-          return $faturamento > 100.00;
-      })
-      ->select(['nome_produto', 'qtd', 'preco'])
-      ->toObject()
-  ]
+        'run' => fn () => LinqPHP::from($vendas)
+            ->where(['status', '=', 'concluido'])
+            ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+            ->where(function ($row) {
+                if ($row['categoria'] !== 'Insumo') {
+                    return false;
+                }
+                $faturamento = $row['qtd'] * $row['preco'];
+                return $faturamento > 200.00;
+            })
+            ->select(['id_venda', 'nome_produto', 'qtd', 'preco'])
+            ->toObject()
+    ]
 ];
 
 // Identifica o cenário atual pela URL
@@ -170,152 +321,435 @@ if (!array_key_exists($cenarioAtual, $cenarios)) {
 }
 
 $dadosCenario = $cenarios[$cenarioAtual];
-$linq = $dadosCenario['run']();
-$resultado = $linq->data;
+
+$codigoAtivo = $_POST['codigo_customizado'] ?? $dadosCenario['codigo'];
+$normalizarQuebras = static fn (string $str): string => str_replace(["\r\n", "\r"], "\n", trim($str));
+$isCustomCode = isset($_POST['codigo_customizado'])
+    && $normalizarQuebras($_POST['codigo_customizado']) !== $normalizarQuebras($dadosCenario['codigo']);
+
+$erroExecucao = null;
+$linq = null;
+$resultado = [];
+
+// Função avaliadora do sandbox interativo
+$avaliarLinq = function (string $rawCode) use ($clientes, $produtos, $produtosOutlet, $vendas): stdClass {
+    $cleanCode = trim($rawCode);
+    $prefix = "use HeliomarPM\\LinqPHP\\LinqPHP;\nuse HeliomarPM\\LinqPHP\\JoinType;\n";
+
+    if (preg_match('/^(LinqPHP::|\(?new\s+LinqPHP)/i', $cleanCode)) {
+        $cleanCode = "return " . $cleanCode;
+    }
+
+    // Garante que o retorno do script ou da variável $linq seja obtido mesmo se o código tiver closures internas
+    $cleanCode .= "\nreturn \$linq ?? \$resultado ?? \$result ?? \$dados ?? null;";
+
+    $startTime = microtime(true);
+    $startMemory = memory_get_usage(true);
+
+    $evalResult = eval($prefix . $cleanCode);
+
+    if ($evalResult === null && isset($linq)) {
+        $evalResult = $linq;
+    }
+
+    $endTime = microtime(true);
+    $elapsedTime = number_format($endTime - $startTime, 6);
+    $memoryUsed = sprintf("%5.2f MB", (memory_get_peak_usage(true) - $startMemory) / 1024 / 1024);
+
+    if ($evalResult instanceof LinqPHP) {
+        $evalResult = $evalResult->toObject();
+    } elseif (is_array($evalResult)) {
+        $obj = new \stdClass();
+        $obj->data = $evalResult;
+        $obj->count = count($evalResult);
+        $obj->elapsedTime = $elapsedTime;
+        $obj->memoryUsed = $memoryUsed;
+        $evalResult = $obj;
+    } elseif ($evalResult instanceof \stdClass && !isset($evalResult->elapsedTime)) {
+        $evalResult->elapsedTime = $elapsedTime;
+        $evalResult->memoryUsed = $memoryUsed;
+    }
+
+    if (!($evalResult instanceof \stdClass)) {
+        $obj = new \stdClass();
+        $obj->data = [];
+        $obj->count = 0;
+        $obj->elapsedTime = $elapsedTime;
+        $obj->memoryUsed = $memoryUsed;
+        $evalResult = $obj;
+    }
+
+    return $evalResult;
+};
+
+try {
+    if ($isCustomCode) {
+        $linq = $avaliarLinq($codigoAtivo);
+    } else {
+        $linq = $dadosCenario['run']();
+    }
+    $resultado = $linq->data ?? [];
+} catch (\Throwable $e) {
+    $erroExecucao = $e->getMessage();
+    $linq = new \stdClass();
+    $linq->data = [];
+    $linq->count = 0;
+    $linq->elapsedTime = '0.000000';
+    $linq->memoryUsed = '0.00 MB';
+    $resultado = [];
+}
 
 // ==========================================
 // 3. FUNÇÃO DE RENDERIZAÇÃO HTML
 // ==========================================
-function renderGrid(string $titulo, array $dados, string $corHeader = 'bg-primary')
-{
-    if (empty($dados)) {
-        return "<div class='alert alert-warning'>Nenhum dado retornado para este cenário.</div>";
-    }
-    $colunas = array_keys($dados[0]);
-    $html = "<div class='card shadow-sm mb-4'>";
-    $html .= "<div class='card-header text-white {$corHeader}'><h6 class='mb-0'>{$titulo}</h6></div>";
-    $html .= "<div class='card-body p-0'><div class='table-responsive'><table class='table table-sm table-striped table-hover mb-0' style='font-size: 0.9rem;'>";
-    $html .= "<thead><tr>";
-    foreach ($colunas as $col) {
-        $html .= "<th>" . strtoupper($col) . "</th>";
-    }
-    $html .= "</tr></thead><tbody>";
-    foreach ($dados as $linha) {
-        $html .= "<tr>";
-        foreach ($colunas as $col) {
-            $valor = $linha[$col] ?? '<em class="text-muted">null</em>';
-            if (is_bool($valor)) {
-                $valor = $valor ? 'Sim' : 'Não';
-            }
-            if (is_float($valor)) {
-                $valor = number_format($valor, 2, ',', '.');
-            }
-            $html .= "<td>{$valor}</td>";
+if (!function_exists('renderGrid')) {
+    function renderGrid(string $titulo, array $dados, string $corHeader = 'bg-primary', ?int $totalRegistros = null): string
+    {
+        if (empty($dados)) {
+            return "<div class='alert alert-warning py-2 mb-3' style='font-size: 0.85rem;'>Nenhum registro encontrado.</div>";
         }
-        $html .= "</tr>";
+
+        $colunas = array_keys($dados[0]);
+        $badgeCount = $totalRegistros ?? count($dados);
+
+        $html = "<div class='card shadow-sm mb-3 border-0 rounded-3 overflow-hidden'>";
+        $html .= "<div class='card-header text-white {$corHeader} d-flex justify-content-between align-items-center py-2 px-3'>";
+        $html .= "<span class='fw-semibold' style='font-size: 0.85rem;'>{$titulo}</span>";
+        $html .= "<span class='badge bg-light text-dark rounded-pill' style='font-size: 0.72rem;'>{$badgeCount} itens</span>";
+        $html .= "</div>";
+        $html .= "<div class='card-body p-0'><div class='table-responsive'><table class='table table-sm table-striped table-hover mb-0 align-middle' style='font-size: 0.82rem;'>";
+        $html .= "<thead class='table-light'><tr>";
+
+        foreach ($colunas as $col) {
+            $html .= "<th class='text-secondary py-2 px-2' style='font-weight: 600; font-size: 0.75rem;'>" . strtoupper($col) . "</th>";
+        }
+
+        $html .= "</tr></thead><tbody>";
+
+        foreach ($dados as $linha) {
+            $html .= "<tr>";
+            foreach ($colunas as $col) {
+                $valor = $linha[$col] ?? null;
+
+                if ($valor === null) {
+                    $celula = '<span class="badge bg-secondary-subtle text-secondary font-monospace" style="font-size: 0.7rem;">null</span>';
+                } elseif (is_bool($valor)) {
+                    $celula = $valor
+                        ? '<span class="badge bg-success-subtle text-success">Sim</span>'
+                        : '<span class="badge bg-light text-muted border">Não</span>';
+                } elseif (is_float($valor)) {
+                    $celula = number_format($valor, 2, ',', '.');
+                } elseif (is_array($valor)) {
+                    $celula = '<code class="small">' . htmlspecialchars(json_encode($valor, JSON_UNESCAPED_UNICODE)) . '</code>';
+                } elseif ($col === 'status') {
+                    $corStatus = match ($valor) {
+                        'concluido' => 'bg-success text-white',
+                        'pendente'  => 'bg-warning text-dark',
+                        'cancelado' => 'bg-danger text-white',
+                        default     => 'bg-secondary text-white'
+                    };
+                    $celula = "<span class='badge rounded-pill {$corStatus} text-uppercase' style='font-size: 0.68rem;'>{$valor}</span>";
+                } else {
+                    $celula = htmlspecialchars((string) $valor);
+                }
+
+                $html .= "<td class='py-2 px-2'>{$celula}</td>";
+            }
+            $html .= "</tr>";
+        }
+
+        $html .= "</tbody></table></div></div></div>";
+        return $html;
     }
-    $html .= "</tbody></table></div></div></div>";
-    return $html;
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LinqPHP - Demo</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      background-color: #f1f3f5;
-      padding-bottom: 50px;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinqPHP - Laboratório Interativo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+            --brand-purple: #6f42c1;
+        }
 
-    .performance-bar {
-      font-size: 0.9rem;
-    }
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            padding-bottom: 60px;
+        }
 
-    .nav-pills .nav-link.active {
-      background-color: #6f42c1;
-    }
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
 
-    .data-sources {
-      max-height: 80vh;
-      overflow-y: auto;
-      padding-right: 10px;
-    }
+        .brand-header {
+            background: var(--primary-gradient);
+        }
 
-    .data-sources::-webkit-scrollbar {
-      width: 6px;
-    }
+        .nav-pills .nav-link {
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.2s ease-in-out;
+            padding: 8px 14px;
+        }
 
-    .data-sources::-webkit-scrollbar-thumb {
-      background-color: #adb5bd;
-      border-radius: 10px;
-    }
-  </style>
+        .nav-pills .nav-link:hover:not(.active) {
+            background-color: #e2e8f0;
+            transform: translateY(-1px);
+        }
+
+        .nav-pills .nav-link.active {
+            background: #6366f1;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+        }
+
+        .data-sources {
+            max-height: 82vh;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .data-sources::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .data-sources::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .code-container {
+            font-family: 'JetBrains Mono', Consolas, monospace;
+            background-color: #0f172a;
+            border-radius: 10px;
+            font-size: 0.88rem;
+        }
+
+        .performance-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 10px;
+        }
+
+        .tag-pill {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+    </style>
 </head>
 
 <body>
 
-  <nav class="navbar navbar-dark mb-4 shadow-sm" style="background-color: #6f42c1;">
-    <div class="container-fluid">
-      <span class="navbar-brand mb-0 h1">🧪 LinqPHP - Laboratório Avançado</span>
+    <nav class="navbar navbar-dark brand-header mb-4 shadow-sm py-3">
+        <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <span class="navbar-brand mb-0 h1 d-flex align-items-center gap-2">
+                    <span>⚡</span>
+                    <span>LinqPHP</span>
+                    <span class="badge bg-white text-dark rounded-pill fw-semibold" style="font-size: 0.7rem;">v2.0.0</span>
+                </span>
+                <span class="text-white-50 small d-none d-lg-inline">Laboratório Interativo & Benchmark DX</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="https://github.com/heliomarpm/linq-php" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-light d-flex align-items-center gap-2 fw-semibold px-3 py-2 shadow-sm rounded-pill text-dark" style="font-size: 0.82rem; transition: transform 0.2s ease;">
+                    <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                    </svg>
+                    <span>Repositório GitHub</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+
+        <!-- Barra de Seleção de Cenários -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm border-0 rounded-3">
+                    <div class="card-body bg-white rounded-3 p-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="text-secondary small fw-semibold text-uppercase" style="letter-spacing: 0.05em;">Cenários de Demonstração</span>
+                            <span class="badge bg-light text-secondary border"><?= count($cenarios) ?> cenários disponíveis</span>
+                        </div>
+                        <ul class="nav nav-pills gap-1">
+                            <?php foreach ($cenarios as $key => $cenario): ?>
+                                <li class="nav-item">
+                                    <a class="nav-link d-flex align-items-center gap-2 <?= $key === $cenarioAtual ? 'active' : 'bg-light text-dark border' ?>"
+                                        href="?cenario=<?= $key ?>">
+                                        <span class="badge bg-<?= $cenario['cor'] ?> tag-pill"><?= $cenario['tag'] ?></span>
+                                        <span><?= $cenario['titulo'] ?></span>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Coluna da Esquerda: Coleções de Origem (Com Scroll Suave) -->
+            <div class="col-lg-4 data-sources">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="text-secondary fw-bold text-uppercase mb-0" style="letter-spacing: 0.05em;">
+                        🗄️ Coleções de Origem
+                    </h6>
+                    <span class="text-muted small">4 Datasets</span>
+                </div>
+
+                <?= renderGrid('Clientes', $clientes, 'bg-indigo', count($clientes)) ?>
+                <?= renderGrid('Produtos', $produtos, 'bg-dark', count($produtos)) ?>
+                <?= renderGrid('Produtos Outlet', $produtosOutlet, 'bg-secondary', count($produtosOutlet)) ?>
+                <?= renderGrid('Vendas', $vendas, 'bg-primary', count($vendas)) ?>
+            </div>
+
+            <!-- Coluna da Direita: Resultado do Cenário Selecionado -->
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0 rounded-3 p-4 bg-white mb-4">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="badge bg-<?= $dadosCenario['cor'] ?> tag-pill"><?= $dadosCenario['tag'] ?></span>
+                                <?php if ($isCustomCode): ?>
+                                    <span class="badge bg-warning text-dark tag-pill">⚡ Código Editado</span>
+                                <?php endif; ?>
+                            </div>
+                            <h4 class="fw-bold text-dark mb-1"><?= $dadosCenario['titulo'] ?></h4>
+                            <p class="text-muted mb-0"><?= $dadosCenario['desc'] ?></p>
+                        </div>
+                    </div>
+
+                    <!-- Mensagem de Erro (se houver) -->
+                    <?php if ($erroExecucao !== null): ?>
+                        <div class="alert alert-danger shadow-sm border-0 d-flex align-items-start gap-3 my-3 rounded-3 p-3">
+                            <span class="fs-4">⚠️</span>
+                            <div>
+                                <h6 class="fw-bold mb-1">Falha na Execução do Código:</h6>
+                                <div class="font-monospace small text-break"><?= htmlspecialchars($erroExecucao) ?></div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Card de Telemetria / Performance -->
+                    <div class="performance-card text-white p-3 my-3 shadow-sm d-flex flex-wrap justify-content-between align-items-center gap-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="text-white-50 small fw-semibold">TELEMETRIA LINQ:</span>
+                            <span class="badge bg-primary rounded-pill px-3 py-2 fw-semibold">
+                                ⏱️ <?= $linq->elapsedTime ?>s
+                            </span>
+                            <span class="badge bg-info text-dark rounded-pill px-3 py-2 fw-semibold">
+                                💾 <?= $linq->memoryUsed ?>
+                            </span>
+                        </div>
+                        <div>
+                            <span class="badge bg-success rounded-pill px-3 py-2 fw-semibold fs-6">
+                                📝 <?= $linq->count ?> <?= $linq->count === 1 ? 'linha gerada' : 'linhas geradas' ?>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Bloco de Código Editável (Sandbox) -->
+                    <form method="POST" action="?cenario=<?= urlencode($cenarioAtual) ?>" id="formEditor" class="mt-2 mb-4">
+                        <div class="card border-0 shadow-sm rounded-3 overflow-hidden" style="background-color: #0f172a;">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center py-2 px-3 border-bottom border-secondary-subtle" style="background-color: #1e293b;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-white fw-bold small text-uppercase" style="letter-spacing: 0.05em;">💻 Pipeline LINQ Editável</span>
+                                    <span class="text-white-50 small d-none d-sm-inline">(PHP 8.1+)</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <?php if ($isCustomCode): ?>
+                                        <a href="?cenario=<?= urlencode($cenarioAtual) ?>" class="btn btn-sm btn-outline-light py-1 px-2" style="font-size: 0.78rem;">
+                                            🔄 Restaurar Padrão
+                                        </a>
+                                    <?php endif; ?>
+                                    <button type="submit" class="btn btn-sm btn-primary py-1 px-3 shadow-sm fw-semibold d-flex align-items-center gap-1" style="font-size: 0.8rem; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border: none;">
+                                        <span>▶️ Simular / Executar</span>
+                                        <span class="d-none d-md-inline text-white-50 small">(Ctrl+Enter)</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="p-2">
+                                <textarea name="codigo_customizado" id="codigoEditor" class="form-control font-monospace border-0 bg-transparent text-info p-2" rows="8" spellcheck="false" style="font-family: 'JetBrains Mono', Consolas, monospace; font-size: 0.88rem; line-height: 1.5; resize: vertical; outline: none; box-shadow: none; color: #38bdf8 !important;"><?= htmlspecialchars($codigoAtivo) ?></textarea>
+                            </div>
+                            <div class="d-flex flex-wrap justify-content-between align-items-center py-2 px-3 border-top border-secondary-subtle" style="background-color: #0b1120; font-size: 0.75rem;">
+                                <span class="text-secondary">
+                                    <strong class="text-light">Variáveis disponíveis:</strong> <code class="text-info">$vendas</code>, <code class="text-info">$produtos</code>, <code class="text-info">$produtosOutlet</code>, <code class="text-info">$clientes</code> | <code class="text-warning">JoinType::*</code>
+                                </span>
+                                <span class="text-white-50 d-none d-md-inline">💡 Use Tab para indentar e Ctrl+Enter para executar</span>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Tabela de Saída -->
+                    <div class="mt-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold text-secondary text-uppercase mb-0" style="font-size: 0.78rem; letter-spacing: 0.05em;">
+                                🎯 Resultado Projetado
+                            </h6>
+                            <span class="badge bg-light text-muted border"><?= count($resultado) ?> linhas retornadas</span>
+                        </div>
+                        <?= renderGrid('Dados Processados', $resultado, 'bg-dark', $linq->count) ?>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </nav>
 
-  <div class="container-fluid px-4">
-
-    <div class="row mb-4">
-      <div class="col-12">
-        <div class="card shadow-sm border-0">
-          <div class="card-body bg-white rounded">
-            <ul class="nav nav-pills justify-content-center">
-              <?php foreach ($cenarios as $key => $cenario): ?>
-                <li class="nav-item me-2 mb-2">
-                  <a class="nav-link <?= $key === $cenarioAtual ? 'active shadow' : 'bg-light text-dark border' ?>"
-                    href="?cenario=<?= $key ?>">
-                    <?= $cenario['titulo'] ?>
-                  </a>
-                </li>
-              <?php endforeach; ?>
-            </ul>
-          </div>
+    <!-- Rodapé -->
+    <footer class="text-center py-4 text-muted small border-top bg-white mt-5">
+        <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span>
+                ⚡ <strong>LinqPHP</strong> © <?= date('Y') ?> Heliomar P. Marques — Zero dependências em produção.
+            </span>
+            <div class="d-flex align-items-center gap-3">
+                <a href="https://github.com/heliomarpm/linq-php" target="_blank" rel="noopener noreferrer" class="text-decoration-none text-secondary">
+                    Repositório GitHub
+                </a>
+                <span>•</span>
+                <a href="https://packagist.org/packages/heliomarpm/linq-php" target="_blank" rel="noopener noreferrer" class="text-decoration-none text-secondary">
+                    Packagist
+                </a>
+                <span>•</span>
+                <a href="https://github.com/heliomarpm/linq-php/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" class="text-decoration-none text-secondary">
+                    Licença MIT
+                </a>
+            </div>
         </div>
-      </div>
-    </div>
+    </footer>
 
-    <div class="row">
-      <!-- Coluna da Esquerda: Arrays de Origem (Com Scroll) -->
-      <div class="col-lg-4 data-sources">
-        <h5 class="mb-3 text-secondary">🗄️ Arrays de Origem</h5>
-        <?= renderGrid('Clientes', $clientes, 'bg-secondary') ?>
-        <?= renderGrid('Produtos', $produtos, 'bg-secondary') ?>
-        <?= renderGrid('Vendas', $vendas, 'bg-secondary') ?>
-      </div>
+    <script>
+        const editor = document.getElementById('codigoEditor');
+        const form = document.getElementById('formEditor');
 
-      <!-- Coluna da Direita: Resultado -->
-      <div class="col-lg-8">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="text-dark mb-0">🎯 Resultado: <?= $dadosCenario['titulo'] ?></h5>
-        </div>
-
-        <p class="text-muted"><?= $dadosCenario['desc'] ?></p>
-
-        <div class="alert alert-dark performance-bar d-flex justify-content-between align-items-center shadow-sm">
-          <span><strong>Metadados de Execução</strong></span>
-          <span class="badge bg-primary rounded-pill fs-6">
-            ⏱️ <?= $linq->elapsedTime ?>s | 💾 <?= $linq->memoryUsed ?> | 📝 <?= $linq->count ?> linhas
-          </span>
-        </div>
-
-        <?= renderGrid('Dados de Saída', $resultado, 'bg-dark') ?>
-
-        <div class="card mt-4 shadow-sm border-0">
-          <div class="card-header text-white" style="background-color: #2b3035;">
-            <small>💻 Código Executado</small>
-          </div>
-          <div class="card-body bg-dark text-light rounded-bottom">
-            <pre class="mb-0"
-              style="white-space: pre-wrap;"><code class="text-light"><?= htmlspecialchars($dadosCenario['codigo']) ?></code></pre>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
+        if (editor && form) {
+            // Suporte para indentação com tecla TAB e envio com Ctrl+Enter
+            editor.addEventListener('keydown', function(e) {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const start = this.selectionStart;
+                    const end = this.selectionEnd;
+                    this.value = this.value.substring(0, start) + "    " + this.value.substring(end);
+                    this.selectionStart = this.selectionEnd = start + 4;
+                } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    form.submit();
+                }
+            });
+        }
+    </script>
 </body>
 
 </html>
