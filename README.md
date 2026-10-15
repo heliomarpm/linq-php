@@ -25,6 +25,8 @@ Uma biblioteca leve, de alta performance e sem dependências externas para manip
 
 O LinqPHP permite filtrar, agrupar, ordenar e unir arrays multidimensionais de forma fluida e elegante, sendo ideal para processamento de relatórios, formatação de dados para APIs e refatoração de sistemas legados.
 
+[Demo interativo](https://linq-php.vercel.app/)
+
 > Benchmark v2.0.0
 
 <img src="./bench-v2.0.0.png" alt="Benchmark" width="100%" />
