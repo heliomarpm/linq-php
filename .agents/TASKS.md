@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Estabilizar governança, corrigir inconsistências documentais e aprimorar qualidade contínua (CI/QA)\
-> **Status:** em desenvolvimento | **Progresso:** 3/8 (37%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-13
+> **Status:** em desenvolvimento | **Progresso:** 7/8 (87%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-13
 
 ## Em progresso
 
@@ -19,49 +19,34 @@
   - Origem: discovery | Dep.: nenhuma
   - Ref: [.github/workflows/ci.yml](../.github/workflows/ci.yml#L18), [composer.json](../composer.json#L55)
   - DoD:
-    - [ ] Adicionar PHP 8.1, 8.2 e 8.3 na matriz do GitHub Actions
+    - [ ] Adicionar PHP 8.1, 8.2 , 8.3 e 8.4 na matriz do GitHub Actions
     - [ ] Garantir que testes e benchmarks rodem com sucesso em todas as versões suportadas
 
 ### Média Prioridade
 
-- [ ] **T-003 · P2 · Corrigir portabilidade e duplicação no script `reset` do Composer**
-  - Origem: discovery | Dep.: nenhuma
-  - Ref: [composer.json](../composer.json#L47-L51)
-  - DoD:
-    - [ ] Remover chamada duplicada de `composer install`
-    - [ ] Tornar o comando de limpeza portável ou compatível com ambientes Windows
-
-- [ ] **T-004 · P2 · Corrigir metadados do projeto em `CITATION.cff`**
-  - Origem: discovery | Dep.: nenhuma
-  - Ref: [CITATION.cff](../CITATION.cff)
-  - DoD:
-    - [ ] Substituir referências legadas de `ion-calendar` por `linq-php`
-    - [ ] Atualizar resumo, palavras-chave e URL do repositório
-
-- [ ] **T-005 · P2 · Configurar ferramenta de análise estática formal (PHPStan) no QA**
-  - Origem: discovery | Dep.: nenhuma
-  - Ref: [composer.json](../composer.json), [.editorconfig](../.editorconfig)
-  - DoD:
-    - [ ] Adicionar `phpstan/phpstan` no `require-dev` do Composer
-    - [ ] Criar script `phpstan` e integrá-lo ao comando `composer qa`
-    - [ ] Garantir que o código passe sem erros no nível configurado
-
-- [ ] **T-008 · P2 · Reescrever em português os documentos de governança e templates de issue**
-  - Origem: manual | Dep.: T-004
-  - Ref: [CITATION.cff](../CITATION.cff), [docs/CODE_OF_CONDUCT.md](../docs/CODE_OF_CONDUCT.md), [docs/SUPPORT.md](../docs/SUPPORT.md), [docs/CONTRIBUTING.md](../docs/CONTRIBUTING.md), [.github/ISSUE_TEMPLATE](../.github/ISSUE_TEMPLATE)
-  - DoD:
-    - [ ] Traduzir `CITATION.cff` mantendo compatibilidade com a especificação CFF
-    - [ ] Reescrever `docs/CODE_OF_CONDUCT.md` em português (Contributor Covenant em pt-BR)
-    - [ ] Reescrever `docs/SUPPORT.md` em português alinhado aos canais do LinqPHP
-    - [ ] Reescrever `docs/CONTRIBUTING.md` em português detalhando fluxo de contribuição e convenções
-		- [ ] Reescrever `.github/pull_request_template.md` em português
-    - [ ] Traduzir todos os arquivos de `.github/ISSUE_TEMPLATE/` (`README.md`, `bug_report.yml`, `feature_request.yml`, `documentation.yml`, `support_question.yml`) e sanear referências obsoletas
+(nenhuma)
 
 ### Baixa Prioridade
 
 (nenhuma)
 
 ## Concluídas recentemente
+
+- [x] **T-003 · P2 · Corrigir portabilidade e duplicação no script `reset` do Composer** (2026-10-13)
+  - Arquivos: [composer.json](../composer.json)
+  - Evidência: Duplicação de `composer install` removida; comando de remoção portabilizado com `@php` multiplataforma; validação aprovada via `composer validate`.
+
+- [x] **T-004 · P2 · Corrigir metadados do projeto em `CITATION.cff`** (2026-10-13)
+  - Arquivos: [CITATION.cff](../CITATION.cff)
+  - Evidência: Resíduos de `ion-calendar` substituídos por `linq-php`, com resumo, versão 0.1.0, palavras-chave e URL do repositório corrigidos.
+
+- [x] **T-005 · P2 · Configurar ferramenta de análise estática formal (PHPStan) no QA** (2026-10-13)
+  - Arquivos: [composer.json](../composer.json), [phpstan.neon](../phpstan.neon), [src/LinqPHP.php](../src/LinqPHP.php)
+  - Evidência: `phpstan/phpstan` instalado em `require-dev`; [phpstan.neon](../phpstan.neon) configurado no nível 5; PHPDocs de tipos ajustados; script `composer phpstan` criado e integrado ao `composer qa` rodando com 0 erros.
+
+- [x] **T-008 · P2 · Reescrever em português os documentos de governança e templates de issue** (2026-10-13)
+  - Arquivos: [CITATION.cff](../CITATION.cff), [docs/CODE_OF_CONDUCT.md](../docs/CODE_OF_CONDUCT.md), [docs/SUPPORT.md](../docs/SUPPORT.md), [docs/CONTRIBUTING.md](../docs/CONTRIBUTING.md), [.github/pull_request_template.md](../.github/pull_request_template.md), [.github/ISSUE_TEMPLATE](../.github/ISSUE_TEMPLATE)
+  - Evidência: Documentos de governança e todos os templates reescritos em pt-BR com referências a scripts de Composer/PHP; resíduos de Node/npm eliminados.
 
 - [x] **T-006 · P3 · Avaliar código comentado de validação em `assertJsonCollection()`** (2026-10-13)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
