@@ -82,7 +82,7 @@ class SalvarRealWorldTest extends TestCase
         $this->assertSame('hoje', $arrNiverHoje[0]['desc_quando']);
         $this->assertSame(2, $arrNiverHoje[0]['count']);
 
-        $qtdHoje = $arrNiverHoje ? $arrNiverHoje[0]['count'] : 0;
+        $qtdHoje = $arrNiverHoje !== [] ? $arrNiverHoje[0]['count'] : 0;
         $this->assertSame(2, $qtdHoje);
     }
 
@@ -105,7 +105,7 @@ class SalvarRealWorldTest extends TestCase
 
         // Assert
         $this->assertSame([], $arrNiverHoje);
-        $qtdHoje = $arrNiverHoje ? $arrNiverHoje[0]['count'] : 0;
+        $qtdHoje = $arrNiverHoje !== [] ? $arrNiverHoje[0]['count'] : 0;
         $this->assertSame(0, $qtdHoje);
     }
 

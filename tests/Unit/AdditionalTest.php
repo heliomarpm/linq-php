@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use PHPUnit\Framework\TestCase;
 use HeliomarPM\LinqPHP\LinqPHP;
 use HeliomarPM\LinqPHP\JoinType;
@@ -91,7 +93,7 @@ class AdditionalTest extends TestCase
           ['id' => 1, 'name' => 'John', 'age' => 25, 'address' => ['street' => '123 Main St', 'city' => 'New York']],
           ['id' => 2, 'name' => 'Jane', 'age' => 30, 'address' => ['street' => '456 Elm St', 'city' => 'Los Angeles']],
         ];
-        $result = LinqPHP::from($data)->distinct('address')->toArray();
+        $result = LinqPHP::from($data)->distinct()->toArray();
         $this->assertEquals($expected, $result);
     }
 

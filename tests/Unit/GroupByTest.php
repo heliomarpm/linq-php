@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use PHPUnit\Framework\TestCase;
 use HeliomarPM\LinqPHP\LinqPHP;
 
@@ -28,12 +30,10 @@ class GroupByTest extends TestCase
             ['id' => 2, 'name' => 'Jane', 'age' => 30],
             ['id' => 3, 'name' => 'John', 'age' => 35],
         ];
-
-        $groupedResult = [];
         $groupKey = 'John';
 
         $result = LinqPHP::from($data)
-            ->groupBy(['name'], [], ['sum' => ['age']])
+            ->groupBy(['name'], [])
             ->toArray();
 
         $this->assertEquals($groupKey, $result[0]['name']);

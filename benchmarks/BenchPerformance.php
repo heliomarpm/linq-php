@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace HeliomarPM\LinqPHP\Benchmark;
 
 use HeliomarPM\LinqPHP\LinqPHP;
@@ -39,19 +41,19 @@ class BenchPerformance
             $this->produtos[] = [
               'id_produto' => $i,
               'nome_produto' => 'Produto ' . $i,
-              'categoria' => 'Categoria ' . rand(1, 5)
+              'categoria' => 'Categoria ' . random_int(1, 5)
             ];
         }
 
         // 2. Gera tabela principal de Vendas e tabela para Distinct
         for ($i = 0; $i < $tamanho; $i++) {
-            $produto_id = rand(0, $qtdProdutos - 1);
+            $produto_id = random_int(0, $qtdProdutos - 1);
             $status = $statusOptions[array_rand($statusOptions)];
 
             $this->vendas[] = [
               'id_venda' => $i,
               'produto_id' => $produto_id,
-              'valor' => rand(10, 1000) / 10,
+              'valor' => random_int(10, 1000) / 10,
               'status' => $status
             ];
 

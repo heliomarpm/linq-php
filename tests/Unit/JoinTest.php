@@ -29,7 +29,7 @@ class JoinTest extends TestCase
             $data[] = [
               'id' => $i,
               'group_id' => $i % 10,
-              'score' => rand(0, 100)
+              'score' => random_int(0, 100)
             ];
         }
 
@@ -38,7 +38,7 @@ class JoinTest extends TestCase
             $data[] = [
               'id' => $i,
               'group_id' => $i % 10,
-              'score' => rand(0, 100)
+              'score' => random_int(0, 100)
             ];
         }
 

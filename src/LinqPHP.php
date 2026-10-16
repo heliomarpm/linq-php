@@ -14,10 +14,10 @@ enum JoinType: string
 
 class LinqPHP
 {
-    private array $data = [];
-    private float $startTime;
+    private array $data;
+    private readonly float $startTime;
     private float $endTime;
-    private int $startMemory;
+    private readonly int $startMemory;
 
     public function __construct(array $data)
     {
@@ -104,12 +104,12 @@ class LinqPHP
     public function unionAll(array $unionData): self
     {
         // Caso venha um único objeto, converte em lista
-        if (empty($this->data)) {
+        if ($this->data === []) {
             $this->data = $unionData;
             return $this;
         }
 
-        if (empty($unionData)) {
+        if ($unionData === []) {
             return $this;
         }
 
@@ -259,7 +259,7 @@ class LinqPHP
 
     private function nullFillRightOnly(array $leftItem, array $rightSample): array
     {
-        if (empty($rightSample)) {
+        if ($rightSample === []) {
             return [];
         }
         $rightKeys = array_keys($rightSample[0]);
@@ -427,7 +427,7 @@ class LinqPHP
     public function groupBy(array $groupingFields, array $aggregations = []): self
     {
         $groupedResult = [];
-        $hasAggregations = !empty($aggregations);
+        $hasAggregations = $aggregations !== [];
         $duplicatedFields = [];
         $groupingFieldsFlip = array_flip($groupingFields);
 
@@ -449,9 +449,7 @@ class LinqPHP
             $groupKey = implode('_', array_intersect_key($item, $groupingFieldsFlip));
 
             // Inicializar grupo se ainda não existir
-            if (!isset($groupedResult[$groupKey])) {
-                $groupedResult[$groupKey] = array_intersect_key($item, $groupingFieldsFlip);
-            }
+            $groupedResult[$groupKey] ??= array_intersect_key($item, $groupingFieldsFlip);
 
             if (!$hasAggregations) {
                 $this->groupByDefaultAggregations($groupedResult, $groupKey, $groupingFields, $item);
@@ -594,7 +592,7 @@ class LinqPHP
      */
     public function select(array $selectors = [], bool $strict = false): self
     {
-        if (empty($selectors)) {
+        if ($selectors === []) {
             $this->endTime = microtime(true);
             return $this;
         }
@@ -608,7 +606,7 @@ class LinqPHP
             foreach ($this->data as $item) {
                 if ($strict) {
                     $missingKeys = array_diff_key($selectorKeys, $item);
-                    if (!empty($missingKeys)) {
+                    if ($missingKeys !== []) {
                         throw new InvalidArgumentException(
                             'Select strict mode error. Missing keys: ' . implode(', ', array_keys($missingKeys))
                         );
@@ -639,7 +637,7 @@ class LinqPHP
         foreach ($this->data as $item) {
             if ($strict) {
                 $missingKeys = array_diff_key($origKeysFlip, $item);
-                if (!empty($missingKeys)) {
+                if ($missingKeys !== []) {
                     throw new InvalidArgumentException(
                         'Select strict mode error. Missing keys: ' . implode(', ', array_keys($missingKeys))
                     );
@@ -747,7 +745,7 @@ class LinqPHP
     {
         $data = array_column($this->data, $key);
 
-        if (empty($data)) {
+        if ($data === []) {
             throw new InvalidArgumentException("This field does not exist for sorting.");
         }
 
@@ -763,9 +761,6 @@ class LinqPHP
 
     /**
      * Ordena o array de dados de acordo com a ordem fornecida.
-     *
-     * @param array $fields
-     * @return LinqPHP
      */
     public function orderBy(array $fields): self
     {
@@ -794,7 +789,6 @@ class LinqPHP
 
     /**
      * Summary of toArray
-     * @return array
      */
     public function toArray(): array
     {

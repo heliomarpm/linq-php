@@ -66,23 +66,23 @@ $cenarios = [
         'tag'    => 'JOIN & ALIASES',
         'cor'    => 'primary',
         'desc'   => 'Une Vendas, Produtos e Clientes VIPs, demonstrando a nova feature de renomeação de colunas com aliases amigáveis e formato híbrido.',
-        'codigo' => <<<PHP
-\$linq = LinqPHP::from(\$vendas)
-    ->where(['status', '=', 'concluido'])
-    ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
-    ->join(\$clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
-    ->where(['vip', '=', true])
-    ->orderByKey('id_venda', 'asc')
-    ->select([
-        'id_venda'     => 'Código Venda',
-        'nome_cliente' => 'Cliente VIP',
-        'uf', // formato híbrido: mantém o nome original
-        'nome_produto' => 'Produto',
-        'qtd'          => 'Quantidade',
-        'preco'        => 'Valor Unitário'
-    ])
-    ->toObject();
-PHP,
+        'codigo' => <<<PHP_WRAP
+        \$linq = LinqPHP::from(\$vendas)
+            ->where(['status', '=', 'concluido'])
+            ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+            ->join(\$clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
+            ->where(['vip', '=', true])
+            ->orderByKey('id_venda', 'asc')
+            ->select([
+                'id_venda'     => 'Código Venda',
+                'nome_cliente' => 'Cliente VIP',
+                'uf', // formato híbrido: mantém o nome original
+                'nome_produto' => 'Produto',
+                'qtd'          => 'Quantidade',
+                'preco'        => 'Valor Unitário'
+            ])
+            ->toObject();
+        PHP_WRAP,
         'run' => fn () => LinqPHP::from($vendas)
             ->where(['status', '=', 'concluido'])
             ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
@@ -105,18 +105,18 @@ PHP,
         'tag'    => 'GROUP BY',
         'cor'    => 'success',
         'desc'   => 'Agrupa produtos vendidos por categoria e extrai: Soma(qtd), Contagem(vendas), Max(preco), Min(preco) e Avg(preco).',
-        'codigo' => <<<PHP
-\$linq = LinqPHP::from(\$vendas)
-    ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
-    ->groupBy(['categoria'], [
-        'sum'   => ['qtd'],
-        'count' => ['id_venda'],
-        'max'   => ['preco'],
-        'min'   => ['preco'],
-        'avg'   => ['preco']
-    ])
-    ->toObject();
-PHP,
+        'codigo' => <<<PHP_WRAP
+        \$linq = LinqPHP::from(\$vendas)
+            ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+            ->groupBy(['categoria'], [
+                'sum'   => ['qtd'],
+                'count' => ['id_venda'],
+                'max'   => ['preco'],
+                'min'   => ['preco'],
+                'avg'   => ['preco']
+            ])
+            ->toObject();
+        PHP_WRAP,
         'run' => fn () => LinqPHP::from($vendas)
             ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
             ->groupBy(['categoria'], [
@@ -134,15 +134,15 @@ PHP,
         'tag'    => 'AGGREGATE',
         'cor'    => 'info',
         'desc'   => 'Calcula KPIs consolidados em uma única linha usando groupBy([], ...), somando itens vendidos e totalizando pedidos concluídos.',
-        'codigo' => <<<PHP
-\$linq = LinqPHP::from(\$vendas)
-    ->where(['status', '=', 'concluido'])
-    ->groupBy([], [
-        'sum'   => ['qtd'],
-        'count' => ['id_venda' => 'total_vendas']
-    ])
-    ->toObject();
-PHP,
+        'codigo' => <<<PHP_WRAP
+        \$linq = LinqPHP::from(\$vendas)
+            ->where(['status', '=', 'concluido'])
+            ->groupBy([], [
+                'sum'   => ['qtd'],
+                'count' => ['id_venda' => 'total_vendas']
+            ])
+            ->toObject();
+        PHP_WRAP,
         'run' => fn () => LinqPHP::from($vendas)
             ->where(['status', '=', 'concluido'])
             ->groupBy([], [
@@ -157,15 +157,15 @@ PHP,
         'tag'    => 'SORT & TAKE',
         'cor'    => 'danger',
         'desc'   => 'Cruza vendas concluídas com produtos, ordena descrescente por quantidade e fatia os 4 maiores pedidos com take(4).',
-        'codigo' => <<<PHP
-\$linq = LinqPHP::from(\$vendas)
-    ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
-    ->where(['status', '=', 'concluido'])
-    ->orderByKey('qtd', 'desc')
-    ->select(['id_venda', 'nome_produto', 'categoria', 'qtd', 'preco'])
-    ->take(4)
-    ->toObject();
-PHP,
+        'codigo' => <<<PHP_WRAP
+        \$linq = LinqPHP::from(\$vendas)
+            ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+            ->where(['status', '=', 'concluido'])
+            ->orderByKey('qtd', 'desc')
+            ->select(['id_venda', 'nome_produto', 'categoria', 'qtd', 'preco'])
+            ->take(4)
+            ->toObject();
+        PHP_WRAP,
         'run' => fn () => LinqPHP::from($vendas)
             ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
             ->where(['status', '=', 'concluido'])
@@ -180,12 +180,12 @@ PHP,
         'tag'    => 'FULL JOIN',
         'cor'    => 'warning',
         'desc'   => 'Mostra TUDO entre Vendas e Catálogo. Revela o "Produto 999" (órfão vendido sem cadastro) e produtos no catálogo sem nenhuma saída (ex: Resina 8K).',
-        'codigo' => <<<PHP
-\$linq = LinqPHP::from(\$vendas)
-    ->join(\$produtos, JoinType::FULL, ['produto_id' => 'id_produto'])
-    ->select(['id_venda', 'produto_id', 'nome_produto', 'categoria', 'qtd', 'preco'])
-    ->toObject();
-PHP,
+        'codigo' => <<<PHP_WRAP
+        \$linq = LinqPHP::from(\$vendas)
+            ->join(\$produtos, JoinType::FULL, ['produto_id' => 'id_produto'])
+            ->select(['id_venda', 'produto_id', 'nome_produto', 'categoria', 'qtd', 'preco'])
+            ->toObject();
+        PHP_WRAP,
         'run' => fn () => LinqPHP::from($vendas)
             ->join($produtos, JoinType::FULL, ['produto_id' => 'id_produto'])
             ->select(['id_venda', 'produto_id', 'nome_produto', 'categoria', 'qtd', 'preco'])
@@ -197,12 +197,12 @@ PHP,
         'tag'    => 'RIGHT JOIN',
         'cor'    => 'secondary',
         'desc'   => 'Une Vendas com Clientes (RIGHT). Revela clientes cadastrados que nunca realizaram compras (como "Cliente Ocioso").',
-        'codigo' => <<<PHP
-\$linq = LinqPHP::from(\$vendas)
-    ->join(\$clientes, JoinType::RIGHT, ['cliente_id' => 'id_cliente'])
-    ->select(['id_cliente', 'nome_cliente', 'cidade', 'uf', 'id_venda', 'status'])
-    ->toObject();
-PHP,
+        'codigo' => <<<PHP_WRAP
+        \$linq = LinqPHP::from(\$vendas)
+            ->join(\$clientes, JoinType::RIGHT, ['cliente_id' => 'id_cliente'])
+            ->select(['id_cliente', 'nome_cliente', 'cidade', 'uf', 'id_venda', 'status'])
+            ->toObject();
+        PHP_WRAP,
         'run' => fn () => LinqPHP::from($vendas)
             ->join($clientes, JoinType::RIGHT, ['cliente_id' => 'id_cliente'])
             ->select(['id_cliente', 'nome_cliente', 'cidade', 'uf', 'id_venda', 'status'])
@@ -214,18 +214,18 @@ PHP,
         'tag'    => 'WHERE',
         'cor'    => 'primary',
         'desc'   => 'Aplica múltiplos filtros simultâneos no catálogo via array: Insumos com preço entre R$ 80 e R$ 150 e estoque acima de 10 unidades.',
-        'codigo' => <<<PHP
-\$linq = LinqPHP::from(\$produtos)
-    ->where([
-        ['preco', '>=', 80.0],
-        ['preco', '<=', 150.0],
-        ['categoria', '=', 'Insumo'],
-        ['estoque', '>', 10]
-    ])
-    ->select(['nome_produto', 'categoria', 'preco', 'estoque'])
-    ->orderByKey('preco', 'asc')
-    ->toObject();
-PHP,
+        'codigo' => <<<PHP_WRAP
+        \$linq = LinqPHP::from(\$produtos)
+            ->where([
+                ['preco', '>=', 80.0],
+                ['preco', '<=', 150.0],
+                ['categoria', '=', 'Insumo'],
+                ['estoque', '>', 10]
+            ])
+            ->select(['nome_produto', 'categoria', 'preco', 'estoque'])
+            ->orderByKey('preco', 'asc')
+            ->toObject();
+        PHP_WRAP,
         'run' => fn () => LinqPHP::from($produtos)
             ->where([
                 ['preco', '>=', 80.0],
@@ -243,13 +243,13 @@ PHP,
         'tag'    => 'UNION ALL',
         'cor'    => 'dark',
         'desc'   => 'Consolida o catálogo de produtos regulares com produtos de Outlet (schemas heterogêneos). O LinqPHP preenche colunas ausentes com null.',
-        'codigo' => <<<PHP
-\$linq = LinqPHP::from(\$produtos)
-    ->select(['id_produto', 'nome_produto', 'categoria', 'preco'])
-    ->unionAll(\$produtosOutlet)
-    ->orderByKey('preco', 'asc')
-    ->toObject();
-PHP,
+        'codigo' => <<<PHP_WRAP
+        \$linq = LinqPHP::from(\$produtos)
+            ->select(['id_produto', 'nome_produto', 'categoria', 'preco'])
+            ->unionAll(\$produtosOutlet)
+            ->orderByKey('preco', 'asc')
+            ->toObject();
+        PHP_WRAP,
         'run' => fn () => LinqPHP::from($produtos)
             ->select(['id_produto', 'nome_produto', 'categoria', 'preco'])
             ->unionAll($produtosOutlet)
@@ -262,15 +262,15 @@ PHP,
         'tag'    => 'DISTINCT',
         'cor'    => 'info',
         'desc'   => 'Quais Estados (UF) já compraram produtos da categoria "Peça"? Elimina duplicidades e retorna valores únicos.',
-        'codigo' => <<<PHP
-\$linq = LinqPHP::from(\$vendas)
-    ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
-    ->join(\$clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
-    ->where(['categoria', '=', 'Peça'])
-    ->select(['uf'])
-    ->distinct()
-    ->toObject();
-PHP,
+        'codigo' => <<<PHP_WRAP
+        \$linq = LinqPHP::from(\$vendas)
+            ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+            ->join(\$clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
+            ->where(['categoria', '=', 'Peça'])
+            ->select(['uf'])
+            ->distinct()
+            ->toObject();
+        PHP_WRAP,
         'run' => fn () => LinqPHP::from($vendas)
             ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
             ->join($clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
@@ -285,20 +285,20 @@ PHP,
         'tag'    => 'CLOSURE',
         'cor'    => 'success',
         'desc'   => 'Executa lógica de negócio em PHP puro: pedidos concluídos de Insumos cujo faturamento da linha (qtd * preco) foi maior que R$ 200,00.',
-        'codigo' => <<<PHP
-\$linq = LinqPHP::from(\$vendas)
-    ->where(['status', '=', 'concluido'])
-    ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
-    ->where(function (\$row) {
-        if (\$row['categoria'] !== 'Insumo') {
-            return false;
-        }
-        \$faturamento = \$row['qtd'] * \$row['preco'];
-        return \$faturamento > 200.00;
-    })
-    ->select(['id_venda', 'nome_produto', 'qtd', 'preco'])
-    ->toObject();
-PHP,
+        'codigo' => <<<PHP_WRAP
+        \$linq = LinqPHP::from(\$vendas)
+            ->where(['status', '=', 'concluido'])
+            ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+            ->where(function (\$row) {
+                if (\$row['categoria'] !== 'Insumo') {
+                    return false;
+                }
+                \$faturamento = \$row['qtd'] * \$row['preco'];
+                return \$faturamento > 200.00;
+            })
+            ->select(['id_venda', 'nome_produto', 'qtd', 'preco'])
+            ->toObject();
+        PHP_WRAP,
         'run' => fn () => LinqPHP::from($vendas)
             ->where(['status', '=', 'concluido'])
             ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
@@ -332,30 +332,23 @@ $linq = null;
 $resultado = [];
 
 // Função avaliadora do sandbox interativo
-$avaliarLinq = function (string $rawCode) use ($clientes, $produtos, $produtosOutlet, $vendas): stdClass {
+$avaliarLinq = function (string $rawCode): stdClass {
     $cleanCode = trim($rawCode);
     $prefix = "use HeliomarPM\\LinqPHP\\LinqPHP;\nuse HeliomarPM\\LinqPHP\\JoinType;\n";
-
     if (preg_match('/^(LinqPHP::|\(?new\s+LinqPHP)/i', $cleanCode)) {
         $cleanCode = "return " . $cleanCode;
     }
-
     // Garante que o retorno do script ou da variável $linq seja obtido mesmo se o código tiver closures internas
     $cleanCode .= "\nreturn \$linq ?? \$resultado ?? \$result ?? \$dados ?? null;";
-
     $startTime = microtime(true);
     $startMemory = memory_get_usage(true);
-
     $evalResult = eval($prefix . $cleanCode);
-
     if ($evalResult === null && isset($linq)) {
         $evalResult = $linq;
     }
-
     $endTime = microtime(true);
     $elapsedTime = number_format($endTime - $startTime, 6);
     $memoryUsed = sprintf("%5.2f MB", (memory_get_peak_usage(true) - $startMemory) / 1024 / 1024);
-
     if ($evalResult instanceof LinqPHP) {
         $evalResult = $evalResult->toObject();
     } elseif (is_array($evalResult)) {
@@ -369,7 +362,6 @@ $avaliarLinq = function (string $rawCode) use ($clientes, $produtos, $produtosOu
         $evalResult->elapsedTime = $elapsedTime;
         $evalResult->memoryUsed = $memoryUsed;
     }
-
     if (!($evalResult instanceof \stdClass)) {
         $obj = new \stdClass();
         $obj->data = [];
@@ -378,7 +370,6 @@ $avaliarLinq = function (string $rawCode) use ($clientes, $produtos, $produtosOu
         $obj->memoryUsed = $memoryUsed;
         $evalResult = $obj;
     }
-
     return $evalResult;
 };
 
@@ -405,7 +396,7 @@ try {
 if (!function_exists('renderGrid')) {
     function renderGrid(string $titulo, array $dados, string $corHeader = 'bg-primary', ?int $totalRegistros = null): string
     {
-        if (empty($dados)) {
+        if ($dados === []) {
             return "<div class='alert alert-warning py-2 mb-3' style='font-size: 0.85rem;'>Nenhum registro encontrado.</div>";
         }
 
@@ -712,7 +703,7 @@ if (!function_exists('renderGrid')) {
     <footer class="text-center py-4 text-muted small border-top bg-white mt-5">
         <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
             <span>
-                ⚡ <strong>LinqPHP</strong> © <?= date('Y') ?> Heliomar P. Marques — Zero dependências em produção.
+                ⚡ <strong>LinqPHP</strong> © <?= date('Y') ?> Heliomar P. Marques — Zero dependências.
             </span>
             <div class="d-flex align-items-center gap-3">
                 <a href="https://github.com/heliomarpm/linq-php" target="_blank" rel="noopener noreferrer" class="text-decoration-none text-secondary">

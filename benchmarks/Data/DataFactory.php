@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Benchmarks\Data;
 
 class DataFactory
@@ -17,20 +19,20 @@ class DataFactory
             $products[] = [
               'id' => $i,
               'name' => 'Produto ' . $i,
-              'category' => 'Categoria ' . rand(1, 5),
-              'cost' => rand(10, 1000)
+              'category' => 'Categoria ' . random_int(1, 5),
+              'cost' => random_int(10, 1000)
             ];
         }
 
         // 2. Gera tabela principal de Vendas e tabela para Distinct
         for ($i = 0; $i < $size; $i++) {
-            $produto_id = rand(0, $qtdProdutos - 1);
+            $produto_id = random_int(0, $qtdProdutos - 1);
             $status = $statusOptions[array_rand($statusOptions)];
 
             $sales[] = [
               'id' => $i,
               'product_id' => $produto_id,
-              'value' => rand(10, 1000) / 10,
+              'value' => random_int(10, 1000) / 10,
               'status' => $status
             ];
         }
@@ -57,8 +59,8 @@ class DataFactory
             $students[] = [
               'id' => $i,
               'name' => "Student {$i}",
-              'course_id' => rand(1, $courseCount + 3), // gera órfãos
-              'score' => rand(0, 100),
+              'course_id' => random_int(1, $courseCount + 3), // gera órfãos
+              'score' => random_int(0, 100),
             ];
         }
 

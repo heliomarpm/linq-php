@@ -154,7 +154,7 @@ class BenchmarkRunner
     {
         // Verifica se o script está rodando dentro do GitHub Actions
         if (getenv('GITHUB_ACTIONS') === 'true') {
-            if (!empty($this->githubAnnotations)) {
+            if ($this->githubAnnotations !== []) {
                 echo "\n\n🔔 Emitindo Annotations para o GitHub Actions...\n";
                 foreach ($this->githubAnnotations as $annotation) {
                     echo $annotation . PHP_EOL;
