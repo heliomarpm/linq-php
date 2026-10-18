@@ -3,6 +3,7 @@
 namespace HeliomarPM\LinqPHP;
 
 use InvalidArgumentException;
+use stdClass;
 
 enum JoinType: string
 {
@@ -52,24 +53,6 @@ class LinqPHP
     public static function from(array $data): self
     {
         return new self($data);
-    }
-
-    protected function setData(array $data, string $context = 'setData'): void
-    {
-        $this->data = $this->assertJsonCollection($data, $context);
-    }
-
-    protected function assertJsonCollection(mixed $data, string $context = ''): array
-    {
-        if (!is_array($data)) {
-            throw new InvalidArgumentException($context . ' deve ser um array');
-        }
-
-        if (!array_is_list($data)) {
-            throw new InvalidArgumentException($context . ' deve ser um array indexado (lista)');
-        }
-
-        return $data;
     }
 
 
@@ -132,7 +115,7 @@ class LinqPHP
         $allKeys = array_keys($allKeys);
 
         // Normaliza cada linha para conter todas as chaves
-        $normalize = static fn (array $row) => array_replace(array_fill_keys($allKeys, null), $row);
+        $normalize = static fn(array $row) => array_replace(array_fill_keys($allKeys, null), $row);
 
         $this->data = array_merge(
             array_map($normalize, $this->data),
@@ -141,21 +124,6 @@ class LinqPHP
 
         $this->endTime = microtime(true);
         return $this;
-    }
-
-    private function normalizeCollection(array $data): array
-    {
-        // Caso venha um único objeto, converte em lista
-        if ($this->isAssoc($data)) {
-            return [$data];
-        }
-        return $data;
-    }
-
-    private function isAssoc(array $array): bool
-    {
-        // return array_keys($array) !== range(0, count($array) - 1);
-        return !array_is_list($array);
     }
 
     /**
@@ -248,27 +216,6 @@ class LinqPHP
         return $this;
     }
 
-    private function buildJoinKey(array $item, array $fields): string
-    {
-        $values = [];
-        foreach ($fields as $field) {
-            $values[] = $item[$field] ?? null;
-        }
-        return implode("\0", $values);
-    }
-
-    private function nullFillRightOnly(array $leftItem, array $rightSample): array
-    {
-        if ($rightSample === []) {
-            return [];
-        }
-        $rightKeys = array_keys($rightSample[0]);
-
-        // Remove chaves que já existem no LEFT
-        $keysToNull = array_diff($rightKeys, array_keys($leftItem));
-        return array_fill_keys($keysToNull, null);
-    }
-
     /**
      * Aceita arrays de condições simples ou funções (closures) para filtros complexos.
      *
@@ -294,20 +241,20 @@ class LinqPHP
      * ];
      *
      * $result = LinqPHP::from($data)->where($conditions)->toArray();
-       *
-       * // Múltiplos filtros e operadores (startswith, endswith, contains, in)
-       * $result = LinqPHP::from($data)
-       *     ->where([
-       * 	      ['age', '>=', 25],
-       *        ['status', 'in', ['active', 'pending']],
-       *        ['name', 'startswith', 'J']
-       *     ])
-       *     ->toArray();
-       *
-       * // Usando Closures (funções anônimas)
-       * $result = LinqPHP::from($data)
-       *     ->where(fn($item) => $item['id'] % 2 !== 0)
-       *     ->toArray();
+     *
+     * // Múltiplos filtros e operadores (startswith, endswith, contains, in)
+     * $result = LinqPHP::from($data)
+     *     ->where([
+     * 	      ['age', '>=', 25],
+     *        ['status', 'in', ['active', 'pending']],
+     *        ['name', 'startswith', 'J']
+     *     ])
+     *     ->toArray();
+     *
+     * // Usando Closures (funções anônimas)
+     * $result = LinqPHP::from($data)
+     *     ->where(fn($item) => $item['id'] % 2 !== 0)
+     *     ->toArray();
      *
      * // Usando um array simples
      * $condition = ['age', '>', 30];
@@ -324,82 +271,12 @@ class LinqPHP
 
         $resultadosFiltrados = array_filter(
             $this->data,
-            fn (array $item): bool => $this->matchesConditions($item, $normalizedConditions)
+            fn(array $item): bool => $this->matchesConditions($item, $normalizedConditions)
         );
 
         $this->data = array_values($resultadosFiltrados);
         $this->endTime = microtime(true);
         return $this;
-    }
-
-    private function normalizeWhereConditions(mixed $conditions): array
-    {
-        if (is_callable($conditions) || !is_array($conditions)) {
-            $conditions = [$conditions];
-        } else {
-            $first = reset($conditions);
-            if (!is_array($first) && !is_callable($first)) {
-                $conditions = [$conditions];
-            }
-        }
-
-        $normalizedConditions = [];
-        foreach ($conditions as $cond) {
-            if (is_array($cond) && count($cond) === 3) {
-                $normalizedConditions[] = [
-                  $cond[0],
-                  strtolower((string) $cond[1]),
-                  is_string($cond[2]) ? strtolower($cond[2]) : $cond[2],
-                ];
-            } else {
-                $normalizedConditions[] = $cond;
-            }
-        }
-
-        return $normalizedConditions;
-    }
-
-    private function matchesConditions(array $item, array $normalizedConditions): bool
-    {
-        foreach ($normalizedConditions as $condition) {
-            if (is_callable($condition)) {
-                if (!$condition($item)) {
-                    return false;
-                }
-                continue;
-            }
-
-            if (is_array($condition)) {
-                [$key, $operator, $value] = $condition;
-
-                $itemValue = $item[$key] ?? null;
-                if (is_string($itemValue)) {
-                    $itemValue = strtolower($itemValue);
-                }
-
-                if (!$this->evaluateOperatorMatch($itemValue, $operator, $value)) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    private function evaluateOperatorMatch(mixed $itemValue, string $operator, mixed $value): bool
-    {
-        return match ($operator) {
-            '>' => $itemValue > $value,
-            '>=' => $itemValue >= $value,
-            '<' => $itemValue < $value,
-            '<=' => $itemValue <= $value,
-            '=' => $itemValue == $value,
-            'in' => is_array($value) && in_array($itemValue, $value),
-            'startswith' => is_string($itemValue) && is_string($value) && str_starts_with($itemValue, $value),
-            'endswith' => is_string($itemValue) && is_string($value) && str_ends_with($itemValue, $value),
-            'contains' => is_string($itemValue) && is_string($value) && str_contains($itemValue, $value),
-            default => throw new InvalidArgumentException("Unsupported operator: $operator"),
-        };
     }
 
     /**
@@ -441,7 +318,7 @@ class LinqPHP
                 }
             }
             $valueCounts = array_count_values($allAggFields);
-            $duplicatedFields = array_keys(array_filter($valueCounts, fn (int $count): bool => $count > 1));
+            $duplicatedFields = array_keys(array_filter($valueCounts, fn(int $count): bool => $count > 1));
         }
 
         foreach ($this->data as $item) {
@@ -466,95 +343,6 @@ class LinqPHP
         $this->data = array_values($groupedResult);
         $this->endTime = microtime(true);
         return $this;
-    }
-
-    private function groupByDefaultAggregations(
-        array &$groupedResult,
-        string $groupKey,
-        array $groupingFields,
-        array $item
-    ): void {
-        foreach ($item as $key => $value) {
-            if (!in_array($key, $groupingFields, true)) {
-                if (is_numeric($value)) {
-                    // Aplica a soma para as chaves que podem ser somadas
-                    $groupedResult[$groupKey][$key] = isset($groupedResult[$groupKey][$key])
-                      ? $groupedResult[$groupKey][$key] + (float) $value
-                      : (float) $value;
-                } else {
-                    // Aplica o maior valor para chaves que não podem ser somadas
-                    $groupedResult[$groupKey][$key] = isset($groupedResult[$groupKey][$key])
-                      ? max($groupedResult[$groupKey][$key], $value)
-                      : $value;
-                }
-            }
-        }
-    }
-
-    private function groupByCustomAggregations(
-        array &$groupedResult,
-        string $groupKey,
-        array $aggregations,
-        array $duplicatedFields,
-        array $item
-    ): void {
-        foreach ($aggregations as $operation => $fields) {
-            $operation = strtolower($operation);
-
-            foreach ($fields as $field) {
-                $fieldName = in_array($field, $duplicatedFields, true)
-                  ? $field . "_($operation)"
-                  : $field;
-
-                switch ($operation) {
-                    case 'sum':
-                        $groupedResult[$groupKey][$fieldName] = isset($groupedResult[$groupKey][$fieldName])
-                          ? $groupedResult[$groupKey][$fieldName] + (float) $item[$field]
-                          : (float) $item[$field];
-                        break;
-                    case 'max':
-                        $groupedResult[$groupKey][$fieldName] = isset($groupedResult[$groupKey][$fieldName])
-                          ? max($groupedResult[$groupKey][$fieldName], $item[$field])
-                          : $item[$field];
-                        break;
-                    case 'min':
-                        $groupedResult[$groupKey][$fieldName] = isset($groupedResult[$groupKey][$fieldName])
-                          ? min($groupedResult[$groupKey][$fieldName], $item[$field] ?? $groupedResult[$groupKey][$fieldName])
-                          : $item[$field];
-                        break;
-                    case 'count':
-                        $groupedResult[$groupKey][$fieldName] = isset($groupedResult[$groupKey][$fieldName])
-                          ? $groupedResult[$groupKey][$fieldName] + 1
-                          : 1;
-                        break;
-                    case 'avg':
-                        $groupedResult[$groupKey][$fieldName][] = (float) $item[$field];
-                        break;
-                }
-            }
-        }
-    }
-
-    private function resolveGroupAverages(array &$groupedResult, array $aggregations): void
-    {
-        foreach ($aggregations as $operation => $fields) {
-            if (strtolower($operation) === 'avg') {
-                foreach ($groupedResult as &$group) {
-                    foreach ($fields as $field) {
-                        $avgField = $field;
-                        if (array_key_exists($field . "_(avg)", $group)) {
-                            $avgField .= "_(avg)";
-                        }
-                        if (isset($group[$avgField]) && is_array($group[$avgField])) {
-                            $sum = array_sum($group[$avgField]);
-                            $count = count($group[$avgField]);
-                            $group[$avgField] = $count > 0 ? $sum / $count : null;
-                        }
-                    }
-                }
-                unset($group);
-            }
-        }
     }
 
     /**
@@ -779,11 +567,224 @@ class LinqPHP
         return $this;
     }
 
+    protected function setData(array $data, string $context = 'setData'): void
+    {
+        $this->data = $this->assertJsonCollection($data, $context);
+    }
+
+    protected function assertJsonCollection(mixed $data, string $context = ''): array
+    {
+        if (!is_array($data)) {
+            throw new InvalidArgumentException($context . ' deve ser um array');
+        }
+
+        if (!array_is_list($data)) {
+            throw new InvalidArgumentException($context . ' deve ser um array indexado (lista)');
+        }
+
+        return $data;
+    }
+
+    private function normalizeCollection(array $data): array
+    {
+        // Caso venha um único objeto, converte em lista
+        if ($this->isAssoc($data)) {
+            return [$data];
+        }
+        return $data;
+    }
+
+    private function isAssoc(array $array): bool
+    {
+        // return array_keys($array) !== range(0, count($array) - 1);
+        return !array_is_list($array);
+    }
+
+    private function buildJoinKey(array $item, array $fields): string
+    {
+        $values = [];
+        foreach ($fields as $field) {
+            $values[] = $item[$field] ?? null;
+        }
+        return implode("\0", $values);
+    }
+
+    private function nullFillRightOnly(array $leftItem, array $rightSample): array
+    {
+        if ($rightSample === []) {
+            return [];
+        }
+        $rightKeys = array_keys($rightSample[0]);
+
+        // Remove chaves que já existem no LEFT
+        $keysToNull = array_diff($rightKeys, array_keys($leftItem));
+        return array_fill_keys($keysToNull, null);
+    }
+
+    private function normalizeWhereConditions(mixed $conditions): array
+    {
+        if (is_callable($conditions) || !is_array($conditions)) {
+            $conditions = [$conditions];
+        } else {
+            $first = reset($conditions);
+            if (!is_array($first) && !is_callable($first)) {
+                $conditions = [$conditions];
+            }
+        }
+
+        $normalizedConditions = [];
+        foreach ($conditions as $cond) {
+            if (is_array($cond) && count($cond) === 3) {
+                $normalizedConditions[] = [
+                    $cond[0],
+                    strtolower((string)$cond[1]),
+                    is_string($cond[2]) ? strtolower($cond[2]) : $cond[2],
+                ];
+            } else {
+                $normalizedConditions[] = $cond;
+            }
+        }
+
+        return $normalizedConditions;
+    }
+
+    private function matchesConditions(array $item, array $normalizedConditions): bool
+    {
+        foreach ($normalizedConditions as $condition) {
+            if (is_callable($condition)) {
+                if (!$condition($item)) {
+                    return false;
+                }
+                continue;
+            }
+
+            if (is_array($condition)) {
+                [$key, $operator, $value] = $condition;
+
+                $itemValue = $item[$key] ?? null;
+                if (is_string($itemValue)) {
+                    $itemValue = strtolower($itemValue);
+                }
+
+                if (!$this->evaluateOperatorMatch($itemValue, $operator, $value)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private function evaluateOperatorMatch(mixed $itemValue, string $operator, mixed $value): bool
+    {
+        return match ($operator) {
+            '>' => $itemValue > $value,
+            '>=' => $itemValue >= $value,
+            '<' => $itemValue < $value,
+            '<=' => $itemValue <= $value,
+            '=' => $itemValue == $value,
+            'in' => is_array($value) && in_array($itemValue, $value),
+            'startswith' => is_string($itemValue) && is_string($value) && str_starts_with($itemValue, $value),
+            'endswith' => is_string($itemValue) && is_string($value) && str_ends_with($itemValue, $value),
+            'contains' => is_string($itemValue) && is_string($value) && str_contains($itemValue, $value),
+            default => throw new InvalidArgumentException("Unsupported operator: {$operator}"),
+        };
+    }
+
+    private function groupByDefaultAggregations(
+        array &$groupedResult,
+        string $groupKey,
+        array $groupingFields,
+        array $item
+    ): void {
+        foreach ($item as $key => $value) {
+            if (!in_array($key, $groupingFields, true)) {
+                if (is_numeric($value)) {
+                    // Aplica a soma para as chaves que podem ser somadas
+                    $groupedResult[$groupKey][$key] = isset($groupedResult[$groupKey][$key])
+                      ? $groupedResult[$groupKey][$key] + (float)$value
+                      : (float)$value;
+                } else {
+                    // Aplica o maior valor para chaves que não podem ser somadas
+                    $groupedResult[$groupKey][$key] = isset($groupedResult[$groupKey][$key])
+                      ? max($groupedResult[$groupKey][$key], $value)
+                      : $value;
+                }
+            }
+        }
+    }
+
+    private function groupByCustomAggregations(
+        array &$groupedResult,
+        string $groupKey,
+        array $aggregations,
+        array $duplicatedFields,
+        array $item
+    ): void {
+        foreach ($aggregations as $operation => $fields) {
+            $operation = strtolower($operation);
+
+            foreach ($fields as $field) {
+                $fieldName = in_array($field, $duplicatedFields, true)
+                  ? $field . "_({$operation})"
+                  : $field;
+
+                switch ($operation) {
+                    case 'sum':
+                        $groupedResult[$groupKey][$fieldName] = isset($groupedResult[$groupKey][$fieldName])
+                          ? $groupedResult[$groupKey][$fieldName] + (float)$item[$field]
+                          : (float)$item[$field];
+                        break;
+                    case 'max':
+                        $groupedResult[$groupKey][$fieldName] = isset($groupedResult[$groupKey][$fieldName])
+                          ? max($groupedResult[$groupKey][$fieldName], $item[$field])
+                          : $item[$field];
+                        break;
+                    case 'min':
+                        $groupedResult[$groupKey][$fieldName] = isset($groupedResult[$groupKey][$fieldName])
+                          ? min($groupedResult[$groupKey][$fieldName], $item[$field] ?? $groupedResult[$groupKey][$fieldName])
+                          : $item[$field];
+                        break;
+                    case 'count':
+                        $groupedResult[$groupKey][$fieldName] = isset($groupedResult[$groupKey][$fieldName])
+                          ? $groupedResult[$groupKey][$fieldName] + 1
+                          : 1;
+                        break;
+                    case 'avg':
+                        $groupedResult[$groupKey][$fieldName][] = (float)$item[$field];
+                        break;
+                }
+            }
+        }
+    }
+
+    private function resolveGroupAverages(array &$groupedResult, array $aggregations): void
+    {
+        foreach ($aggregations as $operation => $fields) {
+            if (strtolower($operation) === 'avg') {
+                foreach ($groupedResult as &$group) {
+                    foreach ($fields as $field) {
+                        $avgField = $field;
+                        if (array_key_exists($field . "_(avg)", $group)) {
+                            $avgField .= "_(avg)";
+                        }
+                        if (isset($group[$avgField]) && is_array($group[$avgField])) {
+                            $sum = array_sum($group[$avgField]);
+                            $count = count($group[$avgField]);
+                            $group[$avgField] = $count > 0 ? $sum / $count : null;
+                        }
+                    }
+                }
+                unset($group);
+            }
+        }
+    }
+
     private function statisticUsage(): array
     {
         return [
-          'elapsedTime' => number_format($this->endTime - $this->startTime, 6),
-          'memoryUsed' => sprintf("%5.2f MB", (memory_get_peak_usage(true) - $this->startMemory) / 1024 / 1024),
+            'elapsedTime' => number_format($this->endTime - $this->startTime, 6),
+            'memoryUsed' => sprintf("%5.2f MB", (memory_get_peak_usage(true) - $this->startMemory) / 1024 / 1024),
         ];
     }
 
@@ -798,7 +799,7 @@ class LinqPHP
     /**
      * Converte o objeto atual em um objeto stdClass.
      *
-     * @return \stdClass {elapsedTime: float, memoryUsed: string, count: int, data: array} O objeto convertido.
+     * @return stdClass {elapsedTime: float, memoryUsed: string, count: int, data: array} O objeto convertido.
      *
      * * Exemplo de saída:
      * ```php
@@ -809,11 +810,11 @@ class LinqPHP
      * echo $result->data; // Output: array<int, array<string, mixed>>
      * ```
      */
-    public function toObject(): \stdClass
+    public function toObject(): stdClass
     {
         $statistic = $this->statisticUsage();
 
-        $result = new \stdClass();
+        $result = new stdClass();
         $result->elapsedTime = $statistic['elapsedTime'];
         $result->memoryUsed = $statistic['memoryUsed'];
         $result->count = count($this->data);

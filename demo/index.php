@@ -2,8 +2,8 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use HeliomarPM\LinqPHP\LinqPHP;
 use HeliomarPM\LinqPHP\JoinType;
+use HeliomarPM\LinqPHP\LinqPHP;
 
 // ==========================================
 // 1. MASSA DE DADOS (4 Coleções Relacionais)
@@ -83,7 +83,7 @@ $cenarios = [
             ])
             ->toObject();
         PHP_WRAP,
-        'run' => fn () => LinqPHP::from($vendas)
+        'run' => fn() => LinqPHP::from($vendas)
             ->where(['status', '=', 'concluido'])
             ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
             ->join($clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
@@ -95,9 +95,9 @@ $cenarios = [
                 'uf',
                 'nome_produto' => 'Produto',
                 'qtd'          => 'Quantidade',
-                'preco'        => 'Valor Unitário'
+                'preco'        => 'Valor Unitário',
             ])
-            ->toObject()
+            ->toObject(),
     ],
 
     'todas_agregacoes' => [
@@ -117,16 +117,16 @@ $cenarios = [
             ])
             ->toObject();
         PHP_WRAP,
-        'run' => fn () => LinqPHP::from($vendas)
+        'run' => fn() => LinqPHP::from($vendas)
             ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
             ->groupBy(['categoria'], [
                 'sum'   => ['qtd'],
                 'count' => ['id_venda'],
                 'max'   => ['preco'],
                 'min'   => ['preco'],
-                'avg'   => ['preco']
+                'avg'   => ['preco'],
             ])
-            ->toObject()
+            ->toObject(),
     ],
 
     'totalizador_global' => [
@@ -143,13 +143,13 @@ $cenarios = [
             ])
             ->toObject();
         PHP_WRAP,
-        'run' => fn () => LinqPHP::from($vendas)
+        'run' => fn() => LinqPHP::from($vendas)
             ->where(['status', '=', 'concluido'])
             ->groupBy([], [
                 'sum'   => ['qtd'],
-                'count' => ['id_venda' => 'total_vendas']
+                'count' => ['id_venda' => 'total_vendas'],
             ])
-            ->toObject()
+            ->toObject(),
     ],
 
     'top_vendas' => [
@@ -166,13 +166,13 @@ $cenarios = [
             ->take(4)
             ->toObject();
         PHP_WRAP,
-        'run' => fn () => LinqPHP::from($vendas)
+        'run' => fn() => LinqPHP::from($vendas)
             ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
             ->where(['status', '=', 'concluido'])
             ->orderByKey('qtd', 'desc')
             ->select(['id_venda', 'nome_produto', 'categoria', 'qtd', 'preco'])
             ->take(4)
-            ->toObject()
+            ->toObject(),
     ],
 
     'full_join' => [
@@ -186,10 +186,10 @@ $cenarios = [
             ->select(['id_venda', 'produto_id', 'nome_produto', 'categoria', 'qtd', 'preco'])
             ->toObject();
         PHP_WRAP,
-        'run' => fn () => LinqPHP::from($vendas)
+        'run' => fn() => LinqPHP::from($vendas)
             ->join($produtos, JoinType::FULL, ['produto_id' => 'id_produto'])
             ->select(['id_venda', 'produto_id', 'nome_produto', 'categoria', 'qtd', 'preco'])
-            ->toObject()
+            ->toObject(),
     ],
 
     'right_join' => [
@@ -203,10 +203,10 @@ $cenarios = [
             ->select(['id_cliente', 'nome_cliente', 'cidade', 'uf', 'id_venda', 'status'])
             ->toObject();
         PHP_WRAP,
-        'run' => fn () => LinqPHP::from($vendas)
+        'run' => fn() => LinqPHP::from($vendas)
             ->join($clientes, JoinType::RIGHT, ['cliente_id' => 'id_cliente'])
             ->select(['id_cliente', 'nome_cliente', 'cidade', 'uf', 'id_venda', 'status'])
-            ->toObject()
+            ->toObject(),
     ],
 
     'multi_where' => [
@@ -226,16 +226,16 @@ $cenarios = [
             ->orderByKey('preco', 'asc')
             ->toObject();
         PHP_WRAP,
-        'run' => fn () => LinqPHP::from($produtos)
+        'run' => fn() => LinqPHP::from($produtos)
             ->where([
                 ['preco', '>=', 80.0],
                 ['preco', '<=', 150.0],
                 ['categoria', '=', 'Insumo'],
-                ['estoque', '>', 10]
+                ['estoque', '>', 10],
             ])
             ->select(['nome_produto', 'categoria', 'preco', 'estoque'])
             ->orderByKey('preco', 'asc')
-            ->toObject()
+            ->toObject(),
     ],
 
     'union_outlet' => [
@@ -250,11 +250,11 @@ $cenarios = [
             ->orderByKey('preco', 'asc')
             ->toObject();
         PHP_WRAP,
-        'run' => fn () => LinqPHP::from($produtos)
+        'run' => fn() => LinqPHP::from($produtos)
             ->select(['id_produto', 'nome_produto', 'categoria', 'preco'])
             ->unionAll($produtosOutlet)
             ->orderByKey('preco', 'asc')
-            ->toObject()
+            ->toObject(),
     ],
 
     'distinct_uf' => [
@@ -271,13 +271,13 @@ $cenarios = [
             ->distinct()
             ->toObject();
         PHP_WRAP,
-        'run' => fn () => LinqPHP::from($vendas)
+        'run' => fn() => LinqPHP::from($vendas)
             ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
             ->join($clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
             ->where(['categoria', '=', 'Peça'])
             ->select(['uf'])
             ->distinct()
-            ->toObject()
+            ->toObject(),
     ],
 
     'complex_closure' => [
@@ -299,7 +299,7 @@ $cenarios = [
             ->select(['id_venda', 'nome_produto', 'qtd', 'preco'])
             ->toObject();
         PHP_WRAP,
-        'run' => fn () => LinqPHP::from($vendas)
+        'run' => fn() => LinqPHP::from($vendas)
             ->where(['status', '=', 'concluido'])
             ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
             ->where(function ($row) {
@@ -310,8 +310,8 @@ $cenarios = [
                 return $faturamento > 200.00;
             })
             ->select(['id_venda', 'nome_produto', 'qtd', 'preco'])
-            ->toObject()
-    ]
+            ->toObject(),
+    ],
 ];
 
 // Identifica o cenário atual pela URL
@@ -323,7 +323,7 @@ if (!array_key_exists($cenarioAtual, $cenarios)) {
 $dadosCenario = $cenarios[$cenarioAtual];
 
 $codigoAtivo = $_POST['codigo_customizado'] ?? $dadosCenario['codigo'];
-$normalizarQuebras = static fn (string $str): string => str_replace(["\r\n", "\r"], "\n", trim($str));
+$normalizarQuebras = static fn(string $str): string => str_replace(["\r\n", "\r"], "\n", trim($str));
 $isCustomCode = isset($_POST['codigo_customizado'])
     && $normalizarQuebras($_POST['codigo_customizado']) !== $normalizarQuebras($dadosCenario['codigo']);
 
@@ -352,18 +352,18 @@ $avaliarLinq = function (string $rawCode): stdClass {
     if ($evalResult instanceof LinqPHP) {
         $evalResult = $evalResult->toObject();
     } elseif (is_array($evalResult)) {
-        $obj = new \stdClass();
+        $obj = new stdClass();
         $obj->data = $evalResult;
         $obj->count = count($evalResult);
         $obj->elapsedTime = $elapsedTime;
         $obj->memoryUsed = $memoryUsed;
         $evalResult = $obj;
-    } elseif ($evalResult instanceof \stdClass && !isset($evalResult->elapsedTime)) {
+    } elseif ($evalResult instanceof stdClass && !isset($evalResult->elapsedTime)) {
         $evalResult->elapsedTime = $elapsedTime;
         $evalResult->memoryUsed = $memoryUsed;
     }
-    if (!($evalResult instanceof \stdClass)) {
-        $obj = new \stdClass();
+    if (!($evalResult instanceof stdClass)) {
+        $obj = new stdClass();
         $obj->data = [];
         $obj->count = 0;
         $obj->elapsedTime = $elapsedTime;
@@ -380,9 +380,9 @@ try {
         $linq = $dadosCenario['run']();
     }
     $resultado = $linq->data ?? [];
-} catch (\Throwable $e) {
+} catch (Throwable $e) {
     $erroExecucao = $e->getMessage();
-    $linq = new \stdClass();
+    $linq = new stdClass();
     $linq->data = [];
     $linq->count = 0;
     $linq->elapsedTime = '0.000000';
@@ -441,7 +441,7 @@ if (!function_exists('renderGrid')) {
                     };
                     $celula = "<span class='badge rounded-pill {$corStatus} text-uppercase' style='font-size: 0.68rem;'>{$valor}</span>";
                 } else {
-                    $celula = htmlspecialchars((string) $valor);
+                    $celula = htmlspecialchars((string)$valor);
                 }
 
                 $html .= "<td class='py-2 px-2'>{$celula}</td>";

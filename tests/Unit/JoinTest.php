@@ -1,50 +1,11 @@
 <?php
 
-use PHPUnit\Framework\TestCase;
-use HeliomarPM\LinqPHP\LinqPHP;
 use HeliomarPM\LinqPHP\JoinType;
+use HeliomarPM\LinqPHP\LinqPHP;
+use PHPUnit\Framework\TestCase;
 
 class JoinTest extends TestCase
 {
-    private function generateLeftData(int $size): array
-    {
-        $data = [];
-
-        for ($i = 1; $i <= $size; $i++) {
-            $data[] = [
-              'id' => $i,
-              'user_name' => 'User ' . $i,
-              'group_id' => $i % 10
-            ];
-        }
-
-        return $data;
-    }
-
-    private function generateRightData(int $size): array
-    {
-        $data = [];
-
-        for ($i = 1; $i <= $size; $i++) {
-            $data[] = [
-              'id' => $i,
-              'group_id' => $i % 10,
-              'score' => random_int(0, 100)
-            ];
-        }
-
-        // adiciona registros sem match no LEFT
-        for ($i = $size + 1; $i <= $size + 20; $i++) {
-            $data[] = [
-              'id' => $i,
-              'group_id' => $i % 10,
-              'score' => random_int(0, 100)
-            ];
-        }
-
-        return $data;
-    }
-
     // ==========================================================
     // INNER JOIN
     // ==========================================================
@@ -109,7 +70,7 @@ class JoinTest extends TestCase
 
         $rightOnlyRows = array_filter(
             $result,
-            fn ($r) => $r['user_name'] === null
+            fn($r) => $r['user_name'] === null
         );
 
         $this->assertGreaterThan(0, count($rightOnlyRows));
@@ -150,17 +111,17 @@ class JoinTest extends TestCase
     public function testInnerJoin()
     {
         $a = [
-          ['id' => 1, 'course_id' => 10],
-          ['id' => 2, 'course_id' => 20],
+            ['id' => 1, 'course_id' => 10],
+            ['id' => 2, 'course_id' => 20],
         ];
 
         $b = [
-          ['course_id' => 10, 'name' => 'Math'],
-          ['course_id' => 30, 'name' => 'Physics'],
+            ['course_id' => 10, 'name' => 'Math'],
+            ['course_id' => 30, 'name' => 'Physics'],
         ];
 
         $expected = [
-          ['id' => 1, 'course_id' => 10, 'name' => 'Math']
+            ['id' => 1, 'course_id' => 10, 'name' => 'Math'],
         ];
 
         $result = LinqPHP::from($a)
@@ -175,7 +136,7 @@ class JoinTest extends TestCase
     public function testLeftJoin()
     {
         $a = [
-          ['id' => 1, 'course_id' => 10, 'name' => 'Math'],
+            ['id' => 1, 'course_id' => 10, 'name' => 'Math'],
         ];
 
         $b = [];
@@ -195,8 +156,8 @@ class JoinTest extends TestCase
     {
         $a = [];
         $b = [
-          ['course_id' => 10, 'name' => 'Math'],
-          ['course_id' => 30, 'name' => 'Physics'],
+            ['course_id' => 10, 'name' => 'Math'],
+            ['course_id' => 30, 'name' => 'Physics'],
         ];
 
         $expected = $b;
@@ -216,18 +177,18 @@ class JoinTest extends TestCase
     public function testJoinWithInnerJoin()
     {
         $data = [
-          ['id' => 1, 'name' => 'John', 'id_course' => 1],
-          ['id' => 2, 'name' => 'Jane', 'id_course' => 1],
+            ['id' => 1, 'name' => 'John', 'id_course' => 1],
+            ['id' => 2, 'name' => 'Jane', 'id_course' => 1],
         ];
 
         $array2 = [
-          ['id' => 1, 'age' => 25, 'course_id' => 1],
-          ['id' => 1, 'age' => 25, 'course_id' => 2],
-          ['id' => 3, 'age' => 30, 'course_id' => 1],
+            ['id' => 1, 'age' => 25, 'course_id' => 1],
+            ['id' => 1, 'age' => 25, 'course_id' => 2],
+            ['id' => 3, 'age' => 30, 'course_id' => 1],
         ];
 
         $expectedResult = [
-          ['id' => 1, 'name' => 'John', 'id_course' => 1, 'age' => 25, 'course_id' => 1]
+            ['id' => 1, 'name' => 'John', 'id_course' => 1, 'age' => 25, 'course_id' => 1],
         ];
 
         $instance = new LinqPHP($data);
@@ -240,19 +201,19 @@ class JoinTest extends TestCase
     public function testJoinWithLeftJoin()
     {
         $data = [
-          ['id' => 1, 'name' => 'John', 'id_course' => 1],
-          ['id' => 2, 'name' => 'Jane', 'id_course' => 1],
+            ['id' => 1, 'name' => 'John', 'id_course' => 1],
+            ['id' => 2, 'name' => 'Jane', 'id_course' => 1],
         ];
 
         $array2 = [
-          ['id' => 1, 'age' => 25, 'course_id' => 1],
-          ['id' => 1, 'age' => 25, 'course_id' => 2],
-          ['id' => 3, 'age' => 30, 'course_id' => 1],
+            ['id' => 1, 'age' => 25, 'course_id' => 1],
+            ['id' => 1, 'age' => 25, 'course_id' => 2],
+            ['id' => 3, 'age' => 30, 'course_id' => 1],
         ];
 
         $expectedResult = [
-          ['id' => 1, 'name' => 'John', 'id_course' => 1, 'age' => 25, 'course_id' => 1],
-          ['id' => 2, 'name' => 'Jane', 'id_course' => 1, 'age' => null, 'course_id' => null],
+            ['id' => 1, 'name' => 'John', 'id_course' => 1, 'age' => 25, 'course_id' => 1],
+            ['id' => 2, 'name' => 'Jane', 'id_course' => 1, 'age' => null, 'course_id' => null],
         ];
 
         $instance = new LinqPHP($data);
@@ -265,20 +226,20 @@ class JoinTest extends TestCase
     public function testJoinWithRightJoin()
     {
         $a = [
-          ['id' => 1, 'name' => 'John', 'id_course' => 1],
-          ['id' => 2, 'name' => 'Jane', 'id_course' => 1],
+            ['id' => 1, 'name' => 'John', 'id_course' => 1],
+            ['id' => 2, 'name' => 'Jane', 'id_course' => 1],
         ];
 
         $b = [
-          ['id' => 1, 'age' => 25, 'course_id' => 1],
-          ['id' => 1, 'age' => 25, 'course_id' => 2],
-          ['id' => 3, 'age' => 30, 'course_id' => 1],
+            ['id' => 1, 'age' => 25, 'course_id' => 1],
+            ['id' => 1, 'age' => 25, 'course_id' => 2],
+            ['id' => 3, 'age' => 30, 'course_id' => 1],
         ];
 
         $expectedResult = [
-          ['id' => 1, 'name' => 'John', 'id_course' => 1, 'age' => 25, 'course_id' => 1],
-          ['id' => 1, 'name' => null, 'id_course' => null, 'age' => 25, 'course_id' => 2],
-          ['id' => 3, 'name' => null, 'id_course' => null, 'age' => 30, 'course_id' => 1],
+            ['id' => 1, 'name' => 'John', 'id_course' => 1, 'age' => 25, 'course_id' => 1],
+            ['id' => 1, 'name' => null, 'id_course' => null, 'age' => 25, 'course_id' => 2],
+            ['id' => 3, 'name' => null, 'id_course' => null, 'age' => 30, 'course_id' => 1],
         ];
 
         $instance = new LinqPHP($a);
@@ -291,21 +252,21 @@ class JoinTest extends TestCase
     public function testJoinWithFullJoin()
     {
         $data = [
-          ['id' => 1, 'name' => 'John', 'id_course' => 1],
-          ['id' => 2, 'name' => 'Jane', 'id_course' => 1],
+            ['id' => 1, 'name' => 'John', 'id_course' => 1],
+            ['id' => 2, 'name' => 'Jane', 'id_course' => 1],
         ];
 
         $array2 = [
-          ['id' => 1, 'age' => 25, 'course_id' => 1],
-          ['id' => 1, 'age' => 25, 'course_id' => 2],
-          ['id' => 3, 'age' => 30, 'course_id' => 1],
+            ['id' => 1, 'age' => 25, 'course_id' => 1],
+            ['id' => 1, 'age' => 25, 'course_id' => 2],
+            ['id' => 3, 'age' => 30, 'course_id' => 1],
         ];
 
         $expectedResult = [
-          ['id' => 1, 'name' => 'John', 'id_course' => 1, 'age' => 25, 'course_id' => 1],
-          ['id' => 1, 'name' => null, 'id_course' => null, 'age' => 25, 'course_id' => 2],
-          ['id' => 2, 'name' => 'Jane', 'id_course' => 1, 'age' => null, 'course_id' => null],
-          ['id' => 3, 'name' => null, 'id_course' => null, 'age' => 30, 'course_id' => 1],
+            ['id' => 1, 'name' => 'John', 'id_course' => 1, 'age' => 25, 'course_id' => 1],
+            ['id' => 1, 'name' => null, 'id_course' => null, 'age' => 25, 'course_id' => 2],
+            ['id' => 2, 'name' => 'Jane', 'id_course' => 1, 'age' => null, 'course_id' => null],
+            ['id' => 3, 'name' => null, 'id_course' => null, 'age' => 30, 'course_id' => 1],
         ];
 
         $instance = new LinqPHP($data);
@@ -314,5 +275,43 @@ class JoinTest extends TestCase
         $result = $instance->toArray();
 
         $this->assertEquals($expectedResult, $result);
+    }
+    private function generateLeftData(int $size): array
+    {
+        $data = [];
+
+        for ($i = 1; $i <= $size; $i++) {
+            $data[] = [
+                'id' => $i,
+                'user_name' => 'User ' . $i,
+                'group_id' => $i % 10,
+            ];
+        }
+
+        return $data;
+    }
+
+    private function generateRightData(int $size): array
+    {
+        $data = [];
+
+        for ($i = 1; $i <= $size; $i++) {
+            $data[] = [
+                'id' => $i,
+                'group_id' => $i % 10,
+                'score' => random_int(0, 100),
+            ];
+        }
+
+        // adiciona registros sem match no LEFT
+        for ($i = $size + 1; $i <= $size + 20; $i++) {
+            $data[] = [
+                'id' => $i,
+                'group_id' => $i % 10,
+                'score' => random_int(0, 100),
+            ];
+        }
+
+        return $data;
     }
 }

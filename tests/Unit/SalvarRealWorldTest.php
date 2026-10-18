@@ -1,8 +1,8 @@
 <?php
 
-use PHPUnit\Framework\TestCase;
-use HeliomarPM\LinqPHP\LinqPHP;
 use HeliomarPM\LinqPHP\JoinType;
+use HeliomarPM\LinqPHP\LinqPHP;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Testes unitários com dados mockados baseados em cenários reais de uso
@@ -126,7 +126,7 @@ class SalvarRealWorldTest extends TestCase
         // Act - uso real em cliente.php:
         // LinqPHP::from($rs_compras->rows)->where(fn ($row) => $row["id_statusvenda"] != 2)->groupBy([], ['sum' => ['valor_venda'], 'count' => ['id_venda' => 'count']])->toArray()
         $efetivadas = LinqPHP::from($mockSalesHistory)
-            ->where(fn (array $row): bool => $row['id_statusvenda'] != 2)
+            ->where(fn(array $row): bool => $row['id_statusvenda'] != 2)
             ->groupBy([], ['sum' => ['valor_venda'], 'count' => ['id_venda' => 'count']])
             ->toArray();
 
@@ -155,7 +155,7 @@ class SalvarRealWorldTest extends TestCase
 
         // Act
         $efetivadas = LinqPHP::from($mockSalesHistory)
-            ->where(fn (array $row): bool => $row['id_statusvenda'] != 2)
+            ->where(fn(array $row): bool => $row['id_statusvenda'] != 2)
             ->groupBy([], ['sum' => ['valor_venda'], 'count' => ['id_venda' => 'count']])
             ->toArray();
 

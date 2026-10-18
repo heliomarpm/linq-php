@@ -4,24 +4,15 @@ declare(strict_types=1);
 
 namespace HeliomarPM\LinqPHP\Benchmark;
 
-use HeliomarPM\LinqPHP\LinqPHP;
+use Generator;
 use Heliomarpm\LinqPHP\JoinType;
+use HeliomarPM\LinqPHP\LinqPHP;
 
 class BenchPerformance
 {
     private array $vendas;
     private array $produtos;
     private array $dadosParaDistinct;
-
-    /**
-     * Define os cenários de carga de dados.
-     * O PHPBench vai rodar todos os métodos de teste para CADA um desses tamanhos.
-     */
-    public function provideDataSizes(): \Generator
-    {
-        yield '10k_registros' => ['tamanho' => 10000];
-        yield '50k_registros' => ['tamanho' => 50000];
-    }
 
     /**
      * Este método roda antes de cada benchmark, recebendo os parâmetros do provedor.
@@ -36,12 +27,12 @@ class BenchPerformance
         $statusOptions = ['concluido', 'pendente', 'cancelado'];
 
         // 1. Gera tabela de Produtos (10% do tamanho total para simular um catálogo realista)
-        $qtdProdutos = max(1, (int) ($tamanho / 10));
+        $qtdProdutos = max(1, (int)($tamanho / 10));
         for ($i = 0; $i < $qtdProdutos; $i++) {
             $this->produtos[] = [
-              'id_produto' => $i,
-              'nome_produto' => 'Produto ' . $i,
-              'categoria' => 'Categoria ' . random_int(1, 5)
+                'id_produto' => $i,
+                'nome_produto' => 'Produto ' . $i,
+                'categoria' => 'Categoria ' . random_int(1, 5),
             ];
         }
 
@@ -51,18 +42,28 @@ class BenchPerformance
             $status = $statusOptions[array_rand($statusOptions)];
 
             $this->vendas[] = [
-              'id_venda' => $i,
-              'produto_id' => $produto_id,
-              'valor' => random_int(10, 1000) / 10,
-              'status' => $status
+                'id_venda' => $i,
+                'produto_id' => $produto_id,
+                'valor' => random_int(10, 1000) / 10,
+                'status' => $status,
             ];
 
             // Array com altíssima repetição (ótimo para testar o distinct)
             $this->dadosParaDistinct[] = [
-              'produto_id' => $produto_id,
-              'status' => $status
+                'produto_id' => $produto_id,
+                'status' => $status,
             ];
         }
+    }
+
+    /**
+     * Define os cenários de carga de dados.
+     * O PHPBench vai rodar todos os métodos de teste para CADA um desses tamanhos.
+     */
+    public function provideDataSizes(): Generator
+    {
+        yield '10k_registros' => ['tamanho' => 10000];
+        yield '50k_registros' => ['tamanho' => 50000];
     }
 
     /**
@@ -88,8 +89,8 @@ class BenchPerformance
     {
         LinqPHP::from($this->vendas)
           ->groupBy(['produto_id'], [
-            'sum' => ['valor'],
-            'count' => ['id_venda']
+              'sum' => ['valor'],
+              'count' => ['id_venda'],
           ])
           ->toArray();
     }

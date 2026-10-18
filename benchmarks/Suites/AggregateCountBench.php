@@ -19,8 +19,8 @@ class AggregateCountBench extends BenchmarkSuite
           ->groupBy(
               ['status'],
               [
-              'count' => ['id']
-        ]
+                  'count' => ['id'],
+              ]
           )
           ->toArray();
     }

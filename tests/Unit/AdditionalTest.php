@@ -2,21 +2,21 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
-use HeliomarPM\LinqPHP\LinqPHP;
 use HeliomarPM\LinqPHP\JoinType;
+use HeliomarPM\LinqPHP\LinqPHP;
+use PHPUnit\Framework\TestCase;
 
 class AdditionalTest extends TestCase
 {
     public function testUnionAllMergesAndFillsNulls()
     {
         $a = [
-          ['id' => 1, 'name' => 'John'],
-          ['id' => 2, 'name' => 'Jane'],
+            ['id' => 1, 'name' => 'John'],
+            ['id' => 2, 'name' => 'Jane'],
         ];
         $b = [
-          ['id' => 1, 'age' => 25],
-          ['id' => 3, 'age' => 30],
+            ['id' => 1, 'age' => 25],
+            ['id' => 3, 'age' => 30],
         ];
 
         $result = LinqPHP::from($a)->unionAll($b)->toArray();
@@ -31,24 +31,24 @@ class AdditionalTest extends TestCase
     public function testSelectKeepsOnlyGivenKeys()
     {
         $data = [
-          ['id' => 1, 'name' => 'John', 'age' => 25],
-          ['id' => 2, 'name' => 'Jane', 'age' => 30],
+            ['id' => 1, 'name' => 'John', 'age' => 25],
+            ['id' => 2, 'name' => 'Jane', 'age' => 30],
         ];
 
         $result = LinqPHP::from($data)->select(['name'])->toArray();
 
         $this->assertSame([
-          ['name' => 'John'],
-          ['name' => 'Jane'],
+            ['name' => 'John'],
+            ['name' => 'Jane'],
         ], $result);
     }
 
     public function testDistinctRemovesDuplicateRows()
     {
         $data = [
-          ['id' => 1, 'name' => 'John'],
-          ['id' => 1, 'name' => 'John'],
-          ['id' => 2, 'name' => 'Jane'],
+            ['id' => 1, 'name' => 'John'],
+            ['id' => 1, 'name' => 'John'],
+            ['id' => 2, 'name' => 'Jane'],
         ];
 
         $result = LinqPHP::from($data)->distinct()->toArray();
@@ -63,8 +63,8 @@ class AdditionalTest extends TestCase
     {
         // Test distinct with an array of unique elements
         $data = [
-          ['id' => 1, 'name' => 'John', 'age' => 25],
-          ['id' => 2, 'name' => 'Jane', 'age' => 30],
+            ['id' => 1, 'name' => 'John', 'age' => 25],
+            ['id' => 2, 'name' => 'Jane', 'age' => 30],
         ];
         $expected = $data;
         $result = LinqPHP::from($data)->distinct()->toArray();
@@ -72,26 +72,26 @@ class AdditionalTest extends TestCase
 
         // Test distinct with an array of duplicate elements
         $data = [
-          ['id' => 1, 'name' => 'John', 'age' => 25],
-          ['id' => 2, 'name' => 'Jane', 'age' => 30],
-          ['id' => 1, 'name' => 'John', 'age' => 25],
+            ['id' => 1, 'name' => 'John', 'age' => 25],
+            ['id' => 2, 'name' => 'Jane', 'age' => 30],
+            ['id' => 1, 'name' => 'John', 'age' => 25],
         ];
         $expected = [
-          ['id' => 1, 'name' => 'John', 'age' => 25],
-          ['id' => 2, 'name' => 'Jane', 'age' => 30],
+            ['id' => 1, 'name' => 'John', 'age' => 25],
+            ['id' => 2, 'name' => 'Jane', 'age' => 30],
         ];
         $result = LinqPHP::from($data)->distinct()->toArray();
         $this->assertEquals($expected, $result);
 
         // Test distinct with an array of nested objects
         $data = [
-          ['id' => 1, 'name' => 'John', 'age' => 25, 'address' => ['street' => '123 Main St', 'city' => 'New York']],
-          ['id' => 2, 'name' => 'Jane', 'age' => 30, 'address' => ['street' => '456 Elm St', 'city' => 'Los Angeles']],
-          ['id' => 1, 'name' => 'John', 'age' => 25, 'address' => ['street' => '123 Main St', 'city' => 'New York']],
+            ['id' => 1, 'name' => 'John', 'age' => 25, 'address' => ['street' => '123 Main St', 'city' => 'New York']],
+            ['id' => 2, 'name' => 'Jane', 'age' => 30, 'address' => ['street' => '456 Elm St', 'city' => 'Los Angeles']],
+            ['id' => 1, 'name' => 'John', 'age' => 25, 'address' => ['street' => '123 Main St', 'city' => 'New York']],
         ];
         $expected = [
-          ['id' => 1, 'name' => 'John', 'age' => 25, 'address' => ['street' => '123 Main St', 'city' => 'New York']],
-          ['id' => 2, 'name' => 'Jane', 'age' => 30, 'address' => ['street' => '456 Elm St', 'city' => 'Los Angeles']],
+            ['id' => 1, 'name' => 'John', 'age' => 25, 'address' => ['street' => '123 Main St', 'city' => 'New York']],
+            ['id' => 2, 'name' => 'Jane', 'age' => 30, 'address' => ['street' => '456 Elm St', 'city' => 'Los Angeles']],
         ];
         $result = LinqPHP::from($data)->distinct()->toArray();
         $this->assertEquals($expected, $result);
@@ -101,17 +101,17 @@ class AdditionalTest extends TestCase
     public function testTakeLimitsNumberOfItems()
     {
         $data = [
-          ['id' => 1],
-          ['id' => 2],
-          ['id' => 3],
-          ['id' => 4],
+            ['id' => 1],
+            ['id' => 2],
+            ['id' => 3],
+            ['id' => 4],
         ];
 
         $result = LinqPHP::from($data)->take(2)->toArray();
 
         $this->assertSame([
-          ['id' => 1],
-          ['id' => 2]
+            ['id' => 1],
+            ['id' => 2],
         ], $result);
     }
 
@@ -120,9 +120,9 @@ class AdditionalTest extends TestCase
     public function testTakeReturnsSubsetOfData()
     {
         $data = [
-          ['id' => 1, 'name' => 'John'],
-          ['id' => 2, 'name' => 'Jane'],
-          ['id' => 3, 'name' => 'John'],
+            ['id' => 1, 'name' => 'John'],
+            ['id' => 2, 'name' => 'Jane'],
+            ['id' => 3, 'name' => 'John'],
         ];
 
         $instance = new LinqPHP($data);
@@ -137,9 +137,9 @@ class AdditionalTest extends TestCase
     public function testTakeReturnsEmptyArrayWhenMaxItemsIsZero()
     {
         $data = [
-          ['id' => 1, 'name' => 'John'],
-          ['id' => 2, 'name' => 'Jane'],
-          ['id' => 3, 'name' => 'John'],
+            ['id' => 1, 'name' => 'John'],
+            ['id' => 2, 'name' => 'Jane'],
+            ['id' => 3, 'name' => 'John'],
         ];
 
         $instance = new LinqPHP($data);
@@ -151,9 +151,9 @@ class AdditionalTest extends TestCase
     public function testTakeReturnsAllDataWhenMaxItemsIsGreaterThanArrayLength()
     {
         $data = [
-          ['id' => 1, 'name' => 'John'],
-          ['id' => 2, 'name' => 'Jane'],
-          ['id' => 3, 'name' => 'John'],
+            ['id' => 1, 'name' => 'John'],
+            ['id' => 2, 'name' => 'Jane'],
+            ['id' => 3, 'name' => 'John'],
         ];
 
         $instance = new LinqPHP($data);
@@ -165,9 +165,9 @@ class AdditionalTest extends TestCase
     public function testOrderByKeyAscAndDesc()
     {
         $data = [
-          ['id' => 2],
-          ['id' => 1],
-          ['id' => 3],
+            ['id' => 2],
+            ['id' => 1],
+            ['id' => 3],
         ];
 
         $asc = LinqPHP::from($data)->orderByKey('id', 'asc')->toArray();
@@ -180,17 +180,17 @@ class AdditionalTest extends TestCase
     public function testOrderByMultipleFields()
     {
         $data = [
-          ['name' => 'John', 'age' => 30],
-          ['name' => 'John', 'age' => 25],
-          ['name' => 'Jane', 'age' => 35],
+            ['name' => 'John', 'age' => 30],
+            ['name' => 'John', 'age' => 25],
+            ['name' => 'Jane', 'age' => 35],
         ];
 
         $result = LinqPHP::from($data)->orderBy(['name' => 'asc', 'age' => 'desc'])->toArray();
 
         $this->assertSame([
-          ['name' => 'Jane', 'age' => 35],
-          ['name' => 'John', 'age' => 30],
-          ['name' => 'John', 'age' => 25],
+            ['name' => 'Jane', 'age' => 35],
+            ['name' => 'John', 'age' => 30],
+            ['name' => 'John', 'age' => 25],
         ], $result);
     }
 
@@ -206,17 +206,17 @@ class AdditionalTest extends TestCase
         $this->assertTrue(property_exists($obj, 'data'));
         $this->assertSame(2, $obj->count);
         $this->assertSame($data, $obj->data);
-        $this->assertGreaterThanOrEqual(0, (float) $obj->elapsedTime);
+        $this->assertGreaterThanOrEqual(0, (float)$obj->elapsedTime);
         $this->assertIsString($obj->memoryUsed);
     }
 
     public function testJoinRightAndFullOuter()
     {
         $a = [
-          ['id' => 1],
+            ['id' => 1],
         ];
         $b = [
-          ['id' => 2],
+            ['id' => 2],
         ];
 
         $right = LinqPHP::from($a)->join($b, JoinType::RIGHT, ['id'])->toArray();
@@ -232,9 +232,9 @@ class AdditionalTest extends TestCase
     public function testWhereWithCaseInsensitiveOperators()
     {
         $data = [
-          ['name' => 'Alpha'],
-          ['name' => 'beta'],
-          ['name' => 'Gamma'],
+            ['name' => 'Alpha'],
+            ['name' => 'beta'],
+            ['name' => 'Gamma'],
         ];
 
         $starts = LinqPHP::from($data)->where(['name', 'startswith', 'a'])->toArray();
@@ -250,23 +250,23 @@ class AdditionalTest extends TestCase
     public function testGroupByWithMultipleAggregationsAndAvg()
     {
         $data = [
-          ['g' => 'A', 'v1' => 10, 'v2' => 5],
-          ['g' => 'A', 'v1' => 30, 'v2' => 15],
-          ['g' => 'B', 'v1' => 20, 'v2' => 7],
+            ['g' => 'A', 'v1' => 10, 'v2' => 5],
+            ['g' => 'A', 'v1' => 30, 'v2' => 15],
+            ['g' => 'B', 'v1' => 20, 'v2' => 7],
         ];
 
         $res = LinqPHP::from($data)
           ->groupBy(['g'], [
-            'sum' => ['v1'],
-            'max' => ['v2'],
-            'min' => ['v2'],
-            'avg' => ['v1']
+              'sum' => ['v1'],
+              'max' => ['v2'],
+              'min' => ['v2'],
+              'avg' => ['v1'],
           ])
           ->toArray();
 
         $this->assertCount(2, $res);
         // Grupo A
-        $a = array_values(array_filter($res, fn ($x) => $x['g'] === 'A'))[0];
+        $a = array_values(array_filter($res, fn($x) => $x['g'] === 'A'))[0];
         $this->assertEquals(40.0, $a['v1_(sum)']);
         $this->assertEquals(15, $a['v2_(max)']);
         $this->assertEquals(5, $a['v2_(min)']);

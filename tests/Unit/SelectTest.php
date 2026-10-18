@@ -1,7 +1,7 @@
 <?php
 
-use PHPUnit\Framework\TestCase;
 use HeliomarPM\LinqPHP\LinqPHP;
+use PHPUnit\Framework\TestCase;
 
 class SelectTest extends TestCase
 {
@@ -10,22 +10,22 @@ class SelectTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         LinqPHP::from([
-          ['id' => 1, 'name' => 'John']
+            ['id' => 1, 'name' => 'John'],
         ])->select(['gender'], strict: true)->toArray();
     }
 
     public function testSelectReturnsExpectedResult()
     {
         $data = [
-          ['id' => 1, 'name' => 'John', 'age' => 25],
-          ['id' => 2, 'name' => 'Jane', 'age' => 30],
-          ['id' => 3, 'name' => 'John', 'age' => 35],
+            ['id' => 1, 'name' => 'John', 'age' => 25],
+            ['id' => 2, 'name' => 'Jane', 'age' => 30],
+            ['id' => 3, 'name' => 'John', 'age' => 35],
         ];
 
         $expectedResult = [
-          ['name' => 'John', 'age' => 25],
-          ['name' => 'Jane', 'age' => 30],
-          ['name' => 'John', 'age' => 35],
+            ['name' => 'John', 'age' => 25],
+            ['name' => 'Jane', 'age' => 30],
+            ['name' => 'John', 'age' => 35],
         ];
 
         $result = LinqPHP::from($data)->select(['name', 'age'])->toArray();
@@ -36,15 +36,15 @@ class SelectTest extends TestCase
     public function testSelectReturnsEmptyArrayWhenNoMatchingKeys()
     {
         $data = [
-          ['id' => 1, 'name' => 'John', 'age' => 25],
-          ['id' => 2, 'name' => 'Jane', 'age' => 30],
-          ['id' => 3, 'name' => 'John', 'age' => 35],
+            ['id' => 1, 'name' => 'John', 'age' => 25],
+            ['id' => 2, 'name' => 'Jane', 'age' => 30],
+            ['id' => 3, 'name' => 'John', 'age' => 35],
         ];
 
         $expectedResult = [
-          ['id' => 1, 'gender' => null, 'hobby' => null],
-          ['id' => 2, 'gender' => null, 'hobby' => null],
-          ['id' => 3, 'gender' => null, 'hobby' => null],
+            ['id' => 1, 'gender' => null, 'hobby' => null],
+            ['id' => 2, 'gender' => null, 'hobby' => null],
+            ['id' => 3, 'gender' => null, 'hobby' => null],
         ];
 
         $result = LinqPHP::from($data)->select(['id', 'gender', 'hobby'], false)->toArray();
@@ -54,9 +54,9 @@ class SelectTest extends TestCase
     public function testSelectReturnsOriginalDataWhenNoSelectorsProvided()
     {
         $data = [
-          ['id' => 1, 'name' => 'John', 'age' => 25],
-          ['id' => 2, 'name' => 'Jane', 'age' => 30],
-          ['id' => 3, 'name' => 'John', 'age' => 35],
+            ['id' => 1, 'name' => 'John', 'age' => 25],
+            ['id' => 2, 'name' => 'Jane', 'age' => 30],
+            ['id' => 3, 'name' => 'John', 'age' => 35],
         ];
 
         $result = LinqPHP::from($data)->select([])->toArray();
@@ -68,8 +68,8 @@ class SelectTest extends TestCase
     {
         // Test distinct with an array of unique elements
         $data = [
-          ['id' => 1, 'name' => 'John', 'age' => 25],
-          ['id' => 2, 'name' => 'Jane', 'age' => 30],
+            ['id' => 1, 'name' => 'John', 'age' => 25],
+            ['id' => 2, 'name' => 'Jane', 'age' => 30],
         ];
         $expected = $data;
         $result = LinqPHP::from($data)->select([])->distinct()->toArray();
@@ -77,26 +77,26 @@ class SelectTest extends TestCase
 
         // Test distinct with an array of duplicate elements
         $data = [
-          ['id' => 1, 'name' => 'John', 'age' => 25],
-          ['id' => 2, 'name' => 'Jane', 'age' => 30],
-          ['id' => 1, 'name' => 'John', 'age' => 25],
+            ['id' => 1, 'name' => 'John', 'age' => 25],
+            ['id' => 2, 'name' => 'Jane', 'age' => 30],
+            ['id' => 1, 'name' => 'John', 'age' => 25],
         ];
         $expected = [
-          ['name' => 'John', 'age' => 25],
-          ['name' => 'Jane', 'age' => 30],
+            ['name' => 'John', 'age' => 25],
+            ['name' => 'Jane', 'age' => 30],
         ];
         $result = LinqPHP::from($data)->select(['name', 'age'])->distinct()->toArray();
         $this->assertEquals($expected, $result);
 
         // Test distinct with an array of nested objects
         $data = [
-          ['id' => 1, 'name' => 'John', 'age' => 25, 'address' => ['street' => '123 Main St', 'city' => 'New York']],
-          ['id' => 2, 'name' => 'Jane', 'age' => 30, 'address' => ['street' => '456 Elm St', 'city' => 'Los Angeles']],
-          ['id' => 1, 'name' => 'John', 'age' => 25, 'address' => ['street' => '123 Main St', 'city' => 'New York']],
+            ['id' => 1, 'name' => 'John', 'age' => 25, 'address' => ['street' => '123 Main St', 'city' => 'New York']],
+            ['id' => 2, 'name' => 'Jane', 'age' => 30, 'address' => ['street' => '456 Elm St', 'city' => 'Los Angeles']],
+            ['id' => 1, 'name' => 'John', 'age' => 25, 'address' => ['street' => '123 Main St', 'city' => 'New York']],
         ];
         $expected = [
-          ['address' => ['street' => '123 Main St', 'city' => 'New York']],
-          ['address' => ['street' => '456 Elm St', 'city' => 'Los Angeles']],
+            ['address' => ['street' => '123 Main St', 'city' => 'New York']],
+            ['address' => ['street' => '456 Elm St', 'city' => 'Los Angeles']],
         ];
         $result = LinqPHP::from($data)->select(['address'])->distinct()->toArray();
         $this->assertEquals($expected, $result);

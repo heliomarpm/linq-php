@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
 use HeliomarPM\LinqPHP\LinqPHP;
+use PHPUnit\Framework\TestCase;
 
 class GroupByTest extends TestCase
 {
@@ -66,7 +66,7 @@ class GroupByTest extends TestCase
 
         $result = LinqPHP::from($data)
             ->groupBy(['g'], [
-                'sum' => ['v1']
+                'sum' => ['v1'],
             ])
             ->toArray();
 
@@ -120,7 +120,7 @@ class GroupByTest extends TestCase
 
         $result = LinqPHP::from($data)
             ->groupBy(['g'], [
-                'avg' => ['v1']
+                'avg' => ['v1'],
             ])
             ->toArray();
 
@@ -141,7 +141,7 @@ class GroupByTest extends TestCase
                 'sum' => ['v1'],
                 'max' => ['v2'],
                 'min' => ['v2'],
-                'avg' => ['v1']
+                'avg' => ['v1'],
             ])
             ->toArray();
 

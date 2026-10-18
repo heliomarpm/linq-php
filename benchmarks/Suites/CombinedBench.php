@@ -21,9 +21,9 @@ class CombinedBench extends BenchmarkSuite
           ->groupBy(
               ['status'],
               [
-              'sum' => ['value'],
-              'avg' => ['value']
-        ]
+                  'sum' => ['value'],
+                  'avg' => ['value'],
+              ]
           )
           ->orderByKey('status')
           ->toArray();

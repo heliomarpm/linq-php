@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
 use HeliomarPM\LinqPHP\LinqPHP;
+use PHPUnit\Framework\TestCase;
 
 class UnionAllTest extends TestCase
 {
@@ -21,19 +21,19 @@ class UnionAllTest extends TestCase
     {
         // Test case 2: Non-empty arrays with common keys
         $data1 = [
-          ['id' => 1, 'name' => 'John'],
-          ['id' => 2, 'name' => 'Jane'],
+            ['id' => 1, 'name' => 'John'],
+            ['id' => 2, 'name' => 'Jane'],
         ];
         $data2 = [
-          ['id' => 1, 'age' => 25],
-          ['id' => 3, 'age' => 30],
+            ['id' => 1, 'age' => 25],
+            ['id' => 3, 'age' => 30],
         ];
 
         $expected = [
-          ['id' => 1, 'name' => null, 'age' => 25],
-          ['id' => 1, 'name' => 'John', 'age' => null],
-          ['id' => 2, 'name' => 'Jane', 'age' => null],
-          ['id' => 3, 'name' => null, 'age' => 30],
+            ['id' => 1, 'name' => null, 'age' => 25],
+            ['id' => 1, 'name' => 'John', 'age' => null],
+            ['id' => 2, 'name' => 'Jane', 'age' => null],
+            ['id' => 3, 'name' => null, 'age' => 30],
         ];
 
         $result = LinqPHP::from($data1)->unionAll($data2)
@@ -45,18 +45,18 @@ class UnionAllTest extends TestCase
     {
         // Test case 3: Non-empty arrays with no common keys
         $data1 = [
-          ['id' => 1, 'name' => 'John'],
-          ['id' => 2, 'name' => 'Jane'],
+            ['id' => 1, 'name' => 'John'],
+            ['id' => 2, 'name' => 'Jane'],
         ];
         $data2 = [
-          ['id' => 3, 'age' => 30],
-          ['id' => 4, 'age' => 40],
+            ['id' => 3, 'age' => 30],
+            ['id' => 4, 'age' => 40],
         ];
         $expected = [
-          ['id' => 1, 'name' => 'John', 'age' => null],
-          ['id' => 2, 'name' => 'Jane', 'age' => null],
-          ['id' => 3, 'name' => null, 'age' => 30],
-          ['id' => 4, 'name' => null, 'age' => 40],
+            ['id' => 1, 'name' => 'John', 'age' => null],
+            ['id' => 2, 'name' => 'Jane', 'age' => null],
+            ['id' => 3, 'name' => null, 'age' => 30],
+            ['id' => 4, 'name' => null, 'age' => 40],
         ];
 
         $result = LinqPHP::from($data1)->unionAll($data2)->toArray();

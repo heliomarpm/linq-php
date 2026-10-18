@@ -19,8 +19,8 @@ class AggregateSumBench extends BenchmarkSuite
           ->groupBy(
               ['status'],
               [
-              'sum' => ['value']
-        ]
+                  'sum' => ['value'],
+              ]
           )
           ->toArray();
     }

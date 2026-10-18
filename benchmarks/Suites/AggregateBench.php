@@ -19,12 +19,12 @@ class AggregateBench extends BenchmarkSuite
           ->groupBy(
               ['status'],
               [
-              'count' => ['id'],
-              'sum' => ['value'],
-              'max' => ['value'],
-              'min' => ['value'],
-              'avg' => ['value'],
-        ]
+                  'count' => ['id'],
+                  'sum' => ['value'],
+                  'max' => ['value'],
+                  'min' => ['value'],
+                  'avg' => ['value'],
+              ]
           )
           ->toArray();
     }

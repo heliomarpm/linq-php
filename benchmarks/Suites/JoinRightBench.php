@@ -3,8 +3,8 @@
 namespace Benchmarks\Suites;
 
 use Benchmarks\BenchmarkSuite;
-use HeliomarPM\LinqPHP\LinqPHP;
 use HeliomarPM\LinqPHP\JoinType;
+use HeliomarPM\LinqPHP\LinqPHP;
 
 class JoinRightBench extends BenchmarkSuite
 {

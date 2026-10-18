@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
-use HeliomarPM\LinqPHP\LinqPHP;
 use HeliomarPM\LinqPHP\JoinType;
+use HeliomarPM\LinqPHP\LinqPHP;
+use PHPUnit\Framework\TestCase;
 
 class LinqFlowTest extends TestCase
 {
@@ -22,7 +22,7 @@ class LinqFlowTest extends TestCase
 
         $result = LinqPHP::from($users)
             ->join($orders, JoinType::LEFT, ['id' => 'user_id'])
-            ->where(fn ($x) => $x['total'] !== null)
+            ->where(fn($x) => $x['total'] !== null)
             ->groupBy(['id'], ['sum' => ['total']])
             ->toArray();
 

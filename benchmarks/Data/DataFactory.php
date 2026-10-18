@@ -14,13 +14,13 @@ class DataFactory
         $statusOptions = ['concluido', 'pendente', 'cancelado'];
 
         // 1. Gera tabela de Produtos (10% do tamanho total para simular um catálogo realista)
-        $qtdProdutos = max(1, (int) ($size / 10));
+        $qtdProdutos = max(1, (int)($size / 10));
         for ($i = 0; $i < $qtdProdutos; $i++) {
             $products[] = [
-              'id' => $i,
-              'name' => 'Produto ' . $i,
-              'category' => 'Categoria ' . random_int(1, 5),
-              'cost' => random_int(10, 1000)
+                'id' => $i,
+                'name' => 'Produto ' . $i,
+                'category' => 'Categoria ' . random_int(1, 5),
+                'cost' => random_int(10, 1000),
             ];
         }
 
@@ -30,10 +30,10 @@ class DataFactory
             $status = $statusOptions[array_rand($statusOptions)];
 
             $sales[] = [
-              'id' => $i,
-              'product_id' => $produto_id,
-              'value' => random_int(10, 1000) / 10,
-              'status' => $status
+                'id' => $i,
+                'product_id' => $produto_id,
+                'value' => random_int(10, 1000) / 10,
+                'status' => $status,
             ];
         }
 
@@ -45,22 +45,22 @@ class DataFactory
         $students = [];
         $courses = [];
 
-        $courseCount = max(10, (int) ($size / 100));
+        $courseCount = max(10, (int)($size / 100));
 
         for ($i = 1; $i <= $courseCount; $i++) {
             $courses[] = [
-              'id' => $i,
-              'title' => "Course {$i}",
-              'category' => 'cat_' . ($i % 5),
+                'id' => $i,
+                'title' => "Course {$i}",
+                'category' => 'cat_' . ($i % 5),
             ];
         }
 
         for ($i = 1; $i <= $size; $i++) {
             $students[] = [
-              'id' => $i,
-              'name' => "Student {$i}",
-              'course_id' => random_int(1, $courseCount + 3), // gera órfãos
-              'score' => random_int(0, 100),
+                'id' => $i,
+                'name' => "Student {$i}",
+                'course_id' => random_int(1, $courseCount + 3), // gera órfãos
+                'score' => random_int(0, 100),
             ];
         }
 

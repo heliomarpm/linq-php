@@ -19,8 +19,8 @@ class AggregateMaxBench extends BenchmarkSuite
           ->groupBy(
               ['status'],
               [
-              'max' => ['value'],
-        ]
+                  'max' => ['value'],
+              ]
           )
           ->toArray();
     }

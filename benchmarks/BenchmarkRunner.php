@@ -53,7 +53,7 @@ class BenchmarkRunner
         $this->printRow($suite->name(), $results, $dataSizes);
 
         foreach ($dataSizes as $dataSize) {
-            $data = \Benchmarks\Data\DataFactory::generate($dataSize);
+            $data = Data\DataFactory::generate($dataSize);
 
             $startTime = microtime(true);
             $startMemory = memory_get_usage(true);
@@ -61,8 +61,8 @@ class BenchmarkRunner
             $suite->run($data);
 
             $results[$dataSize] = [
-              'time' => microtime(true) - $startTime,
-              'memory' => (memory_get_peak_usage(true) - $startMemory) / 1024 / 1024,
+                'time' => microtime(true) - $startTime,
+                'memory' => (memory_get_peak_usage(true) - $startMemory) / 1024 / 1024,
             ];
 
             // reimprime a MESMA linha, agora com mais uma coluna preenchida

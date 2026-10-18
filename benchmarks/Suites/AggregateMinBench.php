@@ -19,8 +19,8 @@ class AggregateMinBench extends BenchmarkSuite
           ->groupBy(
               ['status'],
               [
-              'min' => ['value']
-        ]
+                  'min' => ['value'],
+              ]
           )
           ->toArray();
     }
