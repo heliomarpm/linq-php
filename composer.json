@@ -33,13 +33,17 @@
     }
   },
   "scripts": {
-    "format": "pint --preset psr12 --test",
-    "format:fix": "pint --preset psr12",
+    "format": "pint --test --parallel --max-processes=4",
+    "format:fix": "pint --parallel --max-processes=4 --repair --dirty",
+    "format:full": "pint --parallel --max-processes=4 --repair",
+    "format:def": "pint --preset=psr12 --parallel --max-processes=4 --repair",
     "lint": "phpstan analyse",
     "refactor": "rector process --dry-run",
     "refactor:apply": "rector process",
-    "test": "./vendor/bin/phpunit --configuration phpunit.xml --colors=always",
-    "test:v": "./vendor/bin/phpunit --configuration phpunit.xml --colors=always --debug",
+    "test": "phpunit --configuration phpunit.xml --colors=always",
+    "test:v": "phpunit --configuration phpunit.xml --colors=always --debug",
+    "test:coverage": "php -d xdebug.mode=coverage vendor/bin/phpunit --configuration phpunit.xml --colors=always --coverage-text",
+    "test:coverage:html": "php -d xdebug.mode=coverage vendor/bin/phpunit --configuration phpunit.xml --coverage-html coverage/",
     "bench": "php ./benchmarks/run.php",
     "perform": "vendor/bin/phpbench run --report=aggregate",
     "demo": "php -S localhost:8000 -t ./demo",
@@ -67,7 +71,7 @@
     "php": ">=8.1"
   },
   "require-dev": {
-    "phpunit/phpunit": "^13.2",
+    "phpunit/phpunit": "^13.4",
     "phpbench/phpbench": "^1.7",
     "phpstan/phpstan": "*",
     "laravel/pint": "^1.32",

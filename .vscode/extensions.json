@@ -3,6 +3,9 @@
     "usernamehw.errorlens",
     "editorconfig.editorconfig",
     "junstyle.php-cs-fixer",
-    "devsense.phptools-vscode"
+    "devsense.phptools-vscode",
+    "xdebug.php-debug",
+    "sanderronde.phpstan-vscode",
+    "open-southeners.laravel-pint"
   ]
 }
