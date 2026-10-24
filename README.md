@@ -266,23 +266,36 @@ $result = LinqPHP::from($data)
 >
 > Caso tente ordenar por uma chave inexistente (como tentar usar `'id_venda'` após ele ter sido transformado em `'Código Venda'`), o LinqPHP disparará uma `InvalidArgumentException("This field does not exist for sorting.")`.
 
-### Extração de Resultados (`toArray` e `toObject`)
+### Extração de Resultados (`toArray`, `toObject` e `firstOrDefault`)
 
-No final da cadeia fluente, invoque um método de saída terminal para extrair os dados processados.
+No final da cadeia fluente, invoque um método de saída terminal para extrair os dados processados:
 
 ```php
 $linq = LinqPHP::from($data)->where(['age', '>', 20]);
 
-// Retorna o array tradicional processado
+// 1. toArray() - Retorna o array tradicional processado
 $array = $linq->toArray();
 
-// Retorna um stdClass contendo os dados e métricas de telemetria embutida
+// 2. toObject() - Retorna um stdClass com telemetria embutida (tempo e memória)
 $obj = $linq->toObject();
 echo $obj->count;       // Quantidade de registros resultantes
 echo $obj->elapsedTime; // Tempo total gasto na operação em segundos
 echo $obj->memoryUsed;  // Consumo de memória formatado (ex: 18.00 MB)
 print_r($obj->data);    // Coleção de dados processados
+
+// 3. firstOrDefault() - Retorna o primeiro elemento correspondente (com early-return) ou valor padrão
+$primeiro = LinqPHP::from($data)->firstOrDefault(); // primeiro item ou null se vazio
+
+// Com predicado (avalia e interrompe no primeiro match sem iterar o array inteiro):
+$usuario = LinqPHP::from($data)->firstOrDefault(fn($item) => $item['id'] === 10);
+
+// Com valor padrão customizado quando não encontrar:
+$usuario = LinqPHP::from($data)->firstOrDefault(
+    fn($item) => $item['id'] === 999,
+    default: ['id' => 0, 'name' => 'Visitante']
+);
 ```
+
 
 ---
 
@@ -292,7 +305,6 @@ O projeto inclui uma interface web completa para experimentação e simulação 
 
 ```bash
 composer start
-# ou: composer demo
 # Acesse http://localhost:8000 no seu navegador
 ```
 

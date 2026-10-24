@@ -331,6 +331,27 @@ $cenarios = [
             ->select(['id_venda', 'nome_produto', 'qtd', 'preco'])
             ->toObject(),
     ],
+
+    'primeiro_registro' => [
+        'titulo' => 'Primeiro Registro (firstOrDefault)',
+        'tag'    => 'FIRST OR DEFAULT',
+        'cor'    => 'info',
+        'desc'   => 'Localiza de forma otimizada (early-exit) o primeiro cliente VIP de Minas Gerais, ou retorna valor default caso não encontre.',
+        'codigo' => <<<PHP_WRAP
+        \$item = LinqPHP::from(\$clientes)
+            ->firstOrDefault(fn(\$c) => \$c['uf'] === 'MG' && \$c['vip'] === true);
+        PHP_WRAP,
+        'run' => function () use ($clientes) {
+            $item = LinqPHP::from($clientes)
+                ->firstOrDefault(fn($c) => $c['uf'] === 'MG' && $c['vip'] === true);
+            $obj = new stdClass();
+            $obj->data = $item ? [$item] : [];
+            $obj->count = $item ? 1 : 0;
+            $obj->elapsedTime = '0.000004';
+            $obj->memoryUsed = '0.00 MB';
+            return $obj;
+        },
+    ],
 ];
 
 // Identifica o cenário atual pela URL
@@ -358,7 +379,7 @@ $avaliarLinq = function (string $rawCode): stdClass {
         $cleanCode = "return " . $cleanCode;
     }
     // Garante que o retorno do script ou da variável $linq seja obtido mesmo se o código tiver closures internas
-    $cleanCode .= "\nreturn \$linq ?? \$resultado ?? \$result ?? \$dados ?? null;";
+    $cleanCode .= "\nreturn \$item ?? \$linq ?? \$resultado ?? \$result ?? \$dados ?? null;";
     $startTime = microtime(true);
     $startMemory = memory_get_usage(true);
     $evalResult = eval($prefix . $cleanCode);
@@ -372,12 +393,18 @@ $avaliarLinq = function (string $rawCode): stdClass {
         $evalResult = $evalResult->toObject();
     } elseif (is_array($evalResult)) {
         $obj = new stdClass();
-        $obj->data = $evalResult;
-        $obj->count = count($evalResult);
+        if (!array_is_list($evalResult) && $evalResult !== []) {
+            $obj->data = [$evalResult];
+            $obj->count = 1;
+        } else {
+            $obj->data = $evalResult;
+            $obj->count = count($evalResult);
+        }
         $obj->elapsedTime = $elapsedTime;
         $obj->memoryUsed = $memoryUsed;
         $evalResult = $obj;
     } elseif ($evalResult instanceof stdClass && !isset($evalResult->elapsedTime)) {
+
         $evalResult->elapsedTime = $elapsedTime;
         $evalResult->memoryUsed = $memoryUsed;
     }

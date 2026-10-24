@@ -47,7 +47,6 @@
     "bench": "php ./benchmarks/run.php",
     "perform": "vendor/bin/phpbench run --report=aggregate",
     "start": "php -S localhost:8000 -t ./demo",
-    "demo": "@start",
     "check": [
       "@format",
       "@lint",

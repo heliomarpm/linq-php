@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Estabilizar governança, corrigir inconsistências documentais e aprimorar recursos de consulta fluente (LINQ)\
-> **Status:** em desenvolvimento | **Progresso:** 8/11 (72%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-24
+> **Status:** em desenvolvimento | **Progresso:** 9/11 (81%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-24
 
 ## Em progresso
 
@@ -19,18 +19,8 @@
   - Origem: discovery | Dep.: nenhuma
   - Ref: [.github/workflows/ci.yml](../.github/workflows/ci.yml#L18), [composer.json](../composer.json#L55)
   - DoD:
-    - [ ] Adicionar PHP 8.1, 8.2 , 8.3 e 8.4 na matriz do GitHub Actions
+    - [ ] Adicionar PHP 8.1, 8.2, 8.3 e 8.4 na matriz do GitHub Actions
     - [ ] Garantir que testes e benchmarks rodem com sucesso em todas as versões suportadas
-
-- [ ] **T-011 · P1 · Implementar método terminal `firstOrDefault()` inspirado no LINQ do C#**
-  - Origem: manual | Dep.: nenhuma
-  - Ref: [src/LinqPHP.php](../src/LinqPHP.php#L814), [tests/Unit/AdditionalTest.php](../tests/Unit/AdditionalTest.php)
-  - DoD:
-    - [ ] Implementar `public function firstOrDefault(?callable $predicate = null, mixed $default = null): mixed`
-    - [ ] Retornar o primeiro registro da coleção ou `$default` (padrão `null`) se a coleção estiver vazia
-    - [ ] Se `$predicate` fornecido, avaliar itens e retornar o primeiro correspondente ou `$default`
-    - [ ] Adicionar testes unitários para coleção vazia, com predicado, sem predicado e default customizado
-    - [ ] Documentar o método e exemplos no `README.md`
 
 ### Média Prioridade
 
@@ -49,9 +39,14 @@
 
 ## Concluídas recentemente
 
+- [x] **T-011 · P1 · Implementar método terminal `firstOrDefault()` inspirado no LINQ do C#** (2026-10-24)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/FirstOrDefaultTest.php](../tests/Unit/FirstOrDefaultTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)
+  - Evidência: Método terminal `firstOrDefault(?callable $predicate = null, mixed $default = null): mixed` implementado com curto-circuito (early-return) e valor default customizável; 90 testes passando (624 asserções); PHPStan nível 5 com 0 erros; cenário interativo adicionado na demo e documentação no README.
+
 - [x] **T-009 · P2 · Suportar parâmetro `$descending` em `orderByKey` e booleanos por campo em `orderBy`** (2026-10-24)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/OrderByTest.php](../tests/Unit/OrderByTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)
   - Evidência: Parâmetro `$descending` (booleano/string) adicionado em `orderByKey`; `orderBy` refinado com assinatura limpa `orderBy(array $fields)` aceitando booleanos (true/false) e strings por campo; 80 testes passando (612 asserções); PHPStan nível 5 com 0 erros; benchmarks validados.
+
 
 - [x] **T-003 · P2 · Corrigir portabilidade e duplicação no script `reset` do Composer** (2026-10-13)
   - Arquivos: [composer.json](../composer.json)

@@ -951,4 +951,47 @@ class LinqPHP
 
         return $result;
     }
+
+    /**
+     * Retorna o primeiro elemento da coleção, ou um valor padrão caso a coleção esteja vazia
+     * ou nenhum elemento satisfaça o predicado fornecido.
+     *
+     * @param (callable(array<string, mixed>): bool)|null $predicate Função opcional para testar cada elemento.
+     * @param mixed $default Valor retornado caso nenhum elemento corresponda. Padrão é null.
+     * @return mixed O primeiro item correspondente ou o valor padrão.
+     *
+     * * Exemplo de uso:
+     * ```php
+     * // Retorna o primeiro item ou null se vazio:
+     * $primeiro = LinqPHP::from($users)->firstOrDefault();
+     *
+     * // Retorna o primeiro item que satisfaz o predicado:
+     * $user = LinqPHP::from($users)->firstOrDefault(fn($u) => $u['id'] === 10);
+     *
+     * // Com valor padrão customizado quando não encontrar:
+     * $user = LinqPHP::from($users)->firstOrDefault(fn($u) => $u['id'] === 999, default: ['id' => 0]);
+     * ```
+     */
+    public function firstOrDefault(?callable $predicate = null, mixed $default = null): mixed
+    {
+        $this->endTime = microtime(true);
+
+        if ($this->data === []) {
+            return $default;
+        }
+
+        if ($predicate === null) {
+            $firstKey = array_key_first($this->data);
+            return $firstKey !== null ? $this->data[$firstKey] : $default;
+        }
+
+        foreach ($this->data as $item) {
+            if ($predicate($item)) {
+                return $item;
+            }
+        }
+
+        return $default;
+    }
 }
+
