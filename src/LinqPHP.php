@@ -217,6 +217,86 @@ class LinqPHP
     }
 
     /**
+     * Realiza uma união do tipo LEFT JOIN com outro array com base em campos relacionados.
+     * Preserva todos os registros da coleção atual e preenche colunas ausentes do array unido com null.
+     *
+     * @param array<int, array<string, mixed>> $joinData O array a ser unido.
+     * @param array<int|string, string> $relatedFields Os campos usados para determinar a relação entre os arrays.
+     * @return LinqPHP O objeto atual com o array unido.
+     *
+     * * Exemplo de uso:
+     * ```php
+     * $result = LinqPHP::from($users)
+     *     ->leftJoin($courses, ['course_id' => 'id_course'])
+     *     ->toArray();
+     * ```
+     */
+    public function leftJoin(array $joinData, array $relatedFields): self
+    {
+        return $this->join($joinData, JoinType::LEFT, $relatedFields);
+    }
+
+    /**
+     * Realiza uma união do tipo RIGHT JOIN com outro array com base em campos relacionados.
+     * Preserva todos os registros do array da direita e preenche colunas ausentes da coleção atual com null.
+     *
+     * @param array<int, array<string, mixed>> $joinData O array a ser unido.
+     * @param array<int|string, string> $relatedFields Os campos usados para determinar a relação entre os arrays.
+     * @return LinqPHP O objeto atual com o array unido.
+     *
+     * * Exemplo de uso:
+     * ```php
+     * $result = LinqPHP::from($users)
+     *     ->rightJoin($courses, ['course_id' => 'id_course'])
+     *     ->toArray();
+     * ```
+     */
+    public function rightJoin(array $joinData, array $relatedFields): self
+    {
+        return $this->join($joinData, JoinType::RIGHT, $relatedFields);
+    }
+
+    /**
+     * Realiza uma união do tipo FULL JOIN com outro array com base em campos relacionados.
+     * Retorna todos os registros de ambos os arrays, preenchendo correspondências ausentes com null.
+     *
+     * @param array<int, array<string, mixed>> $joinData O array a ser unido.
+     * @param array<int|string, string> $relatedFields Os campos usados para determinar a relação entre os arrays.
+     * @return LinqPHP O objeto atual com o array unido.
+     *
+     * * Exemplo de uso:
+     * ```php
+     * $result = LinqPHP::from($users)
+     *     ->fullJoin($courses, ['course_id' => 'id_course'])
+     *     ->toArray();
+     * ```
+     */
+    public function fullJoin(array $joinData, array $relatedFields): self
+    {
+        return $this->join($joinData, JoinType::FULL, $relatedFields);
+    }
+
+    /**
+     * Realiza uma união do tipo INNER JOIN com outro array com base em campos relacionados.
+     * Retorna apenas os registros que possuem correspondência em ambas as coleções.
+     *
+     * @param array<int, array<string, mixed>> $joinData O array a ser unido.
+     * @param array<int|string, string> $relatedFields Os campos usados para determinar a relação entre os arrays.
+     * @return LinqPHP O objeto atual com o array unido.
+     *
+     * * Exemplo de uso:
+     * ```php
+     * $result = LinqPHP::from($users)
+     *     ->innerJoin($courses, ['course_id' => 'id_course'])
+     *     ->toArray();
+     * ```
+     */
+    public function innerJoin(array $joinData, array $relatedFields): self
+    {
+        return $this->join($joinData, JoinType::INNER, $relatedFields);
+    }
+
+    /**
      * Aceita arrays de condições simples ou funções (closures) para filtros complexos.
      *
      * @param mixed $conditions As condições para filtrar o array de dados. Pode ser um array simples, uma função, ou um array de arrays/funções.

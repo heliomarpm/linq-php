@@ -276,6 +276,131 @@ class JoinTest extends TestCase
 
         $this->assertEquals($expectedResult, $result);
     }
+
+    public function testInnerJoinHelperMethodMatchesJoinInner(): void
+    {
+        $users = [
+            ['id' => 1, 'name' => 'John', 'course_id' => 10],
+            ['id' => 2, 'name' => 'Jane', 'course_id' => 20],
+            ['id' => 3, 'name' => 'Bob', 'course_id' => 30],
+        ];
+
+        $courses = [
+            ['id_course' => 10, 'course_name' => 'PHP 8'],
+            ['id_course' => 20, 'course_name' => 'Clean Code'],
+        ];
+
+        $resultHelper = LinqPHP::from($users)
+            ->innerJoin($courses, ['course_id' => 'id_course'])
+            ->toArray();
+
+        $resultStandard = LinqPHP::from($users)
+            ->join($courses, JoinType::INNER, ['course_id' => 'id_course'])
+            ->toArray();
+
+        $this->assertCount(2, $resultHelper);
+        $this->assertSame($resultStandard, $resultHelper);
+    }
+
+    public function testLeftJoinHelperMethodMatchesJoinLeft(): void
+    {
+        $users = [
+            ['id' => 1, 'name' => 'John', 'course_id' => 10],
+            ['id' => 2, 'name' => 'Jane', 'course_id' => 20],
+            ['id' => 3, 'name' => 'Bob', 'course_id' => 30],
+        ];
+
+        $courses = [
+            ['id_course' => 10, 'course_name' => 'PHP 8'],
+        ];
+
+        $resultHelper = LinqPHP::from($users)
+            ->leftJoin($courses, ['course_id' => 'id_course'])
+            ->toArray();
+
+        $resultStandard = LinqPHP::from($users)
+            ->join($courses, JoinType::LEFT, ['course_id' => 'id_course'])
+            ->toArray();
+
+        $this->assertCount(3, $resultHelper);
+        $this->assertSame($resultStandard, $resultHelper);
+    }
+
+    public function testRightJoinHelperMethodMatchesJoinRight(): void
+    {
+        $users = [
+            ['id' => 1, 'name' => 'John', 'course_id' => 10],
+        ];
+
+        $courses = [
+            ['id_course' => 10, 'course_name' => 'PHP 8'],
+            ['id_course' => 20, 'course_name' => 'Clean Code'],
+        ];
+
+        $resultHelper = LinqPHP::from($users)
+            ->rightJoin($courses, ['course_id' => 'id_course'])
+            ->toArray();
+
+        $resultStandard = LinqPHP::from($users)
+            ->join($courses, JoinType::RIGHT, ['course_id' => 'id_course'])
+            ->toArray();
+
+        $this->assertCount(2, $resultHelper);
+        $this->assertSame($resultStandard, $resultHelper);
+    }
+
+    public function testFullJoinHelperMethodMatchesJoinFull(): void
+    {
+        $users = [
+            ['id' => 1, 'name' => 'John', 'course_id' => 10],
+            ['id' => 2, 'name' => 'Jane', 'course_id' => 20],
+        ];
+
+        $courses = [
+            ['id_course' => 20, 'course_name' => 'Clean Code'],
+            ['id_course' => 30, 'course_name' => 'Architecture'],
+        ];
+
+        $resultHelper = LinqPHP::from($users)
+            ->fullJoin($courses, ['course_id' => 'id_course'])
+            ->toArray();
+
+        $resultStandard = LinqPHP::from($users)
+            ->join($courses, JoinType::FULL, ['course_id' => 'id_course'])
+            ->toArray();
+
+        $this->assertCount(3, $resultHelper);
+        $this->assertSame($resultStandard, $resultHelper);
+    }
+
+    public function testChainedHelperJoins(): void
+    {
+        $sales = [
+            ['id' => 1, 'product_id' => 100, 'customer_id' => 500],
+            ['id' => 2, 'product_id' => 200, 'customer_id' => 600],
+        ];
+
+        $products = [
+            ['prod_id' => 100, 'prod_name' => 'Laptop'],
+            ['prod_id' => 200, 'prod_name' => 'Mouse'],
+        ];
+
+        $customers = [
+            ['cust_id' => 500, 'cust_name' => 'Alice'],
+        ];
+
+        $result = LinqPHP::from($sales)
+            ->innerJoin($products, ['product_id' => 'prod_id'])
+            ->leftJoin($customers, ['customer_id' => 'cust_id'])
+            ->toArray();
+
+        $this->assertCount(2, $result);
+        $this->assertSame('Laptop', $result[0]['prod_name']);
+        $this->assertSame('Alice', $result[0]['cust_name']);
+        $this->assertSame('Mouse', $result[1]['prod_name']);
+        $this->assertNull($result[1]['cust_name']);
+    }
+
     private function generateLeftData(int $size): array
     {
         $data = [];

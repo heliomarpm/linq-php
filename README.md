@@ -130,16 +130,14 @@ $result = LinqPHP::from($data)
 
 ### `join()` - União Relacional
 
-Faça uniões relacionais entre arrays multidimensionais como se estivesse em um banco de dados relacional. Suporta os 4 tipos de join via enum nativo `JoinType`:
+Faça uniões relacionais entre arrays multidimensionais como se estivesse em um banco de dados relacional. Suporta os 4 tipos de join via métodos dedicados e expressivos (`innerJoin`, `leftJoin`, `rightJoin`, `fullJoin`) ou pelo método genérico `join()` com o enum nativo `JoinType`:
 
-- `JoinType::INNER`: Retorna apenas os registros com correspondência em ambas as coleções.
-- `JoinType::LEFT`: Retorna todos os registros da esquerda e os correspondentes da direita (ou `null`).
-- `JoinType::RIGHT`: Retorna todos os registros da direita e os correspondentes da esquerda (ou `null`).
-- `JoinType::FULL`: Retorna todos os registros de ambos os lados, preenchendo lacunas com `null`.
+- `innerJoin()` ou `JoinType::INNER`: Retorna apenas os registros com correspondência em ambas as coleções.
+- `leftJoin()` ou `JoinType::LEFT`: Retorna todos os registros da esquerda e os correspondentes da direita (ou `null`).
+- `rightJoin()` ou `JoinType::RIGHT`: Retorna todos os registros da direita e os correspondentes da esquerda (ou `null`).
+- `fullJoin()` ou `JoinType::FULL`: Retorna todos os registros de ambos os lados, preenchendo lacunas com `null`.
 
 ```php
-use HeliomarPM\LinqPHP\JoinType;
-
 $users = [
     ['id' => 1, 'name' => 'John', 'course_id' => 10],
     ['id' => 2, 'name' => 'Jane', 'course_id' => 20],
@@ -150,17 +148,29 @@ $courses = [
     ['id_course' => 20, 'course_name' => 'Clean Code'],
 ];
 
-// Inner Join simples
+// Métodos diretos e fluidos (dispensam a importação de JoinType)
 $result = LinqPHP::from($users)
-    ->join($courses, JoinType::INNER, ['course_id' => 'id_course'])
+    ->innerJoin($courses, ['course_id' => 'id_course'])
+    ->toArray();
+
+$result = LinqPHP::from($users)
+    ->leftJoin($courses, ['course_id' => 'id_course'])
     ->toArray();
 
 // Joins Múltiplos encadeados (Join Triplo)
 $result = LinqPHP::from($vendas)
-    ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
-    ->join($clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
+    ->innerJoin($produtos, ['produto_id' => 'id_produto'])
+    ->leftJoin($clientes, ['cliente_id' => 'id_cliente'])
+    ->toArray();
+
+// Método genérico com o enum JoinType (ideal para tipos de join dinâmicos)
+use HeliomarPM\LinqPHP\JoinType;
+
+$result = LinqPHP::from($users)
+    ->join($courses, JoinType::INNER, ['course_id' => 'id_course'])
     ->toArray();
 ```
+
 
 ### `unionAll()` - Concatenação de Coleções
 
