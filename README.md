@@ -209,7 +209,7 @@ $result = LinqPHP::from($vendas)
 
 ### `orderBy()` e `orderByKey()` - Ordenação
 
-Ordene por uma chave simples (`orderByKey`) com suporte a booleano ou string via `$descending`, ou por múltiplos critérios com direções independentes (`orderBy`).
+Ordene por uma chave simples ou função (`orderByKey`), ou por múltiplos critérios com direções independentes (`orderBy`). Suporta **nomes de campos**, **closures de valores calculados** (`fn($x) => ...`) e **funções comparadoras customizadas estilo `usort`** (`fn($a, $b) => ...`).
 
 ```php
 // 1. Ordenação simples por chave usando booleano ($descending: true)
@@ -222,19 +222,37 @@ $result = LinqPHP::from($data)
     ->orderByKey('age', 'desc')
     ->toArray();
 
-// 3. Ordenação multi-critério com strings ('asc' / 'desc')
+// 3. Ordenação por valor calculado via Closure (expressão customizada)
+$result = LinqPHP::from($produtos)
+    ->orderByKey(fn($p) => $p['preco'] * $p['quantidade'], descending: true)
+    ->toArray();
+
+// 4. Ordenação por comparador customizado estilo usort (2 parâmetros)
+$result = LinqPHP::from($data)
+    ->orderByKey(fn($a, $b) => strcmp($a['name'], $b['name']))
+    ->toArray();
+
+// 5. Ordenação multi-critério com strings ('asc' / 'desc')
 $result = LinqPHP::from($data)
     ->orderBy(['name' => 'asc', 'age' => 'desc'])
     ->toArray();
 
-// 4. Ordenação multi-critério com booleanos expressivos (false = ASC, true = DESC)
+// 6. Ordenação multi-critério com booleanos expressivos (false = ASC, true = DESC)
 $result = LinqPHP::from($data)
     ->orderBy(['name' => false, 'age' => true])
     ->toArray();
 
-// 5. Lista simples de campos (todos ASC por padrão)
+// 7. Lista simples de campos (todos ASC por padrão)
 $result = LinqPHP::from($data)
     ->orderBy(['name', 'age'])
+    ->toArray();
+
+// 8. Multi-critério combinando campos físicos e closures calculadas
+$result = LinqPHP::from($vendas)
+    ->orderBy([
+        'categoria' => false,                              // ASC pelo campo 'categoria'
+        [fn($v) => $v['valor'] * $v['desconto'], 'desc'], // DESC pelo valor do desconto calculado
+    ])
     ->toArray();
 ```
 

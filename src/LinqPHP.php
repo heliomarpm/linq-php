@@ -2,7 +2,9 @@
 
 namespace HeliomarPM\LinqPHP;
 
+use Closure;
 use InvalidArgumentException;
+use ReflectionFunction;
 use stdClass;
 
 enum JoinType: string
@@ -610,22 +612,69 @@ class LinqPHP
      *
      * // Ordenação com string (retrocompatibilidade):
      * $result = LinqPHP::from($data)->orderByKey('id', 'desc')->toArray();
+     *
+     * // Ordenação por closure de extração / campo calculado:
+     * $result = LinqPHP::from($data)->orderByKey(fn($x) => $x['price'] * $x['qty'], true)->toArray();
+     *
+     * // Ordenação por closure comparadora (estilo usort):
+     * $result = LinqPHP::from($data)->orderByKey(fn($a, $b) => strcmp($a['name'], $b['name']))->toArray();
      * ```
      */
-    public function orderByKey(string $key, bool|string $descending = false): self
+    public function orderByKey(callable|string $key, bool|string $descending = false): self
     {
         if ($this->data === []) {
             $this->endTime = microtime(true);
             return $this;
         }
 
-        $data = array_column($this->data, $key);
+        $isDesc = is_bool($descending) ? $descending : strtolower((string)$descending) === 'desc';
 
-        if ($data === []) {
-            throw new InvalidArgumentException("This field does not exist for sorting.");
+        if ($key instanceof Closure || (is_callable($key) && !is_string($key))) {
+            $ref = new ReflectionFunction(Closure::fromCallable($key));
+            if ($ref->getNumberOfParameters() === 2) {
+                if ($isDesc) {
+                    usort($this->data, static fn($a, $b) => $key($b, $a));
+                } else {
+                    usort($this->data, $key);
+                }
+            } else {
+                $values = array_map($key, $this->data);
+                if (!$isDesc) {
+                    array_multisort($values, $this->data);
+                } else {
+                    array_multisort($values, SORT_DESC, $this->data);
+                }
+            }
+            $this->endTime = microtime(true);
+            return $this;
         }
 
-        $isDesc = is_bool($descending) ? $descending : strtolower((string)$descending) === 'desc';
+        $field = (string)$key;
+        $data = array_column($this->data, $field);
+
+        if ($data === []) {
+            if (is_callable($key)) {
+                $ref = new ReflectionFunction(Closure::fromCallable($key));
+                if ($ref->getNumberOfParameters() === 2) {
+                    if ($isDesc) {
+                        usort($this->data, static fn($a, $b) => $key($b, $a));
+                    } else {
+                        usort($this->data, $key);
+                    }
+                } else {
+                    $values = array_map($key, $this->data);
+                    if (!$isDesc) {
+                        array_multisort($values, $this->data);
+                    } else {
+                        array_multisort($values, SORT_DESC, $this->data);
+                    }
+                }
+                $this->endTime = microtime(true);
+                return $this;
+            }
+
+            throw new InvalidArgumentException("This field does not exist for sorting.");
+        }
 
         if (!$isDesc) {
             array_multisort($data, $this->data);
@@ -637,12 +686,14 @@ class LinqPHP
     }
 
     /**
-     * Ordena o array de dados de acordo com os campos e direções fornecidos.
+     * Ordena o array de dados de acordo com os campos, direções e funções fornecidos.
      *
-     * @param array<int|string, string|bool> $fields Os campos pelos quais ordenar. Pode ser uma lista de campos
-     *                                              ['campo1', 'campo2'] (padrão ASC) ou um array associativo com
-     *                                              direções específicas ['campo1' => 'asc', 'campo2' => 'desc']
-     *                                              ou booleanos ['campo1' => false, 'campo2' => true].
+     * @param array<int|string, mixed>|callable $fields Os campos ou função de ordenação. Pode ser:
+     *                                                  - Uma closure/função única (extração ou comparador)
+     *                                                  - Uma lista de campos ['campo1', 'campo2'] (padrão ASC)
+     *                                                  - Um array associativo ['campo1' => 'asc', 'campo2' => 'desc']
+     *                                                  - Um array com booleanos ['campo1' => false, 'campo2' => true]
+     *                                                  - Um array contendo closures: `[fn($x) => $x['total']]`, `[[fn($x) => $x['total'], 'desc']]`
      * @return LinqPHP Retorna a própria instância com os dados ordenados.
      *
      * * Exemplo de uso:
@@ -655,18 +706,74 @@ class LinqPHP
      *
      * // Lista simples (todos ASC por padrão):
      * $result = LinqPHP::from($data)->orderBy(['name', 'age'])->toArray();
+     *
+     * // Ordenação com closure única:
+     * $result = LinqPHP::from($data)->orderBy(fn($x) => $x['price'] * $x['qty'])->toArray();
+     *
+     * // Misto: campo e closure calculada com direção:
+     * $result = LinqPHP::from($data)->orderBy([
+     *     'category' => false,
+     *     [fn($x) => $x['price'] * $x['qty'], true],
+     * ])->toArray();
      * ```
      */
-    public function orderBy(array $fields): self
+    public function orderBy(array|callable $fields): self
     {
         if ($this->data === []) {
             $this->endTime = microtime(true);
             return $this;
         }
 
+        if ($fields instanceof Closure || (is_callable($fields) && !is_string($fields))) {
+            return $this->orderByKey($fields);
+        }
+
+        if (!is_array($fields)) {
+            if (is_callable($fields)) {
+                return $this->orderByKey($fields);
+            }
+            throw new InvalidArgumentException("orderBy expects an array of fields or a callable.");
+        }
+
+        if (count($fields) === 1) {
+            $firstKey = array_key_first($fields);
+            $firstValue = $fields[$firstKey];
+            $candCallable = null;
+            $candDir = false;
+
+            if ($firstValue instanceof Closure || (is_callable($firstValue) && !is_string($firstValue))) {
+                $candCallable = $firstValue;
+            } elseif (is_array($firstValue) && isset($firstValue[0]) && ($firstValue[0] instanceof Closure || (is_callable($firstValue[0]) && !is_string($firstValue[0])))) {
+                $candCallable = $firstValue[0];
+                $candDir = $firstValue[1] ?? false;
+            }
+
+            if ($candCallable !== null) {
+                $ref = new ReflectionFunction(Closure::fromCallable($candCallable));
+                if ($ref->getNumberOfParameters() === 2) {
+                    return $this->orderByKey($candCallable, $candDir);
+                }
+            }
+        }
+
         $sortOrders = [];
         foreach ($fields as $key => $value) {
-            if (is_numeric($key)) {
+            $callable = null;
+            $sort = SORT_ASC;
+            $field = null;
+
+            if ($value instanceof Closure || (is_callable($value) && !is_string($value))) {
+                $callable = $value;
+                $sort = SORT_ASC;
+            } elseif (is_array($value) && isset($value[0]) && ($value[0] instanceof Closure || (is_callable($value[0]) && !is_string($value[0])))) {
+                $callable = $value[0];
+                $direction = $value[1] ?? false;
+                if (is_bool($direction)) {
+                    $sort = $direction ? SORT_DESC : SORT_ASC;
+                } else {
+                    $sort = strtolower((string)$direction) === 'desc' ? SORT_DESC : SORT_ASC;
+                }
+            } elseif (is_numeric($key)) {
                 $field = (string)$value;
                 $sort = SORT_ASC;
             } else {
@@ -678,9 +785,29 @@ class LinqPHP
                 }
             }
 
-            $column = array_column($this->data, $field);
-            if ($column === []) {
-                throw new InvalidArgumentException("This field does not exist for sorting.");
+            if ($callable !== null) {
+                $ref = new ReflectionFunction(Closure::fromCallable($callable));
+                if ($ref->getNumberOfParameters() === 2) {
+                    throw new InvalidArgumentException(
+                        "Comparator callables with two parameters cannot be combined with multiple fields in orderBy."
+                    );
+                }
+                $column = array_map($callable, $this->data);
+            } else {
+                $column = array_column($this->data, (string)$field);
+                if ($column === []) {
+                    if (is_callable($field)) {
+                        $ref = new ReflectionFunction(Closure::fromCallable($field));
+                        if ($ref->getNumberOfParameters() === 2) {
+                            throw new InvalidArgumentException(
+                                "Comparator callables with two parameters cannot be combined with multiple fields in orderBy."
+                            );
+                        }
+                        $column = array_map($field, $this->data);
+                    } else {
+                        throw new InvalidArgumentException("This field does not exist for sorting.");
+                    }
+                }
             }
 
             $sortOrders[] = $column;
@@ -948,6 +1075,9 @@ class LinqPHP
         $result->memoryUsed = $statistic['memoryUsed'];
         $result->count = count($this->data);
         $result->data = $this->data;
+
+        /** @deprecated use $result->data instead */
+        $result->rows = $this->data;
 
         return $result;
     }

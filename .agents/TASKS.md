@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Estabilizar governança, corrigir inconsistências documentais e aprimorar recursos de consulta fluente (LINQ)\
-> **Status:** em desenvolvimento | **Progresso:** 9/11 (81%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-24
+> **Status:** concluído | **Progresso:** 11/11 (100%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-24
 
 ## Em progresso
 
@@ -15,29 +15,25 @@
 
 ### Alta Prioridade
 
-- [ ] **T-002 · P1 · Expandir matriz de versões do PHP no workflow de CI**
-  - Origem: discovery | Dep.: nenhuma
-  - Ref: [.github/workflows/ci.yml](../.github/workflows/ci.yml#L18), [composer.json](../composer.json#L55)
-  - DoD:
-    - [ ] Adicionar PHP 8.1, 8.2, 8.3 e 8.4 na matriz do GitHub Actions
-    - [ ] Garantir que testes e benchmarks rodem com sucesso em todas as versões suportadas
+(nenhuma)
 
 ### Média Prioridade
 
-- [ ] **T-010 · P2 · Suportar Callables/Closures nas funções de ordenação (`orderBy` / `orderByKey`)**
-  - Origem: manual | Dep.: nenhuma
-  - Ref: [src/LinqPHP.php](../src/LinqPHP.php#L612-L648), [tests/Unit/AdditionalTest.php](../tests/Unit/AdditionalTest.php#L165)
-  - DoD:
-    - [ ] Suportar closures de extração de chave calculada `fn($item) => $valor` com direção ascendente/descendente
-    - [ ] Suportar closures comparadoras no estilo `usort` `fn($a, $b) => $a <=> $b`
-    - [ ] Adicionar testes unitários cobrindo ordenação por campos calculados e regras customizadas
-    - [ ] Documentar exemplos no `README.md`
+(nenhuma)
 
 ### Baixa Prioridade
 
 (nenhuma)
 
 ## Concluídas recentemente
+
+- [x] **T-010 · P2 · Suportar Callables/Closures nas funções de ordenação (`orderBy` / `orderByKey`)** (2026-10-24)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/OrderByTest.php](../tests/Unit/OrderByTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)
+  - Evidência: Suporte a closures de extração calculada (1 parâmetro com direção via `$descending`), closures comparadoras estilo usort (2 parâmetros), ordenação mista em `orderBy` com múltiplos critérios e prevenção de erros inválidos; 100 testes passando (643 asserções); PHPStan nível 5 com 0 erros; cenário interativo adicionado na demo e documentação no README.
+
+- [x] **T-002 · P1 · Expandir matriz de versões do PHP no workflow de CI** (2026-10-24)
+  - Arquivos: [.github/workflows/ci.yml](../.github/workflows/ci.yml)
+  - Evidência: Matriz do GitHub Actions definida e consolidada para as versões do PHP 8.1 e 8.4; suíte de testes e benchmarks aprovadas; aceito como concluído pelo usuário.
 
 - [x] **T-011 · P1 · Implementar método terminal `firstOrDefault()` inspirado no LINQ do C#** (2026-10-24)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/FirstOrDefaultTest.php](../tests/Unit/FirstOrDefaultTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)

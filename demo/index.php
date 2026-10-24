@@ -192,6 +192,23 @@ $cenarios = [
             ->toObject(),
     ],
 
+    'ordenacao_closure' => [
+        'titulo' => 'Ordenação com Closures (Valores Calculados)',
+        'tag'    => 'CLOSURE SORT',
+        'cor'    => 'indigo',
+        'desc'   => 'Ordena produtos usando uma closure calculada (preco * estoque) de forma decrescente com orderByKey, sem modificar a estrutura física dos dados.',
+        'codigo' => <<<PHP_WRAP
+        \$linq = LinqPHP::from(\$produtos)
+            ->orderByKey(fn(\$p) => \$p['preco'] * \$p['estoque'], descending: true)
+            ->select(['id_produto', 'nome_produto', 'categoria', 'preco', 'estoque'])
+            ->toObject();
+        PHP_WRAP,
+        'run' => fn() => LinqPHP::from($produtos)
+            ->orderByKey(fn($p) => $p['preco'] * $p['estoque'], descending: true)
+            ->select(['id_produto', 'nome_produto', 'categoria', 'preco', 'estoque'])
+            ->toObject(),
+    ],
+
 
 
     'full_join' => [
