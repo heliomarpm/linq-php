@@ -209,19 +209,36 @@ $result = LinqPHP::from($vendas)
 
 ### `orderBy()` e `orderByKey()` - Ordenação
 
-Ordene por uma chave simples (`orderByKey`) ou por múltiplos critérios com direções independentes (`orderBy`).
+Ordene por uma chave simples (`orderByKey`) com suporte a booleano ou string via `$descending`, ou por múltiplos critérios com direções independentes (`orderBy`).
 
 ```php
-// Ordena por uma chave simples
+// 1. Ordenação simples por chave usando booleano ($descending: true)
+$result = LinqPHP::from($data)
+    ->orderByKey('age', true) // ou orderByKey('age', descending: true)
+    ->toArray();
+
+// 2. Ordenação simples por chave com string (retrocompatível)
 $result = LinqPHP::from($data)
     ->orderByKey('age', 'desc')
     ->toArray();
 
-// Ordenação múltipla com direções independentes
+// 3. Ordenação multi-critério com strings ('asc' / 'desc')
 $result = LinqPHP::from($data)
     ->orderBy(['name' => 'asc', 'age' => 'desc'])
     ->toArray();
+
+// 4. Ordenação multi-critério com booleanos expressivos (false = ASC, true = DESC)
+$result = LinqPHP::from($data)
+    ->orderBy(['name' => false, 'age' => true])
+    ->toArray();
+
+// 5. Lista simples de campos (todos ASC por padrão)
+$result = LinqPHP::from($data)
+    ->orderBy(['name', 'age'])
+    ->toArray();
 ```
+
+
 
 > [!IMPORTANT]
 > **Ciclo de Vida em Memória e Encadeamento com `select()` e Aliases**:
@@ -274,7 +291,8 @@ print_r($obj->data);    // Coleção de dados processados
 O projeto inclui uma interface web completa para experimentação e simulação de queries LINQ em tempo real, com dados de e-commerce e editor interativo de código:
 
 ```bash
-composer demo
+composer start
+# ou: composer demo
 # Acesse http://localhost:8000 no seu navegador
 ```
 

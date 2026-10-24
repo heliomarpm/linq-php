@@ -594,9 +594,8 @@ class LinqPHP
      * Ordena um array de dados por uma chave especificada em ordem ascendente ou descendente.
      *
      * @param string $key A chave pela qual os dados devem ser ordenados.
-     * @param string $order A ordem na qual os dados devem ser ordenados. Padrão é 'asc'.
-     *                     Valores válidos são 'asc' para ordem ascendente e 'desc' para ordem descendente.
-     * @return LinqPHP O objeto atual.
+     * @param bool|string $descending Se verdadeiro ou 'desc', ordena em ordem descendente. Padrão é false ('asc').
+     * @return LinqPHP O objeto atual com os dados ordenados.
      *
      * * Exemplo de uso:
      * ```php
@@ -606,18 +605,29 @@ class LinqPHP
      *     ['id' => 3, 'name' => 'John', 'age' => 35],
      * ];
      *
+     * // Ordenação descendente com booleano:
+     * $result = LinqPHP::from($data)->orderByKey('id', true)->toArray();
+     *
+     * // Ordenação com string (retrocompatibilidade):
      * $result = LinqPHP::from($data)->orderByKey('id', 'desc')->toArray();
      * ```
      */
-    public function orderByKey(string $key, string $order = 'asc'): self
+    public function orderByKey(string $key, bool|string $descending = false): self
     {
+        if ($this->data === []) {
+            $this->endTime = microtime(true);
+            return $this;
+        }
+
         $data = array_column($this->data, $key);
 
         if ($data === []) {
             throw new InvalidArgumentException("This field does not exist for sorting.");
         }
 
-        if (strtolower($order) === 'asc') {
+        $isDesc = is_bool($descending) ? $descending : strtolower((string)$descending) === 'desc';
+
+        if (!$isDesc) {
             array_multisort($data, $this->data);
         } else {
             array_multisort($data, SORT_DESC, $this->data);
@@ -626,26 +636,65 @@ class LinqPHP
         return $this;
     }
 
-
     /**
-     * Ordena o array de dados de acordo com a ordem fornecida.
+     * Ordena o array de dados de acordo com os campos e direções fornecidos.
+     *
+     * @param array<int|string, string|bool> $fields Os campos pelos quais ordenar. Pode ser uma lista de campos
+     *                                              ['campo1', 'campo2'] (padrão ASC) ou um array associativo com
+     *                                              direções específicas ['campo1' => 'asc', 'campo2' => 'desc']
+     *                                              ou booleanos ['campo1' => false, 'campo2' => true].
+     * @return LinqPHP Retorna a própria instância com os dados ordenados.
+     *
+     * * Exemplo de uso:
+     * ```php
+     * // Ordenação com strings:
+     * $result = LinqPHP::from($data)->orderBy(['name' => 'asc', 'age' => 'desc'])->toArray();
+     *
+     * // Ordenação com booleanos (false = ASC, true = DESC):
+     * $result = LinqPHP::from($data)->orderBy(['name' => false, 'age' => true])->toArray();
+     *
+     * // Lista simples (todos ASC por padrão):
+     * $result = LinqPHP::from($data)->orderBy(['name', 'age'])->toArray();
+     * ```
      */
     public function orderBy(array $fields): self
     {
+        if ($this->data === []) {
+            $this->endTime = microtime(true);
+            return $this;
+        }
+
         $sortOrders = [];
-        foreach ($fields as $field => $sortType) {
-            $field = is_numeric($field) ? $sortType : $field;
+        foreach ($fields as $key => $value) {
+            if (is_numeric($key)) {
+                $field = (string)$value;
+                $sort = SORT_ASC;
+            } else {
+                $field = (string)$key;
+                if (is_bool($value)) {
+                    $sort = $value ? SORT_DESC : SORT_ASC;
+                } else {
+                    $sort = strtolower((string)$value) === 'desc' ? SORT_DESC : SORT_ASC;
+                }
+            }
+
             $column = array_column($this->data, $field);
+            if ($column === []) {
+                throw new InvalidArgumentException("This field does not exist for sorting.");
+            }
+
             $sortOrders[] = $column;
-            $sortOrders[] = ($sortType === 'desc') ? SORT_DESC : SORT_ASC;
+            $sortOrders[] = $sort;
         }
 
         $sortOrders[] = &$this->data;
-        array_multisort(...$sortOrders); // Substituído call_user_func_array pelo spread operator (...)
+        array_multisort(...$sortOrders);
 
         $this->endTime = microtime(true);
         return $this;
     }
+
+
 
     protected function setData(array $data, string $context = 'setData'): void
     {

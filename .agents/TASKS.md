@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
-> **Meta:** Estabilizar governança, corrigir inconsistências documentais e aprimorar qualidade contínua (CI/QA)\
-> **Status:** em desenvolvimento | **Progresso:** 7/8 (87%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-13
+> **Meta:** Estabilizar governança, corrigir inconsistências documentais e aprimorar recursos de consulta fluente (LINQ)\
+> **Status:** em desenvolvimento | **Progresso:** 8/11 (72%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-24
 
 ## Em progresso
 
@@ -22,15 +22,36 @@
     - [ ] Adicionar PHP 8.1, 8.2 , 8.3 e 8.4 na matriz do GitHub Actions
     - [ ] Garantir que testes e benchmarks rodem com sucesso em todas as versões suportadas
 
+- [ ] **T-011 · P1 · Implementar método terminal `firstOrDefault()` inspirado no LINQ do C#**
+  - Origem: manual | Dep.: nenhuma
+  - Ref: [src/LinqPHP.php](../src/LinqPHP.php#L814), [tests/Unit/AdditionalTest.php](../tests/Unit/AdditionalTest.php)
+  - DoD:
+    - [ ] Implementar `public function firstOrDefault(?callable $predicate = null, mixed $default = null): mixed`
+    - [ ] Retornar o primeiro registro da coleção ou `$default` (padrão `null`) se a coleção estiver vazia
+    - [ ] Se `$predicate` fornecido, avaliar itens e retornar o primeiro correspondente ou `$default`
+    - [ ] Adicionar testes unitários para coleção vazia, com predicado, sem predicado e default customizado
+    - [ ] Documentar o método e exemplos no `README.md`
+
 ### Média Prioridade
 
-(nenhuma)
+- [ ] **T-010 · P2 · Suportar Callables/Closures nas funções de ordenação (`orderBy` / `orderByKey`)**
+  - Origem: manual | Dep.: nenhuma
+  - Ref: [src/LinqPHP.php](../src/LinqPHP.php#L612-L648), [tests/Unit/AdditionalTest.php](../tests/Unit/AdditionalTest.php#L165)
+  - DoD:
+    - [ ] Suportar closures de extração de chave calculada `fn($item) => $valor` com direção ascendente/descendente
+    - [ ] Suportar closures comparadoras no estilo `usort` `fn($a, $b) => $a <=> $b`
+    - [ ] Adicionar testes unitários cobrindo ordenação por campos calculados e regras customizadas
+    - [ ] Documentar exemplos no `README.md`
 
 ### Baixa Prioridade
 
 (nenhuma)
 
 ## Concluídas recentemente
+
+- [x] **T-009 · P2 · Suportar parâmetro `$descending` em `orderByKey` e booleanos por campo em `orderBy`** (2026-10-24)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/OrderByTest.php](../tests/Unit/OrderByTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)
+  - Evidência: Parâmetro `$descending` (booleano/string) adicionado em `orderByKey`; `orderBy` refinado com assinatura limpa `orderBy(array $fields)` aceitando booleanos (true/false) e strings por campo; 80 testes passando (612 asserções); PHPStan nível 5 com 0 erros; benchmarks validados.
 
 - [x] **T-003 · P2 · Corrigir portabilidade e duplicação no script `reset` do Composer** (2026-10-13)
   - Arquivos: [composer.json](../composer.json)

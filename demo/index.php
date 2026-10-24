@@ -156,24 +156,43 @@ $cenarios = [
         'titulo' => 'Top N Mais Vendidos (Take + OrderByKey)',
         'tag'    => 'SORT & TAKE',
         'cor'    => 'danger',
-        'desc'   => 'Cruza vendas concluídas com produtos, ordena descrescente por quantidade e fatia os 4 maiores pedidos com take(4).',
+        'desc'   => 'Cruza vendas concluídas com produtos, ordena decrescente por quantidade usando descending: true e fatia os 4 maiores pedidos com take(4).',
         'codigo' => <<<PHP_WRAP
         \$linq = LinqPHP::from(\$vendas)
-            ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+            ->innerJoin(\$produtos, ['produto_id' => 'id_produto'])
             ->where(['status', '=', 'concluido'])
-            ->orderByKey('qtd', 'desc')
+            ->orderByKey('qtd', descending: true)
             ->select(['id_venda', 'nome_produto', 'categoria', 'qtd', 'preco'])
             ->take(4)
             ->toObject();
         PHP_WRAP,
         'run' => fn() => LinqPHP::from($vendas)
-            ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+            ->innerJoin($produtos, ['produto_id' => 'id_produto'])
             ->where(['status', '=', 'concluido'])
-            ->orderByKey('qtd', 'desc')
+            ->orderByKey('qtd', descending: true)
             ->select(['id_venda', 'nome_produto', 'categoria', 'qtd', 'preco'])
             ->take(4)
             ->toObject(),
     ],
+
+    'ordenacao_multipla' => [
+        'titulo' => 'Ordenação Multi-Critério (OrderBy)',
+        'tag'    => 'ORDER BY',
+        'cor'    => 'primary',
+        'desc'   => 'Demonstra ordenação com direções independentes por campo, aceitando tanto booleanos (false = ASC, true = DESC) quanto strings.',
+        'codigo' => <<<PHP_WRAP
+        \$linq = LinqPHP::from(\$produtos)
+            ->orderBy(['categoria' => false, 'preco' => true])
+            ->select(['id_produto', 'nome_produto', 'categoria', 'preco', 'estoque'])
+            ->toObject();
+        PHP_WRAP,
+        'run' => fn() => LinqPHP::from($produtos)
+            ->orderBy(['categoria' => false, 'preco' => true])
+            ->select(['id_produto', 'nome_produto', 'categoria', 'preco', 'estoque'])
+            ->toObject(),
+    ],
+
+
 
     'full_join' => [
         'titulo' => 'Full Outer Join (Órfãos e Sem Vendas)',
