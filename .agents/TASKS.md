@@ -1,18 +1,11 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Aprimorar experiência interativa da demo, benchmarks e sinergia com heliomarpm/db-php\
-> **Status:** em execução | **Progresso:** 17/18 (94%) | **WIP:** 1/2 | **Atualizado em:** 2026-10-25
+> **Status:** concluído | **Progresso:** 18/18 (100%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-25
 
 ## Em progresso
 
-- [ ] **T-018 · P2 · Implementar métodos terminais de agregação escalar rápida (`sum`, `avg`, `min`, `max`, `count`)**
-  - **Origem:** manual (novos recursos de agregação escalar)
-  - **Contexto:** Permitir extração direta de métricas escalares inspiradas no LINQ do C# sem a necessidade de passar pela máquina de estados do `groupBy`.
-  - **Critérios de Aceite:**
-    - Métodos `sum(string|callable $field): int|float`, `avg(string|callable $field): ?float`, `min(string|callable $field): mixed`, `max(string|callable $field): mixed` e `count(?callable $predicate = null): int`.
-    - Suporte a nome de campo string ou Closure de cálculo dinâmico.
-    - Testes unitários dedicados cobrindo coleções com dados, coleções vazias e exceções.
-    - Demonstração na demo interativa com comparativo de performance ao vivo.
+(nenhuma)
 
 ## Bloqueadas
 
@@ -33,6 +26,10 @@
 (nenhuma)
 
 ## Concluídas recentemente
+
+- [x] **T-018 · P2 · Implementar métodos terminais de agregação escalar rápida (`sum`, `avg`, `min`, `max`, `count`)** (2026-10-25)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/ScalarAggregationsTest.php](../tests/Unit/ScalarAggregationsTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)
+  - Evidência: Métodos terminais `sum()`, `avg()`, `min()`, `max()` e `count()` implementados com ultra-performance e suporte a closures dinâmicas e strings de campo; nova suíte `ScalarAggregationsTest` criada com 17 novos testes unitários; total de 117 testes unitários passando 100% verde (667 asserções); cenário de demonstração e benchmark comparativo adicionado na demo interativa; documentação no README.md atualizada; PHPStan nível 5 e Pint 100% aprovados.
 
 - [x] **T-017 · P1 · Otimizar loops internos e alocação de memória no LinqPHP (where, select, join, groupBy)** (2026-10-25)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)

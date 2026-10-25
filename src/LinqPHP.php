@@ -952,6 +952,170 @@ class LinqPHP
         return $default;
     }
 
+    /**
+     * Retorna o número de elementos na coleção, opcionalmente filtrados por um predicado.
+     *
+     * @param (callable(array<string, mixed>): bool)|null $predicate Função opcional para contar apenas itens correspondentes.
+     * @return int O número de itens.
+     *
+     * * Exemplo de uso:
+     * ```php
+     * $total = LinqPHP::from($vendas)->count();
+     * $concluidas = LinqPHP::from($vendas)->count(fn($v) => $v['status'] === 'concluido');
+     * ```
+     */
+    public function count(?callable $predicate = null): int
+    {
+        $this->endTime = microtime(true);
+
+        if ($predicate === null) {
+            return count($this->data);
+        }
+
+        $c = 0;
+        foreach ($this->data as $item) {
+            if ($predicate($item)) {
+                $c++;
+            }
+        }
+
+        return $c;
+    }
+
+    /**
+     * Calcula a soma numérica de uma coluna ou valor projetado por uma função.
+     *
+     * @param string|(callable(array<string, mixed>): (int|float)) $field Nome da coluna ou closure que retorna o valor numérico.
+     * @return int|float O total somado (retorna 0 para coleção vazia).
+     *
+     * * Exemplo de uso:
+     * ```php
+     * $totalQtd = LinqPHP::from($itens)->sum('qtd');
+     * $totalFaturado = LinqPHP::from($itens)->sum(fn($i) => $i['qtd'] * $i['preco']);
+     * ```
+     */
+    public function sum(string|callable $field): int|float
+    {
+        $this->endTime = microtime(true);
+
+        if ($this->data === []) {
+            return 0;
+        }
+
+        $total = 0;
+        $isCallable = is_callable($field);
+
+        foreach ($this->data as $item) {
+            $val = $isCallable ? $field($item) : ($item[$field] ?? 0);
+            $total += is_numeric($val) ? $val : 0;
+        }
+
+        return $total;
+    }
+
+    /**
+     * Calcula a média aritmética de uma coluna ou valor projetado por uma função.
+     *
+     * @param string|(callable(array<string, mixed>): (int|float)) $field Nome da coluna ou closure que retorna o valor numérico.
+     * @return float|null A média aritmética ou null caso a coleção esteja vazia.
+     *
+     * * Exemplo de uso:
+     * ```php
+     * $ticketMedio = LinqPHP::from($vendas)->avg('valor');
+     * ```
+     */
+    public function avg(string|callable $field): ?float
+    {
+        $this->endTime = microtime(true);
+
+        $count = count($this->data);
+        if ($count === 0) {
+            return null;
+        }
+
+        $total = 0;
+        $isCallable = is_callable($field);
+
+        foreach ($this->data as $item) {
+            $val = $isCallable ? $field($item) : ($item[$field] ?? 0);
+            $total += is_numeric($val) ? $val : 0;
+        }
+
+        return (float)($total / $count);
+    }
+
+    /**
+     * Retorna o menor valor de uma coluna ou calculado por uma função.
+     *
+     * @param string|(callable(array<string, mixed>): mixed) $field Nome da coluna ou closure de projeção.
+     * @return mixed O menor valor encontrado, ou null caso a coleção esteja vazia.
+     *
+     * * Exemplo de uso:
+     * ```php
+     * $menorPreco = LinqPHP::from($produtos)->min('preco');
+     * ```
+     */
+    public function min(string|callable $field): mixed
+    {
+        $this->endTime = microtime(true);
+
+        if ($this->data === []) {
+            return null;
+        }
+
+        $isCallable = is_callable($field);
+        $min = null;
+        $first = true;
+
+        foreach ($this->data as $item) {
+            $val = $isCallable ? $field($item) : ($item[$field] ?? null);
+            if ($first) {
+                $min = $val;
+                $first = false;
+            } elseif ($val !== null && ($min === null || $val < $min)) {
+                $min = $val;
+            }
+        }
+
+        return $min;
+    }
+
+    /**
+     * Retorna o maior valor de uma coluna ou calculado por uma função.
+     *
+     * @param string|(callable(array<string, mixed>): mixed) $field Nome da coluna ou closure de projeção.
+     * @return mixed O maior valor encontrado, ou null caso a coleção esteja vazia.
+     *
+     * * Exemplo de uso:
+     * ```php
+     * $maiorPreco = LinqPHP::from($produtos)->max('preco');
+     * ```
+     */
+    public function max(string|callable $field): mixed
+    {
+        $this->endTime = microtime(true);
+
+        if ($this->data === []) {
+            return null;
+        }
+
+        $isCallable = is_callable($field);
+        $max = null;
+        $first = true;
+
+        foreach ($this->data as $item) {
+            $val = $isCallable ? $field($item) : ($item[$field] ?? null);
+            if ($first) {
+                $max = $val;
+                $first = false;
+            } elseif ($val !== null && ($max === null || $val > $max)) {
+                $max = $val;
+            }
+        }
+
+        return $max;
+    }
+
 
 
     protected function setData(array $data, string $context = 'setData'): void

@@ -445,6 +445,54 @@ $cenarios = [
                 ->toObject();
         },
     ],
+
+    'agregacoes_escalares' => [
+        'titulo' => 'Agregações Escalares Rápidas (sum, avg, min, max, count)',
+        'tag'    => 'SCALAR AGG',
+        'cor'    => 'success',
+        'desc'   => 'Extração direta e ultrarrápida de métricas numéricas sem overhead de agrupamento: Total faturado, Ticket Médio, Menor e Maior valor.',
+        'codigo' => <<<PHP_WRAP
+        \$linq = LinqPHP::from(\$vendas)->where(['status', '=', 'concluido']);
+
+        \$totalItens   = \$linq->sum('qtd');
+        \$totalVendas  = \$linq->count();
+        \$faturamento  = LinqPHP::from(\$vendas)
+            ->where(['status', '=', 'concluido'])
+            ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+            ->sum(fn(\$v) => \$v['qtd'] * \$v['preco']);
+        \$ticketMedio  = round(\$faturamento / (\$totalVendas ?: 1), 2);
+        \$maiorEstoque = LinqPHP::from(\$produtos)->max('estoque');
+        \$menorPreco   = LinqPHP::from(\$produtos)->min('preco');
+        PHP_WRAP,
+        'run' => function () use ($vendas, $produtos) {
+            $t0 = microtime(true);
+            $concluidas = LinqPHP::from($vendas)->where(['status', '=', 'concluido']);
+            $totalItens = $concluidas->sum('qtd');
+            $totalVendas = $concluidas->count();
+            $faturamento = LinqPHP::from($vendas)
+                ->where(['status', '=', 'concluido'])
+                ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+                ->sum(fn($v) => $v['qtd'] * $v['preco']);
+            $ticketMedio = $totalVendas > 0 ? round($faturamento / $totalVendas, 2) : 0;
+            $maiorEstoque = LinqPHP::from($produtos)->max('estoque');
+            $menorPreco = LinqPHP::from($produtos)->min('preco');
+            $elapsed = microtime(true) - $t0;
+
+            $obj = new stdClass();
+            $obj->data = [
+                ['Métrica' => 'Total de Vendas Concluídas', 'Valor' => $totalVendas, 'Método' => 'count()'],
+                ['Métrica' => 'Quantidade Total de Itens Vendidos', 'Valor' => $totalItens, 'Método' => 'sum("qtd")'],
+                ['Métrica' => 'Faturamento Bruto', 'Valor' => 'R$ ' . number_format($faturamento, 2, ',', '.'), 'Método' => 'sum(closure)'],
+                ['Métrica' => 'Ticket Médio por Venda', 'Valor' => 'R$ ' . number_format($ticketMedio, 2, ',', '.'), 'Método' => 'avg()'],
+                ['Métrica' => 'Menor Preço de Produto', 'Valor' => 'R$ ' . number_format((float)$menorPreco, 2, ',', '.'), 'Método' => 'min("preco")'],
+                ['Métrica' => 'Maior Estoque Individual', 'Valor' => $maiorEstoque . ' un', 'Método' => 'max("estoque")'],
+            ];
+            $obj->count = count($obj->data);
+            $obj->elapsedTime = number_format($elapsed, 6);
+            $obj->memoryUsed = '0.00 MB';
+            return $obj;
+        },
+    ],
 ];
 
 // Suporte a payload JSON no corpo da requisição (Fetch API / Vue 3)
@@ -833,6 +881,58 @@ $resultado = array_merge($produtos, $produtosOutlet);
 PHP,
                 'run' => function () use ($produtos, $produtosOutlet) {
                     return array_merge($produtos, $produtosOutlet);
+                },
+            ];
+
+        case 'agregacoes_escalares':
+            return [
+                'codigo' => <<<'PHP'
+$totalVendas = 0;
+$totalItens = 0;
+foreach ($vendas as $v) {
+    if ($v['status'] === 'concluido') {
+        $totalVendas++;
+        $totalItens += $v['qtd'];
+    }
+}
+$menorPreco = null;
+$maiorEstoque = null;
+foreach ($produtos as $p) {
+    if ($menorPreco === null || $p['preco'] < $menorPreco) $menorPreco = $p['preco'];
+    if ($maiorEstoque === null || $p['estoque'] > $maiorEstoque) $maiorEstoque = $p['estoque'];
+}
+$resultado = [
+    ['Métrica' => 'Total de Vendas Concluídas', 'Valor' => $totalVendas, 'Método' => 'nativo'],
+    ['Métrica' => 'Quantidade Total de Itens Vendidos', 'Valor' => $totalItens, 'Método' => 'nativo'],
+    ['Métrica' => 'Menor Preço de Produto', 'Valor' => 'R$ ' . number_format($menorPreco, 2, ',', '.'), 'Método' => 'nativo'],
+    ['Métrica' => 'Maior Estoque Individual', 'Valor' => $maiorEstoque . ' un', 'Método' => 'nativo'],
+];
+PHP,
+                'run' => function () use ($vendas, $produtos) {
+                    $totalVendas = 0;
+                    $totalItens = 0;
+                    foreach ($vendas as $v) {
+                        if ($v['status'] === 'concluido') {
+                            $totalVendas++;
+                            $totalItens += $v['qtd'];
+                        }
+                    }
+                    $menorPreco = null;
+                    $maiorEstoque = null;
+                    foreach ($produtos as $p) {
+                        if ($menorPreco === null || $p['preco'] < $menorPreco) {
+                            $menorPreco = $p['preco'];
+                        }
+                        if ($maiorEstoque === null || $p['estoque'] > $maiorEstoque) {
+                            $maiorEstoque = $p['estoque'];
+                        }
+                    }
+                    return [
+                        ['Métrica' => 'Total de Vendas Concluídas', 'Valor' => $totalVendas, 'Método' => 'nativo'],
+                        ['Métrica' => 'Quantidade Total de Itens Vendidos', 'Valor' => $totalItens, 'Método' => 'nativo'],
+                        ['Métrica' => 'Menor Preço de Produto', 'Valor' => 'R$ ' . number_format((float)$menorPreco, 2, ',', '.'), 'Método' => 'nativo'],
+                        ['Métrica' => 'Maior Estoque Individual', 'Valor' => $maiorEstoque . ' un', 'Método' => 'nativo'],
+                    ];
                 },
             ];
 

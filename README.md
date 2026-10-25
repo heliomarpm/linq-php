@@ -307,9 +307,9 @@ $result = LinqPHP::from($vendas)
 >
 > Caso tente ordenar por uma chave inexistente (como tentar usar `'id_venda'` após ele ter sido transformado em `'Código Venda'`), o LinqPHP disparará uma `InvalidArgumentException("This field does not exist for sorting.")`.
 
-### Extração de Resultados (`toArray`, `toObject` e `firstOrDefault`)
+### Extração de Resultados (`toArray`, `toObject`, `firstOrDefault` e Agregações Escalares)
 
-No final da cadeia fluente, invoque um método de saída terminal para extrair os dados processados:
+No final da cadeia fluente, invoque um método de saída terminal para extrair os dados processados ou calcular métricas pontuais com ultra-performance:
 
 ```php
 $linq = LinqPHP::from($data)->where(['age', '>', 20]);
@@ -335,6 +335,18 @@ $usuario = LinqPHP::from($data)->firstOrDefault(
     fn($item) => $item['id'] === 999,
     default: ['id' => 0, 'name' => 'Visitante']
 );
+
+// 4. Agregações Escalares Rápidas (sum, avg, min, max, count)
+// Extração direta de métricas sem a necessidade de passar pela máquina de agrupamento:
+$totalVendas    = LinqPHP::from($vendas)->count();
+$vendasPagas    = LinqPHP::from($vendas)->count(fn($v) => $v['status'] === 'concluido');
+$totalItens     = LinqPHP::from($vendas)->where(['status', '=', 'concluido'])->sum('qtd');
+$ticketMedio    = LinqPHP::from($produtos)->avg('preco');
+$menorPreco     = LinqPHP::from($produtos)->min('preco');
+$maiorEstoque   = LinqPHP::from($produtos)->max('estoque');
+
+// Suportam também closures dinâmicas calculadas:
+$faturamento    = LinqPHP::from($itens)->sum(fn($i) => $i['qtd'] * $i['preco']);
 ```
 
 
