@@ -1,11 +1,18 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Aprimorar experiência interativa da demo, benchmarks e sinergia com heliomarpm/db-php\
-> **Status:** concluído | **Progresso:** 16/16 (100%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-25
+> **Status:** em execução | **Progresso:** 17/18 (94%) | **WIP:** 1/2 | **Atualizado em:** 2026-10-25
 
 ## Em progresso
 
-(nenhuma)
+- [ ] **T-018 · P2 · Implementar métodos terminais de agregação escalar rápida (`sum`, `avg`, `min`, `max`, `count`)**
+  - **Origem:** manual (novos recursos de agregação escalar)
+  - **Contexto:** Permitir extração direta de métricas escalares inspiradas no LINQ do C# sem a necessidade de passar pela máquina de estados do `groupBy`.
+  - **Critérios de Aceite:**
+    - Métodos `sum(string|callable $field): int|float`, `avg(string|callable $field): ?float`, `min(string|callable $field): mixed`, `max(string|callable $field): mixed` e `count(?callable $predicate = null): int`.
+    - Suporte a nome de campo string ou Closure de cálculo dinâmico.
+    - Testes unitários dedicados cobrindo coleções com dados, coleções vazias e exceções.
+    - Demonstração na demo interativa com comparativo de performance ao vivo.
 
 ## Bloqueadas
 
@@ -26,6 +33,10 @@
 (nenhuma)
 
 ## Concluídas recentemente
+
+- [x] **T-017 · P1 · Otimizar loops internos e alocação de memória no LinqPHP (where, select, join, groupBy)** (2026-10-25)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
+  - Evidência: Fast-path em `where()` para closures diretas e condição única estruturada reduzindo latência em mais de 2x (~26µs vs ~58µs); fast-path para joins com chave simples (`count($fields) === 1`) eliminando overhead de `implode` e alocação de matrizes; fast-path em `groupBy([], ...)` para agregações globais eliminando `array_intersect_key` linha a linha; suíte de 100 testes unitários passando 100% verde (643 asserções); Pint e PHPStan 100% aprovados sem quebra de compatibilidade.
 
 - [x] **T-016 · P3 · Adicionar ferramenta de exportação rápida (CSV, JSON e Array PHP) na demo** (2026-10-25)
   - Arquivos: [demo/index.php](../demo/index.php)

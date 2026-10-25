@@ -173,29 +173,31 @@ class LinqPHP
         }
 
         // ============================
-        // Indexa RIGHT
+        // Indexa RIGHT (Fast Path para chave simples)
         // ============================
+        $singleRight = count($rightFields) === 1 ? $rightFields[0] : null;
         $rightIndex = [];
         foreach ($joinData as $r) {
-            $key = $this->buildJoinKey($r, $rightFields);
+            $key = $singleRight !== null ? (string)($r[$singleRight] ?? '') : $this->buildJoinKey($r, $rightFields);
             $rightIndex[$key][] = $r;
         }
 
         $result = [];
         $matchedRightKeys = [];
+        $singleLeft = count($leftFields) === 1 ? $leftFields[0] : null;
 
         // ============================
         // INNER / LEFT / FULL
         // ============================
         foreach ($this->data as $l) {
-            $key = $this->buildJoinKey($l, $leftFields);
+            $key = $singleLeft !== null ? (string)($l[$singleLeft] ?? '') : $this->buildJoinKey($l, $leftFields);
 
             if (isset($rightIndex[$key])) {
                 foreach ($rightIndex[$key] as $r) {
                     $result[] = array_merge($l, $r);
                 }
                 $matchedRightKeys[$key] = true;
-            } elseif (in_array($joinType, [JoinType::LEFT, JoinType::FULL])) {
+            } elseif (in_array($joinType, [JoinType::LEFT, JoinType::FULL], true)) {
                 $result[] = array_merge($l, $this->nullFillRightOnly($l, $joinData));
             }
         }
@@ -203,9 +205,9 @@ class LinqPHP
         // ============================
         // RIGHT / FULL
         // ============================
-        if (in_array($joinType, [JoinType::RIGHT, JoinType::FULL])) {
+        if (in_array($joinType, [JoinType::RIGHT, JoinType::FULL], true)) {
             foreach ($joinData as $r) {
-                $key = $this->buildJoinKey($r, $rightFields);
+                $key = $singleRight !== null ? (string)($r[$singleRight] ?? '') : $this->buildJoinKey($r, $rightFields);
 
                 if (!isset($matchedRightKeys[$key])) {
                     $result[] = array_merge($this->nullFillRightOnly($r, $this->data), $r);
@@ -349,7 +351,37 @@ class LinqPHP
      */
     public function where(mixed $conditions): self
     {
+        // Fast-path 1: Se for uma closure/função única, executa direto sem wrapper
+        if (is_callable($conditions) && !is_array($conditions)) {
+            $this->data = array_values(array_filter($this->data, $conditions));
+            $this->endTime = microtime(true);
+            return $this;
+        }
+
         $normalizedConditions = $this->normalizeWhereConditions($conditions);
+
+        // Fast-path 2: Condição única estruturada (ex: ['status', '=', 'concluido'])
+        if (count($normalizedConditions) === 1 && is_array($normalizedConditions[0]) && count($normalizedConditions[0]) === 3) {
+            $cond = $normalizedConditions[0];
+            $key = $cond[0];
+            $operator = $cond[1];
+            $value = $cond[2];
+
+            $filtered = [];
+            foreach ($this->data as $item) {
+                $itemValue = $item[$key] ?? null;
+                if (is_string($itemValue)) {
+                    $itemValue = strtolower($itemValue);
+                }
+                if ($this->evaluateOperatorMatch($itemValue, $operator, $value)) {
+                    $filtered[] = $item;
+                }
+            }
+
+            $this->data = $filtered;
+            $this->endTime = microtime(true);
+            return $this;
+        }
 
         $resultadosFiltrados = array_filter(
             $this->data,
@@ -385,10 +417,15 @@ class LinqPHP
      */
     public function groupBy(array $groupingFields, array $aggregations = []): self
     {
+        if ($this->data === []) {
+            $this->endTime = microtime(true);
+            return $this;
+        }
+
         $groupedResult = [];
         $hasAggregations = $aggregations !== [];
         $duplicatedFields = [];
-        $groupingFieldsFlip = array_flip($groupingFields);
+        $isGlobal = ($groupingFields === []);
 
         if ($hasAggregations) {
             $allAggFields = [];
@@ -403,17 +440,31 @@ class LinqPHP
             $duplicatedFields = array_keys(array_filter($valueCounts, fn(int $count): bool => $count > 1));
         }
 
-        foreach ($this->data as $item) {
-            // Gerar chave única para identificar o grupo
-            $groupKey = implode('_', array_intersect_key($item, $groupingFieldsFlip));
+        if ($isGlobal) {
+            // Fast-path para Totalizador Global (sem campos de agrupamento)
+            $groupKey = '0';
+            $groupedResult[$groupKey] = [];
+            foreach ($this->data as $item) {
+                if (!$hasAggregations) {
+                    $this->groupByDefaultAggregations($groupedResult, $groupKey, $groupingFields, $item);
+                } else {
+                    $this->groupByCustomAggregations($groupedResult, $groupKey, $aggregations, $duplicatedFields, $item);
+                }
+            }
+        } else {
+            $groupingFieldsFlip = array_flip($groupingFields);
+            foreach ($this->data as $item) {
+                // Gerar chave única para identificar o grupo
+                $groupKey = implode('_', array_intersect_key($item, $groupingFieldsFlip));
 
-            // Inicializar grupo se ainda não existir
-            $groupedResult[$groupKey] ??= array_intersect_key($item, $groupingFieldsFlip);
+                // Inicializar grupo se ainda não existir
+                $groupedResult[$groupKey] ??= array_intersect_key($item, $groupingFieldsFlip);
 
-            if (!$hasAggregations) {
-                $this->groupByDefaultAggregations($groupedResult, $groupKey, $groupingFields, $item);
-            } else {
-                $this->groupByCustomAggregations($groupedResult, $groupKey, $aggregations, $duplicatedFields, $item);
+                if (!$hasAggregations) {
+                    $this->groupByDefaultAggregations($groupedResult, $groupKey, $groupingFields, $item);
+                } else {
+                    $this->groupByCustomAggregations($groupedResult, $groupKey, $aggregations, $duplicatedFields, $item);
+                }
             }
         }
 
@@ -821,6 +872,86 @@ class LinqPHP
         return $this;
     }
 
+    /**
+     * Summary of toArray
+     */
+    public function toArray(): array
+    {
+        return $this->data;
+    }
+
+    /**
+     * Converte o objeto atual em um objeto stdClass.
+     *
+     * @return stdClass {elapsedTime: float, memoryUsed: string, count: int, data: array} O objeto convertido.
+     *
+     * * Exemplo de saída:
+     * ```php
+     * $result = LinqPHP::from($data)->toObject();
+     * echo $result->elapsedTime; // Output: 0.0160
+     * echo $result->memoryUsed; // Output: 0.01MB
+     * echo $result->count; // Output: 10_000
+     * echo $result->data; // Output: array<int, array<string, mixed>>
+     * ```
+     */
+    public function toObject(): stdClass
+    {
+        $statistic = $this->statisticUsage();
+
+        $result = new stdClass();
+        $result->elapsedTime = $statistic['elapsedTime'];
+        $result->memoryUsed = $statistic['memoryUsed'];
+        $result->count = count($this->data);
+        $result->data = $this->data;
+
+        /** @deprecated use $result->data instead */
+        $result->rows = $this->data;
+
+        return $result;
+    }
+
+    /**
+     * Retorna o primeiro elemento da coleção, ou um valor padrão caso a coleção esteja vazia
+     * ou nenhum elemento satisfaça o predicado fornecido.
+     *
+     * @param (callable(array<string, mixed>): bool)|null $predicate Função opcional para testar cada elemento.
+     * @param mixed $default Valor retornado caso nenhum elemento corresponda. Padrão é null.
+     * @return mixed O primeiro item correspondente ou o valor padrão.
+     *
+     * * Exemplo de uso:
+     * ```php
+     * // Retorna o primeiro item ou null se vazio:
+     * $primeiro = LinqPHP::from($users)->firstOrDefault();
+     *
+     * // Retorna o primeiro item que satisfaz o predicado:
+     * $user = LinqPHP::from($users)->firstOrDefault(fn($u) => $u['id'] === 10);
+     *
+     * // Com valor padrão customizado quando não encontrar:
+     * $user = LinqPHP::from($users)->firstOrDefault(fn($u) => $u['id'] === 999, default: ['id' => 0]);
+     * ```
+     */
+    public function firstOrDefault(?callable $predicate = null, mixed $default = null): mixed
+    {
+        $this->endTime = microtime(true);
+
+        if ($this->data === []) {
+            return $default;
+        }
+
+        if ($predicate === null) {
+            $firstKey = array_key_first($this->data);
+            return $firstKey !== null ? $this->data[$firstKey] : $default;
+        }
+
+        foreach ($this->data as $item) {
+            if ($predicate($item)) {
+                return $item;
+            }
+        }
+
+        return $default;
+    }
+
 
 
     protected function setData(array $data, string $context = 'setData'): void
@@ -858,6 +989,10 @@ class LinqPHP
 
     private function buildJoinKey(array $item, array $fields): string
     {
+        if (count($fields) === 1) {
+            return (string)($item[$fields[0]] ?? '');
+        }
+
         $values = [];
         foreach ($fields as $field) {
             $values[] = $item[$field] ?? null;
@@ -915,7 +1050,9 @@ class LinqPHP
             }
 
             if (is_array($condition)) {
-                [$key, $operator, $value] = $condition;
+                $key = $condition[0];
+                $operator = $condition[1];
+                $value = $condition[2];
 
                 $itemValue = $item[$key] ?? null;
                 if (is_string($itemValue)) {
@@ -1043,85 +1180,4 @@ class LinqPHP
             'memoryUsed' => sprintf("%5.2f MB", (memory_get_peak_usage(true) - $this->startMemory) / 1024 / 1024),
         ];
     }
-
-    /**
-     * Summary of toArray
-     */
-    public function toArray(): array
-    {
-        return $this->data;
-    }
-
-    /**
-     * Converte o objeto atual em um objeto stdClass.
-     *
-     * @return stdClass {elapsedTime: float, memoryUsed: string, count: int, data: array} O objeto convertido.
-     *
-     * * Exemplo de saída:
-     * ```php
-     * $result = LinqPHP::from($data)->toObject();
-     * echo $result->elapsedTime; // Output: 0.0160
-     * echo $result->memoryUsed; // Output: 0.01MB
-     * echo $result->count; // Output: 10_000
-     * echo $result->data; // Output: array<int, array<string, mixed>>
-     * ```
-     */
-    public function toObject(): stdClass
-    {
-        $statistic = $this->statisticUsage();
-
-        $result = new stdClass();
-        $result->elapsedTime = $statistic['elapsedTime'];
-        $result->memoryUsed = $statistic['memoryUsed'];
-        $result->count = count($this->data);
-        $result->data = $this->data;
-
-        /** @deprecated use $result->data instead */
-        $result->rows = $this->data;
-
-        return $result;
-    }
-
-    /**
-     * Retorna o primeiro elemento da coleção, ou um valor padrão caso a coleção esteja vazia
-     * ou nenhum elemento satisfaça o predicado fornecido.
-     *
-     * @param (callable(array<string, mixed>): bool)|null $predicate Função opcional para testar cada elemento.
-     * @param mixed $default Valor retornado caso nenhum elemento corresponda. Padrão é null.
-     * @return mixed O primeiro item correspondente ou o valor padrão.
-     *
-     * * Exemplo de uso:
-     * ```php
-     * // Retorna o primeiro item ou null se vazio:
-     * $primeiro = LinqPHP::from($users)->firstOrDefault();
-     *
-     * // Retorna o primeiro item que satisfaz o predicado:
-     * $user = LinqPHP::from($users)->firstOrDefault(fn($u) => $u['id'] === 10);
-     *
-     * // Com valor padrão customizado quando não encontrar:
-     * $user = LinqPHP::from($users)->firstOrDefault(fn($u) => $u['id'] === 999, default: ['id' => 0]);
-     * ```
-     */
-    public function firstOrDefault(?callable $predicate = null, mixed $default = null): mixed
-    {
-        $this->endTime = microtime(true);
-
-        if ($this->data === []) {
-            return $default;
-        }
-
-        if ($predicate === null) {
-            $firstKey = array_key_first($this->data);
-            return $firstKey !== null ? $this->data[$firstKey] : $default;
-        }
-
-        foreach ($this->data as $item) {
-            if ($predicate($item)) {
-                return $item;
-            }
-        }
-
-        return $default;
-    }
 }
-
