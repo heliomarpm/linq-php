@@ -539,54 +539,77 @@ if (!function_exists('renderGrid')) {
     function renderGrid(string $titulo, array $dados, string $corHeader = 'bg-primary', ?int $totalRegistros = null): string
     {
         if ($dados === []) {
-            return "<div class='alert alert-warning py-2 mb-3' style='font-size: 0.85rem;'>Nenhum registro encontrado.</div>";
+            return "<div class='alert alert-secondary py-3 mb-3 text-secondary text-center rounded-3' style='background: #161b22; border: 1px solid #30363d; font-size: 0.85rem;'><i class='bi bi-inbox me-2'></i>Nenhum registro encontrado.</div>";
         }
 
         $colunas = array_keys($dados[0]);
         $badgeCount = $totalRegistros ?? count($dados);
 
-        $html = "<div class='card shadow-sm mb-3 border-0 rounded-3 overflow-hidden'>";
-        $html .= "<div class='card-header text-white {$corHeader} d-flex justify-content-between align-items-center py-2 px-3'>";
-        $html .= "<span class='fw-semibold' style='font-size: 0.85rem;'>{$titulo}</span>";
-        $html .= "<span class='badge bg-light text-dark rounded-pill' style='font-size: 0.72rem;'>{$badgeCount} itens</span>";
+        $dotColor = match ($corHeader) {
+            'bg-indigo' => '#8B5CF6',
+            'bg-primary' => '#6366F1',
+            'bg-secondary' => '#94A3B8',
+            'bg-dark' => '#FF7A00',
+            default => '#8B5CF6',
+        };
+
+        $badgeStyle = match ($corHeader) {
+            'bg-indigo' => 'background: rgba(139, 92, 246, 0.18); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.4);',
+            'bg-primary' => 'background: rgba(99, 102, 241, 0.18); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.4);',
+            'bg-secondary' => 'background: rgba(148, 163, 184, 0.18); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.4);',
+            'bg-dark' => 'background: rgba(255, 122, 0, 0.18); color: #fdba74; border: 1px solid rgba(255, 122, 0, 0.4);',
+            default => 'background: rgba(139, 92, 246, 0.18); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.4);',
+        };
+
+        $html = "<div class='card mb-3 rounded-3 overflow-hidden shadow-sm' style='background: #161b22; border: 1px solid #30363d;'>";
+        $html .= "<div class='card-header d-flex justify-content-between align-items-center py-2 px-3' style='background: #21262d; border-bottom: 1px solid #30363d;'>";
+        $html .= "<div class='d-flex align-items-center gap-2'>";
+        $html .= "<span style='width: 8px; height: 8px; border-radius: 50%; background-color: {$dotColor}; display: inline-block; box-shadow: 0 0 8px {$dotColor};'></span>";
+        $html .= "<span class='fw-semibold text-white' style='font-size: 0.85rem;'>{$titulo}</span>";
         $html .= "</div>";
-        $html .= "<div class='card-body p-0'><div class='table-responsive'><table class='table table-sm table-striped table-hover mb-0 align-middle' style='font-size: 0.82rem;'>";
-        $html .= "<thead class='table-light'><tr>";
+        $html .= "<span class='badge rounded-pill fw-semibold' style='font-size: 0.72rem; {$badgeStyle}'>{$badgeCount} itens</span>";
+        $html .= "</div>";
+        $html .= "<div class='card-body p-0'><div class='table-responsive'><table class='table table-sm table-dark table-hover mb-0 align-middle' style='font-size: 0.82rem; background: #161b22; border-color: #30363d;'>";
+        $html .= "<thead style='background: #1c2128; border-bottom: 1px solid #30363d;'><tr>";
 
         foreach ($colunas as $col) {
-            $html .= "<th class='text-secondary py-2 px-2' style='font-weight: 600; font-size: 0.75rem;'>" . strtoupper($col) . "</th>";
+            $html .= "<th class='text-secondary py-2 px-2' style='font-weight: 600; font-size: 0.74rem; letter-spacing: 0.04em; background: #1c2128; border-color: #30363d;'>" . strtoupper($col) . "</th>";
         }
 
         $html .= "</tr></thead><tbody>";
 
         foreach ($dados as $linha) {
-            $html .= "<tr>";
+            $html .= "<tr style='border-color: #21262d;'>";
             foreach ($colunas as $col) {
                 $valor = $linha[$col] ?? null;
 
                 if ($valor === null) {
-                    $celula = '<span class="badge bg-secondary-subtle text-secondary font-monospace" style="font-size: 0.7rem;">null</span>';
+                    $celula = '<span class="badge font-monospace" style="font-size: 0.68rem; background: rgba(110, 118, 129, 0.2); color: #8b949e; border: 1px solid #30363d;">null</span>';
                 } elseif (is_bool($valor)) {
                     $celula = $valor
-                        ? '<span class="badge bg-success-subtle text-success">Sim</span>'
-                        : '<span class="badge bg-light text-muted border">Não</span>';
+                        ? '<span class="badge" style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.35);">Sim</span>'
+                        : '<span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35);">Não</span>';
                 } elseif (is_float($valor)) {
-                    $celula = number_format($valor, 2, ',', '.');
+                    $celula = '<span class="fw-semibold text-light">' . number_format($valor, 2, ',', '.') . '</span>';
                 } elseif (is_array($valor)) {
-                    $celula = '<code class="small">' . htmlspecialchars(json_encode($valor, JSON_UNESCAPED_UNICODE)) . '</code>';
+                    $celula = '<code class="small text-info">' . htmlspecialchars(json_encode($valor, JSON_UNESCAPED_UNICODE)) . '</code>';
                 } elseif ($col === 'status') {
                     $corStatus = match ($valor) {
-                        'concluido' => 'bg-success text-white',
-                        'pendente'  => 'bg-warning text-dark',
-                        'cancelado' => 'bg-danger text-white',
-                        default     => 'bg-secondary text-white'
+                        'concluido' => 'background: rgba(34, 197, 94, 0.18); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4);',
+                        'pendente'  => 'background: rgba(245, 158, 11, 0.18); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);',
+                        'cancelado' => 'background: rgba(239, 68, 68, 0.18); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4);',
+                        default     => 'background: rgba(148, 163, 184, 0.18); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.4);',
                     };
-                    $celula = "<span class='badge rounded-pill {$corStatus} text-uppercase' style='font-size: 0.68rem;'>{$valor}</span>";
+                    $celula = "<span class='badge rounded-pill text-uppercase' style='font-size: 0.68rem; {$corStatus}'>{$valor}</span>";
+                } elseif ($col === 'vip') {
+                    $celula = $valor
+                        ? '<span class="badge" style="background: rgba(255, 122, 0, 0.2); color: #fb923c; border: 1px solid rgba(255, 122, 0, 0.4);">VIP ⭐</span>'
+                        : '<span class="badge text-secondary" style="background: rgba(110, 118, 129, 0.15); border: 1px solid #30363d;">Comum</span>';
                 } else {
                     $celula = htmlspecialchars((string)$valor);
                 }
 
-                $html .= "<td class='py-2 px-2'>{$celula}</td>";
+                $html .= "<td class='py-2 px-2' style='background: #161b22; color: #c9d1d9; border-color: #21262d;'>{$celula}</td>";
             }
             $html .= "</tr>";
         }
@@ -597,60 +620,134 @@ if (!function_exists('renderGrid')) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-bs-theme="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinqPHP - Laboratório Interativo</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>LinqPHP · Laboratório Interativo & Benchmark DX</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
-            --brand-purple: #6f42c1;
+            --brand-dark-bg: #0d1117;
+            --brand-card-bg: #161b22;
+            --brand-card-subtle: #21262d;
+            --brand-border: #30363d;
+            --brand-purple: #8B5CF6;
+            --brand-purple-light: #A78BFA;
+            --brand-purple-glow: rgba(139, 92, 246, 0.35);
+            --brand-orange: #FF7A00;
+            --brand-orange-light: #FB923C;
+            --brand-orange-glow: rgba(255, 122, 0, 0.35);
+            --brand-cyan: #00A3FF;
+            --brand-gradient: linear-gradient(135deg, #8B5CF6 0%, #6366F1 50%, #FF7A00 100%);
+            --brand-gradient-hover: linear-gradient(135deg, #9D74FF 0%, #7578FF 50%, #FF8F26 100%);
+            --brand-text: #f0f6fc;
+            --brand-text-secondary: #8b949e;
         }
 
         body {
             font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-            background-color: #f8fafc;
-            color: #1e293b;
+            background-color: var(--brand-dark-bg);
+            color: var(--brand-text);
             padding-bottom: 60px;
+            min-height: 100vh;
         }
 
-        .navbar-brand {
-            font-weight: 700;
+        .navbar-custom {
+            background-color: rgba(22, 27, 34, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--brand-border);
+        }
+
+        .brand-title {
+            background: linear-gradient(135deg, #C4B5FD 0%, #FFFFFF 45%, #FDBA74 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
             letter-spacing: -0.02em;
         }
 
-        .brand-header {
-            background: var(--primary-gradient);
+        .brand-badge {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(255, 122, 0, 0.2));
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            color: #f0f6fc;
         }
 
-        .nav-pills .nav-link {
-            font-size: 0.85rem;
-            font-weight: 600;
-            border-radius: 8px;
-            transition: all 0.2s ease-in-out;
-            padding: 8px 14px;
+        .btn-nav-action {
+            background: #21262d;
+            border: 1px solid var(--brand-border);
+            color: #f0f6fc;
+            transition: all 0.2s ease;
+            text-decoration: none;
         }
 
-        .nav-pills .nav-link:hover:not(.active) {
-            background-color: #e2e8f0;
+        .btn-nav-action:hover {
+            background: #30363d;
+            border-color: var(--brand-purple);
+            color: #ffffff;
             transform: translateY(-1px);
         }
 
-        .nav-pills .nav-link.active {
-            background: #6366f1;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+        .btn-nav-cyan {
+            background: rgba(0, 163, 255, 0.1);
+            border: 1px solid rgba(0, 163, 255, 0.4);
+            color: #38bdf8;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-nav-cyan:hover {
+            background: rgba(0, 163, 255, 0.2);
+            border-color: #00A3FF;
+            color: #ffffff;
+            box-shadow: 0 0 12px rgba(0, 163, 255, 0.35);
+            transform: translateY(-1px);
+        }
+
+        .scenario-card {
+            background-color: var(--brand-card-bg);
+            border: 1px solid var(--brand-border);
+            border-radius: 12px;
+        }
+
+        .scenario-pill {
+            text-decoration: none;
+            color: var(--brand-text-secondary);
+            background: var(--brand-card-subtle);
+            border: 1px solid var(--brand-border);
+            border-radius: 9999px;
+            padding: 0.42rem 0.85rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+
+        .scenario-pill:hover {
+            color: #ffffff;
+            border-color: var(--brand-purple);
+            background: rgba(139, 92, 246, 0.12);
+            transform: translateY(-1px);
+        }
+
+        .scenario-pill.active {
+            color: #ffffff;
+            background: var(--brand-gradient);
+            border-color: transparent;
+            box-shadow: 0 0 16px var(--brand-purple-glow);
         }
 
         .data-sources {
-            max-height: 82vh;
+            max-height: 84vh;
             overflow-y: auto;
-            padding-right: 8px;
+            padding-right: 6px;
         }
 
         .data-sources::-webkit-scrollbar {
@@ -658,57 +755,70 @@ if (!function_exists('renderGrid')) {
         }
 
         .data-sources::-webkit-scrollbar-thumb {
-            background-color: #cbd5e1;
+            background-color: #30363d;
             border-radius: 10px;
         }
 
-        .code-container {
-            font-family: 'JetBrains Mono', Consolas, monospace;
-            background-color: #0f172a;
-            border-radius: 10px;
-            font-size: 0.88rem;
-        }
-
-        .performance-card {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            border-radius: 10px;
+        .data-sources::-webkit-scrollbar-thumb:hover {
+            background-color: #484f58;
         }
 
         .tag-pill {
             font-size: 0.65rem;
             text-transform: uppercase;
             font-weight: 700;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.05em;
+        }
+
+        .hud-telemetry {
+            background: linear-gradient(135deg, #161b22 0%, #1a2234 100%);
+            border: 1px solid var(--brand-border);
+            border-radius: 12px;
+        }
+
+        .btn-gradient-run {
+            background: var(--brand-gradient);
+            color: #ffffff;
+            border: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px var(--brand-purple-glow);
+        }
+
+        .btn-gradient-run:hover {
+            background: var(--brand-gradient-hover);
+            color: #ffffff;
+            box-shadow: 0 6px 18px var(--brand-orange-glow);
+            transform: translateY(-1px);
         }
     </style>
 </head>
 
 <body>
 
-    <nav class="navbar navbar-dark brand-header mb-4 shadow-sm py-3">
+    <nav class="navbar navbar-dark navbar-custom mb-4 py-3 sticky-top">
         <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-3">
                 <span class="navbar-brand mb-0 h1 d-flex align-items-center gap-2">
-                    <span>⚡</span>
-                    <span>LinqPHP</span>
-                    <span class="badge bg-white text-dark rounded-pill fw-semibold" style="font-size: 0.7rem;">v2.1.0</span>
+                    <span style="filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.6)); font-size: 1.25rem;">⚡</span>
+                    <span class="brand-title">LinqPHP</span>
+                    <span class="badge brand-badge rounded-pill fw-semibold" style="font-size: 0.72rem;">v2.1.0</span>
                 </span>
-                <span class="text-white-50 small d-none d-lg-inline">Laboratório Interativo & Benchmark DX</span>
+                <span class="text-secondary small d-none d-lg-inline">· Laboratório Interativo & Benchmark DX</span>
             </div>
             <div class="d-flex align-items-center gap-2">
-                <a href="https://github.com/heliomarpm/linq-php" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-light d-flex align-items-center gap-2 fw-semibold px-3 py-2 shadow-sm rounded-pill text-dark" style="font-size: 0.82rem; transition: transform 0.2s ease;">
-                    <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
-                    </svg>
-                    <span>Repositório GitHub</span>
+                <a href="https://github.com/heliomarpm/linq-php" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-nav-action d-flex align-items-center gap-2 fw-semibold px-3 py-2 rounded-pill" style="font-size: 0.82rem;">
+                    <i class="bi bi-github"></i>
+                    <span>GitHub</span>
                 </a>
-                <a href="https://packagist.org/packages/heliomarpm/linq-php" target="_blank" class="btn btn-sm btn-outline-warning px-3">
-                    <i class="bi bi-box-seam me-1"></i> Packagist
+                <a href="https://packagist.org/packages/heliomarpm/linq-php" target="_blank" class="btn btn-sm btn-nav-action d-flex align-items-center gap-2 fw-semibold px-3 py-2 rounded-pill text-warning" style="font-size: 0.82rem;">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Packagist</span>
                 </a>
-                <span>&nbsp;&nbsp;</span>
-                <a href="https://db-php.vercel.app/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-info d-flex align-items-center gap-2 fw-semibold px-3 py-2 shadow-sm rounded-pill text-white" style="font-size: 0.82rem; border-color: rgba(255,255,255,0.4); text-decoration: none;" title="Acesse a demonstração da biblioteca parceira DbPHP">
+                <a href="https://db-php.vercel.app/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-nav-cyan d-flex align-items-center gap-2 fw-semibold px-3 py-2 rounded-pill" style="font-size: 0.82rem;" title="Acesse a demonstração da biblioteca parceira DbPHP">
                     <span>🗄️</span>
                     <span>DbPHP Demo</span>
+                    <i class="bi bi-arrow-up-right small"></i>
                 </a>
             </div>
         </div>
@@ -719,23 +829,22 @@ if (!function_exists('renderGrid')) {
         <!-- Barra de Seleção de Cenários -->
         <div class="row mb-4">
             <div class="col-12">
-                <div class="card shadow-sm border-0 rounded-3">
-                    <div class="card-body bg-white rounded-3 p-3">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <span class="text-secondary small fw-semibold text-uppercase" style="letter-spacing: 0.05em;">Cenários de Demonstração</span>
-                            <span class="badge bg-light text-secondary border"><?= count($cenarios) ?> cenários disponíveis</span>
-                        </div>
-                        <ul class="nav nav-pills gap-1">
-                            <?php foreach ($cenarios as $key => $cenario): ?>
-                                <li class="nav-item">
-                                    <a class="nav-link d-flex align-items-center gap-2 <?= $key === $cenarioAtual ? 'active' : 'bg-light text-dark border' ?>"
-                                        href="?cenario=<?= $key ?>">
-                                        <span class="badge bg-<?= $cenario['cor'] ?> tag-pill"><?= $cenario['tag'] ?></span>
-                                        <span><?= $cenario['titulo'] ?></span>
-                                    </a>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
+                <div class="card scenario-card p-3 shadow-sm">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-secondary small fw-semibold text-uppercase" style="letter-spacing: 0.05em;">
+                            <i class="bi bi-collection-play me-1 text-purple-light"></i> Cenários de Demonstração
+                        </span>
+                        <span class="badge rounded-pill" style="background: #21262d; border: 1px solid #30363d; color: #8b949e; font-size: 0.75rem;">
+                            <?= count($cenarios) ?> cenários disponíveis
+                        </span>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 pt-1">
+                        <?php foreach ($cenarios as $key => $cenario): ?>
+                            <a class="scenario-pill <?= $key === $cenarioAtual ? 'active' : '' ?>" href="?cenario=<?= $key ?>">
+                                <span class="badge rounded-pill tag-pill" style="background: rgba(255, 255, 255, 0.15);"><?= $cenario['tag'] ?></span>
+                                <span><?= $cenario['titulo'] ?></span>
+                            </a>
+                        <?php endforeach; ?>
                     </div>
                 </div>
             </div>
@@ -745,10 +854,12 @@ if (!function_exists('renderGrid')) {
             <!-- Coluna da Esquerda: Coleções de Origem (Com Scroll Suave) -->
             <div class="col-lg-4 data-sources">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h6 class="text-secondary fw-bold text-uppercase mb-0" style="letter-spacing: 0.05em;">
+                    <h6 class="text-secondary fw-bold text-uppercase mb-0" style="letter-spacing: 0.05em; font-size: 0.8rem;">
                         🗄️ Coleções & Tabelas
                     </h6>
-                    <span class="text-muted small">4 Origens + SQLite</span>
+                    <span class="badge rounded-pill" style="background: #21262d; border: 1px solid #30363d; color: #8b949e; font-size: 0.72rem;">
+                        4 Origens + SQLite
+                    </span>
                 </div>
 
                 <?= renderGrid('Clientes', $clientes, 'bg-indigo', count($clientes)) ?>
@@ -757,21 +868,24 @@ if (!function_exists('renderGrid')) {
                 <?= renderGrid('Vendas (Array)', $vendas, 'bg-primary', count($vendas)) ?>
 
                 <?php if (class_exists(DB::class)): ?>
-                    <div class="card shadow-sm border-0 rounded-3 mb-3" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #f8fafc;">
+                    <div class="card mb-3 rounded-3 shadow-sm" style="background: linear-gradient(135deg, #161b22 0%, #1a2234 100%); border: 1px solid rgba(255, 122, 0, 0.35);">
                         <div class="card-body p-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="badge bg-warning text-dark tag-pill">SQLite :memory:</span>
-                                <span class="text-white-50 small">DbPHP Nativo</span>
+                                <span class="badge rounded-pill tag-pill" style="background: rgba(255, 122, 0, 0.2); color: #fdba74; border: 1px solid rgba(255, 122, 0, 0.4);">
+                                    SQLite :memory:
+                                </span>
+                                <span class="small fw-semibold" style="color: #38bdf8;">DbPHP Nativo</span>
                             </div>
-                            <div class="fw-bold mb-1" style="font-size: 0.88rem;">
+                            <div class="fw-bold mb-1 text-white" style="font-size: 0.88rem;">
                                 <span>🗄️ Tabela <code>vendas_sql</code></span>
                             </div>
-                            <div class="small text-secondary mb-2" style="font-size: 0.78rem;">
+                            <div class="small mb-3" style="color: #8b949e; font-size: 0.78rem;">
                                 Conectada via <code>DB::sqlite()</code>. Pronta para consultas SQL diretas com <code>DB::query()</code> no editor.
                             </div>
                             <div class="d-flex gap-2">
-                                <a href="https://db-php.vercel.app/" target="_blank" class="btn btn-xs btn-outline-warning rounded-pill py-1 px-2" style="font-size: 0.72rem; text-decoration: none;">
-                                    Demo DbPHP ↗
+                                <a href="https://db-php.vercel.app/" target="_blank" class="btn btn-sm btn-nav-action rounded-pill py-1 px-3 d-flex align-items-center gap-1" style="font-size: 0.75rem; border-color: rgba(255, 122, 0, 0.4); color: #fdba74;">
+                                    <span>Demo DbPHP</span>
+                                    <i class="bi bi-arrow-up-right small"></i>
                                 </a>
                             </div>
                         </div>
@@ -781,37 +895,42 @@ if (!function_exists('renderGrid')) {
 
             <!-- Coluna da Direita: Resultado do Cenário Selecionado -->
             <div class="col-lg-8">
-                <div class="card shadow-sm border-0 rounded-3 p-4 bg-white mb-4">
+                <div class="card scenario-card p-4 mb-4 shadow-sm">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
                             <div class="d-flex align-items-center gap-2 mb-2">
-                                <span class="badge bg-<?= $dadosCenario['cor'] ?> tag-pill"><?= $dadosCenario['tag'] ?></span>
+                                <span class="badge rounded-pill tag-pill" style="background: rgba(139, 92, 246, 0.2); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.45);">
+                                    <?= $dadosCenario['tag'] ?>
+                                </span>
                                 <?php if ($isCustomCode): ?>
-                                    <span class="badge bg-warning text-dark tag-pill">⚡ Código Editado</span>
+                                    <span class="badge rounded-pill tag-pill" style="background: rgba(255, 122, 0, 0.25); color: #fdba74; border: 1px solid rgba(255, 122, 0, 0.45);">
+                                        ⚡ Código Editado
+                                    </span>
                                 <?php endif; ?>
                             </div>
-                            <h4 class="fw-bold text-dark mb-1"><?= $dadosCenario['titulo'] ?></h4>
-                            <p class="text-muted mb-0"><?= $dadosCenario['desc'] ?></p>
+                            <h4 class="fw-bold text-white mb-1" style="letter-spacing: -0.02em;"><?= $dadosCenario['titulo'] ?></h4>
+                            <p class="mb-0" style="color: #8b949e; font-size: 0.92rem;"><?= $dadosCenario['desc'] ?></p>
                         </div>
                     </div>
 
                     <?php if ($cenarioAtual === 'do_banco_ao_relatorio'): ?>
-                        <div class="alert alert-warning border-0 shadow-sm d-flex flex-wrap align-items-center justify-content-between p-3 my-3 rounded-3" style="background: linear-gradient(135deg, rgba(254, 243, 199, 0.9) 0%, rgba(253, 230, 138, 0.9) 100%);">
+                        <div class="alert border-0 shadow-sm d-flex flex-wrap align-items-center justify-content-between p-3 my-3 rounded-3" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(255, 122, 0, 0.15) 100%); border: 1px solid rgba(139, 92, 246, 0.35) !important;">
                             <div class="d-flex align-items-center gap-3">
                                 <span class="fs-4">🗄️</span>
                                 <div>
-                                    <div class="fw-bold text-dark" style="font-size: 0.9rem;">Consulta SQL Real com heliomarpm/db-php</div>
-                                    <div class="small text-secondary">
+                                    <div class="fw-bold text-white" style="font-size: 0.9rem;">Consulta SQL Real com heliomarpm/db-php</div>
+                                    <div class="small" style="color: #cbd5e1;">
                                         Este cenário executa <code>DB::query(...)</code> em tabela SQLite real em memória (<code>vendas_sql</code>) com parâmetros nomeados (<code>:status</code>) e encadeia direto no LinqPHP via <code>-&gt;linq()</code> para enriquecimento relacional.
                                     </div>
                                 </div>
                             </div>
                             <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
-                                <a href="https://db-php.vercel.app/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-dark px-3 py-2 fw-semibold rounded-pill d-flex align-items-center gap-1 text-nowrap" style="font-size: 0.8rem;">
+                                <a href="https://db-php.vercel.app/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-nav-action px-3 py-2 fw-semibold rounded-pill d-flex align-items-center gap-1 text-nowrap" style="font-size: 0.8rem; border-color: rgba(255, 122, 0, 0.4); color: #fdba74;">
                                     <span>Demo DbPHP</span>
-                                    <span>↗</span>
+                                    <i class="bi bi-arrow-up-right small"></i>
                                 </a>
-                                <a href="https://github.com/heliomarpm/db-php" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-dark px-2 py-2 fw-semibold rounded-pill d-flex align-items-center gap-1 text-nowrap" style="font-size: 0.8rem;">
+                                <a href="https://github.com/heliomarpm/db-php" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-nav-action px-2 py-2 fw-semibold rounded-pill d-flex align-items-center gap-1 text-nowrap" style="font-size: 0.8rem;">
+                                    <i class="bi bi-github"></i>
                                     <span>GitHub</span>
                                 </a>
                             </div>
@@ -820,28 +939,28 @@ if (!function_exists('renderGrid')) {
 
                     <!-- Mensagem de Erro (se houver) -->
                     <?php if ($erroExecucao !== null): ?>
-                        <div class="alert alert-danger shadow-sm border-0 d-flex align-items-start gap-3 my-3 rounded-3 p-3">
+                        <div class="alert shadow-sm border-0 d-flex align-items-start gap-3 my-3 rounded-3 p-3" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4) !important; color: #fca5a5;">
                             <span class="fs-4">⚠️</span>
                             <div>
-                                <h6 class="fw-bold mb-1">Falha na Execução do Código:</h6>
+                                <h6 class="fw-bold mb-1 text-danger">Falha na Execução do Código:</h6>
                                 <div class="font-monospace small text-break"><?= htmlspecialchars($erroExecucao) ?></div>
                             </div>
                         </div>
                     <?php endif; ?>
 
                     <!-- Card de Telemetria / Performance -->
-                    <div class="performance-card text-white p-3 my-3 shadow-sm d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div class="hud-telemetry p-3 my-3 shadow-sm d-flex flex-wrap justify-content-between align-items-center gap-3">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="text-white-50 small fw-semibold">TELEMETRIA LINQ:</span>
-                            <span class="badge bg-primary rounded-pill px-3 py-2 fw-semibold">
+                            <span class="small fw-bold text-uppercase" style="letter-spacing: 0.05em; color: #8b949e; font-size: 0.72rem;">TELEMETRIA LINQ:</span>
+                            <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background: rgba(139, 92, 246, 0.2); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.45);">
                                 ⏱️ <?= $linq->elapsedTime ?>s
                             </span>
-                            <span class="badge bg-info text-dark rounded-pill px-3 py-2 fw-semibold">
+                            <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background: rgba(0, 163, 255, 0.18); color: #7dd3fc; border: 1px solid rgba(0, 163, 255, 0.35);">
                                 💾 <?= $linq->memoryUsed ?>
                             </span>
                         </div>
                         <div>
-                            <span class="badge bg-success rounded-pill px-3 py-2 fw-semibold fs-6">
+                            <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background: rgba(255, 122, 0, 0.2); color: #fdba74; border: 1px solid rgba(255, 122, 0, 0.4); font-size: 0.85rem;">
                                 📝 <?= $linq->count ?> <?= $linq->count === 1 ? 'linha gerada' : 'linhas geradas' ?>
                             </span>
                         </div>
@@ -849,32 +968,33 @@ if (!function_exists('renderGrid')) {
 
                     <!-- Bloco de Código Editável (Sandbox) -->
                     <form method="POST" action="?cenario=<?= urlencode($cenarioAtual) ?>" id="formEditor" class="mt-2 mb-4">
-                        <div class="card border-0 shadow-sm rounded-3 overflow-hidden" style="background-color: #0f172a;">
-                            <div class="d-flex flex-wrap justify-content-between align-items-center py-2 px-3 border-bottom border-secondary-subtle" style="background-color: #1e293b;">
+                        <div class="card border-0 shadow-sm rounded-3 overflow-hidden" style="background-color: #0b0f19; border: 1px solid #30363d !important;">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center py-2 px-3" style="background-color: #161b22; border-bottom: 1px solid #30363d;">
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="text-white fw-bold small text-uppercase" style="letter-spacing: 0.05em;">💻 Pipeline LINQ Editável</span>
-                                    <span class="text-white-50 small d-none d-sm-inline">(PHP 8.1+)</span>
+                                    <span class="small d-none d-sm-inline" style="color: #8b949e;">(PHP 8.1+)</span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <?php if ($isCustomCode): ?>
-                                        <a href="?cenario=<?= urlencode($cenarioAtual) ?>" class="btn btn-sm btn-outline-light py-1 px-2" style="font-size: 0.78rem;">
-                                            🔄 Restaurar Padrão
+                                        <a href="?cenario=<?= urlencode($cenarioAtual) ?>" class="btn btn-sm btn-nav-action py-1 px-2" style="font-size: 0.78rem;">
+                                            <i class="bi bi-arrow-counterclockwise"></i> Restaurar Padrão
                                         </a>
                                     <?php endif; ?>
-                                    <button type="submit" class="btn btn-sm btn-primary py-1 px-3 shadow-sm fw-semibold d-flex align-items-center gap-1" style="font-size: 0.8rem; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border: none;">
-                                        <span>▶️ Simular / Executar</span>
-                                        <span class="d-none d-md-inline text-white-50 small">(Ctrl+Enter)</span>
+                                    <button type="submit" class="btn btn-sm btn-gradient-run py-1 px-3 d-flex align-items-center gap-1" style="font-size: 0.82rem;">
+                                        <i class="bi bi-play-fill fs-6"></i>
+                                        <span>Simular / Executar</span>
+                                        <span class="d-none d-md-inline opacity-75 small">(Ctrl+Enter)</span>
                                     </button>
                                 </div>
                             </div>
                             <div class="p-2">
-                                <textarea name="codigo_customizado" id="codigoEditor" class="form-control font-monospace border-0 bg-transparent text-info p-2" rows="8" spellcheck="false" style="font-family: 'JetBrains Mono', Consolas, monospace; font-size: 0.88rem; line-height: 1.5; resize: vertical; outline: none; box-shadow: none; color: #38bdf8 !important;"><?= htmlspecialchars($codigoAtivo) ?></textarea>
+                                <textarea name="codigo_customizado" id="codigoEditor" class="form-control font-monospace border-0 bg-transparent p-2" rows="8" spellcheck="false" style="font-family: 'JetBrains Mono', Consolas, monospace; font-size: 0.88rem; line-height: 1.5; resize: vertical; outline: none; box-shadow: none; color: #38bdf8 !important;"><?= htmlspecialchars($codigoAtivo) ?></textarea>
                             </div>
-                            <div class="d-flex flex-wrap justify-content-between align-items-center py-2 px-3 border-top border-secondary-subtle" style="background-color: #0b1120; font-size: 0.75rem;">
-                                <span class="text-secondary">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center py-2 px-3" style="background-color: #0b0f19; border-top: 1px solid #21262d; font-size: 0.75rem;">
+                                <span style="color: #8b949e;">
                                     <strong class="text-light">Variáveis disponíveis:</strong> <code class="text-info">$vendas</code>, <code class="text-info">$produtos</code>, <code class="text-info">$produtosOutlet</code>, <code class="text-info">$clientes</code> | <code class="text-warning">JoinType::*</code>, <code class="text-warning">DB::query()</code> (tabela <code class="text-info">vendas_sql</code>)
                                 </span>
-                                <span class="text-white-50 d-none d-md-inline">💡 Use Tab para indentar e Ctrl+Enter para executar</span>
+                                <span class="d-none d-md-inline" style="color: #6e7681;">💡 Use Tab para indentar e Ctrl+Enter para executar</span>
                             </div>
                         </div>
                     </form>
@@ -882,10 +1002,12 @@ if (!function_exists('renderGrid')) {
                     <!-- Tabela de Saída -->
                     <div class="mt-2">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="fw-bold text-secondary text-uppercase mb-0" style="font-size: 0.78rem; letter-spacing: 0.05em;">
+                            <h6 class="fw-bold text-uppercase mb-0" style="font-size: 0.78rem; letter-spacing: 0.05em; color: #8b949e;">
                                 🎯 Resultado Projetado
                             </h6>
-                            <span class="badge bg-light text-muted border"><?= count($resultado) ?> linhas retornadas</span>
+                            <span class="badge rounded-pill" style="background: #21262d; border: 1px solid #30363d; color: #8b949e;">
+                                <?= count($resultado) ?> linhas retornadas
+                            </span>
                         </div>
                         <?= renderGrid('Dados Processados', $resultado, 'bg-dark', $linq->count) ?>
                     </div>
@@ -895,21 +1017,21 @@ if (!function_exists('renderGrid')) {
     </div>
 
     <!-- Rodapé -->
-    <footer class="text-center py-4 text-muted small border-top bg-white mt-5">
+    <footer class="text-center py-4 small mt-5" style="background-color: #161b22; border-top: 1px solid #30363d; color: #8b949e;">
         <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
             <span>
-                ⚡ <strong>LinqPHP</strong> © <?= date('Y') ?> Heliomar P. Marques — Zero dependências.
+                ⚡ <strong>LinqPHP</strong> © <?= date('Y') ?> Heliomar P. Marques — Zero dependências em produção.
             </span>
             <div class="d-flex align-items-center gap-3">
-                <a href="https://github.com/heliomarpm/linq-php" target="_blank" rel="noopener noreferrer" class="text-decoration-none text-secondary">
-                    Repositório GitHub
+                <a href="https://github.com/heliomarpm/linq-php" target="_blank" rel="noopener noreferrer" class="text-decoration-none" style="color: #8b949e;">
+                    <i class="bi bi-github me-1"></i> Repositório GitHub
                 </a>
                 <span>•</span>
-                <a href="https://packagist.org/packages/heliomarpm/linq-php" target="_blank" rel="noopener noreferrer" class="text-decoration-none text-secondary">
-                    Packagist
+                <a href="https://packagist.org/packages/heliomarpm/linq-php" target="_blank" rel="noopener noreferrer" class="text-decoration-none" style="color: #8b949e;">
+                    <i class="bi bi-box-seam me-1"></i> Packagist
                 </a>
                 <span>•</span>
-                <a href="https://github.com/heliomarpm/linq-php/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" class="text-decoration-none text-secondary">
+                <a href="https://github.com/heliomarpm/linq-php/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" class="text-decoration-none" style="color: #8b949e;">
                     Licença MIT
                 </a>
             </div>

@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Aprimorar experiência interativa da demo, benchmarks e sinergia com heliomarpm/db-php\
-> **Status:** em planejamento | **Progresso:** 12/16 (75%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-25
+> **Status:** em planejamento | **Progresso:** 13/16 (81%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-25
 
 ## Em progresso
 
@@ -18,13 +18,6 @@
 (nenhuma)
 
 ### Média Prioridade
-
-- [ ] **T-013 · P2 · Modernizar layout da demo com Dark Theme coordenado (Roxo/Laranja Neon)**
-  - **Origem:** manual (identidade visual)
-  - **Contexto:** Alinhar o padrão estético da demo do LinqPHP ao design system moderno implementado no DbPHP (`#0d1117`, cartões `#161b22`, fontes *Plus Jakarta Sans* e *JetBrains Mono*).
-  - **Critérios de Aceite:**
-    - Fundo escuro com acentos roxo elétrico (`#8B5CF6`) e laranja quente (`#FF7A00`) combinando com o logo 3D do LinqPHP.
-    - Badges e tipografia refinados com suporte visual consistente em desktop e mobile.
 
 - [ ] **T-014 · P2 · Implementar reatividade com Vue.js 3 via CDN e endpoint JSON na demo**
   - **Origem:** manual (experiência do usuário)
@@ -52,6 +45,10 @@
     - Botão para copiar JSON formatado.
 
 ## Concluídas recentemente
+
+- [x] **T-013 · P2 · Modernizar layout da demo com Dark Theme coordenado (Roxo/Laranja Neon)** (2026-10-25)
+  - Arquivos: [demo/index.php](../demo/index.php)
+  - Evidência: Dark theme com paleta (#0d1117 / #161b22 / #30363d) alinhada ao ecossistema do heliomarpm/db-php; acentos roxo elétrico (#8B5CF6) e laranja neon (#FF7A00); fontes Plus Jakarta Sans e JetBrains Mono; renderGrid refinado com badges de status, null, booleanos, vip e dots coloridos; HUD de telemetria estilizado; editor sandbox com suporte a Ctrl+Enter e Tab; todos os 14 cenários testados e validados; 100 testes unitários passando (643 asserções); PHPStan nível 5 com 0 erros; benchmarks validados.
 
 - [x] **T-012 · P1 · Integrar interoperabilidade e cross-promotion com heliomarpm/db-php na demo e README** (2026-10-25)
   - Arquivos: [demo/index.php](../demo/index.php), [README.md](../README.md)
