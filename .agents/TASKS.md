@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
-> **Meta:** Estabilizar governança, corrigir inconsistências documentais e aprimorar recursos de consulta fluente (LINQ)\
-> **Status:** concluído | **Progresso:** 11/11 (100%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-24
+> **Meta:** Aprimorar experiência interativa da demo, benchmarks e sinergia com heliomarpm/db-php\
+> **Status:** em planejamento | **Progresso:** 11/16 (68%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-24
 
 ## Em progresso
 
@@ -15,15 +15,47 @@
 
 ### Alta Prioridade
 
-(nenhuma)
+- [ ] **T-012 · P1 · Integrar interoperabilidade e cross-promotion com heliomarpm/db-php na demo e README**
+  - **Origem:** manual (sinergia entre bibliotecas da suíte)
+  - **Contexto:** Consolidar `linq-php` e `db-php` como ferramentas complementares no mesmo ecossistema open-source.
+  - **Critérios de Aceite:**
+    - Botão de navegação cruzada adicionado no cabeçalho da demo apontando para `https://db-php.vercel.app/` (e repositório GitHub).
+    - Novo cenário de teste na demo: *"Do Banco ao Relatório (com DbPHP)"*, demonstrando consulta SQL fluente conectada ao LinqPHP via `->linq()`.
+    - Seção de sugestão/integração no `README.md` destacando o pacote parceiro `heliomarpm/db-php`.
 
 ### Média Prioridade
 
-(nenhuma)
+- [ ] **T-013 · P2 · Modernizar layout da demo com Dark Theme coordenado (Roxo/Laranja Neon)**
+  - **Origem:** manual (identidade visual)
+  - **Contexto:** Alinhar o padrão estético da demo do LinqPHP ao design system moderno implementado no DbPHP (`#0d1117`, cartões `#161b22`, fontes *Plus Jakarta Sans* e *JetBrains Mono*).
+  - **Critérios de Aceite:**
+    - Fundo escuro com acentos roxo elétrico (`#8B5CF6`) e laranja quente (`#FF7A00`) combinando com o logo 3D do LinqPHP.
+    - Badges e tipografia refinados com suporte visual consistente em desktop e mobile.
+
+- [ ] **T-014 · P2 · Implementar reatividade com Vue.js 3 via CDN e endpoint JSON na demo**
+  - **Origem:** manual (experiência do usuário)
+  - **Contexto:** Permitir alternar cenários, rodar o editor de código e filtrar tabelas de dados instantaneamente sem reload de página.
+  - **Critérios de Aceite:**
+    - Vue 3 via CDN montado na aplicação da demo.
+    - Endpoint JSON serverless retornando dados, telemetria e metadados de execução.
+    - Atualização em tempo real das abas de resultado (Grid Tabela, Código e JSON Bruto).
+
+- [ ] **T-015 · P2 · Adicionar painel de benchmark comparativo ao vivo (LinqPHP vs PHP Nativo)**
+  - **Origem:** manual (evidência de performance)
+  - **Contexto:** Demonstrar a desenvolvedores céticos que o overhead de abstração do LinqPHP é desprezível em relação a loops manuais em PHP puro.
+  - **Critérios de Aceite:**
+    - Execução em paralelo da mesma transformação via `LinqPHP` e via loops nativos (`array_filter`/`array_map`/`usort`).
+    - Exibição de comparativo visual de tempos de execução (microsegundos) lado a lado na demo.
 
 ### Baixa Prioridade
 
-(nenhuma)
+- [ ] **T-016 · P3 · Adicionar ferramenta de exportação rápida (CSV, JSON e Array PHP) na demo**
+  - **Origem:** manual (utilitários de dados)
+  - **Contexto:** Facilitar a extração dos dados transformados para uso imediato em relatórios ou seeds de banco de dados.
+  - **Critérios de Aceite:**
+    - Botão para download direto do resultado transformado em formato `.csv`.
+    - Botão para copiar o resultado em formato de Array PHP literal (`['campo' => 'valor']`).
+    - Botão para copiar JSON formatado.
 
 ## Concluídas recentemente
 
