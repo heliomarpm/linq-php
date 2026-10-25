@@ -953,6 +953,38 @@ if (($_GET['action'] ?? '') === 'bench' || ($jsonInput['action'] ?? '') === 'ben
     exit;
 }
 
+// Exportação Direta via CSV (?export=csv ou ?format=csv)
+if (($_GET['export'] ?? '') === 'csv' || ($_GET['format'] ?? '') === 'csv') {
+    if (!headers_sent()) {
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="linq-' . $cenarioAtual . '.csv"');
+    }
+    $fp = fopen('php://output', 'w');
+    if ($fp !== false) {
+        fwrite($fp, "\xEF\xBB\xBF"); // BOM UTF-8 para Excel
+        if ($resultado !== [] && is_array($resultado[0])) {
+            fputcsv($fp, array_keys($resultado[0]), ';', '"', '\\');
+            foreach ($resultado as $linha) {
+                $row = array_map(function ($val) {
+                    if ($val === null) {
+                        return '';
+                    }
+                    if (is_bool($val)) {
+                        return $val ? 'Sim' : 'Não';
+                    }
+                    if (is_array($val)) {
+                        return json_encode($val, JSON_UNESCAPED_UNICODE);
+                    }
+                    return (string)$val;
+                }, $linha);
+                fputcsv($fp, $row, ';', '"', '\\');
+            }
+        }
+        fclose($fp);
+    }
+    exit;
+}
+
 // Resposta para Endpoint JSON (API padrão)
 $isApiRequest = isset($_GET['api'])
     || ($_GET['format'] ?? '') === 'json'
@@ -1612,9 +1644,48 @@ if (!function_exists('renderGrid')) {
                                 </li>
                             </ul>
 
-                            <span class="badge rounded-pill" style="background: #21262d; border: 1px solid #30363d; color: #8b949e; font-size: 0.75rem;">
-                                {{ resultado.length }} {{ resultado.length === 1 ? 'linha retornada' : 'linhas retornadas' }}
-                            </span>
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <span class="badge rounded-pill" style="background: #21262d; border: 1px solid #30363d; color: #8b949e; font-size: 0.75rem;">
+                                    {{ resultado.length }} {{ resultado.length === 1 ? 'linha retornada' : 'linhas retornadas' }}
+                                </span>
+
+                                <!-- Ferramentas de Exportação Rápida -->
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button 
+                                        type="button" 
+                                        class="btn btn-sm btn-nav-action px-2 py-1 d-flex align-items-center gap-1 rounded-start-pill"
+                                        style="font-size: 0.75rem;"
+                                        @click="baixarCsv"
+                                        :disabled="resultado.length === 0"
+                                        title="Baixar planilha CSV formatada (UTF-8 com BOM)"
+                                    >
+                                        <i class="bi bi-filetype-csv text-success"></i>
+                                        <span>CSV</span>
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        class="btn btn-sm btn-nav-action px-2 py-1 d-flex align-items-center gap-1"
+                                        style="font-size: 0.75rem;"
+                                        @click="copiarArrayPhp"
+                                        :disabled="resultado.length === 0"
+                                        title="Copiar resultado como Array literal PHP"
+                                    >
+                                        <i :class="copiadoPhp ? 'bi bi-check2 text-success' : 'bi bi-filetype-php text-info'"></i>
+                                        <span>{{ copiadoPhp ? 'Copiado!' : 'Array PHP' }}</span>
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        class="btn btn-sm btn-nav-action px-2 py-1 d-flex align-items-center gap-1 rounded-end-pill"
+                                        style="font-size: 0.75rem;"
+                                        @click="copiarTexto(jsonFormatado, 'json')"
+                                        :disabled="resultado.length === 0"
+                                        title="Copiar JSON formatado para a área de transferência"
+                                    >
+                                        <i :class="copiadoJson ? 'bi bi-check2 text-success' : 'bi bi-braces text-warning'"></i>
+                                        <span>{{ copiadoJson ? 'Copiado!' : 'JSON' }}</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Conteúdo da Aba 1: Grid Tabela -->
@@ -1732,15 +1803,27 @@ if (!function_exists('renderGrid')) {
                                         <span class="text-white fw-bold small">Payload JSON Completo</span>
                                         <span class="badge rounded-pill bg-dark text-secondary" style="font-size: 0.7rem;">{{ resultado.length }} registros</span>
                                     </div>
-                                    <button 
-                                        type="button" 
-                                        class="btn btn-sm btn-nav-action py-1 px-3 d-flex align-items-center gap-1 rounded-pill" 
-                                        style="font-size: 0.78rem;"
-                                        @click="copiarTexto(jsonFormatado, 'json')"
-                                    >
-                                        <i :class="copiadoJson ? 'bi bi-check2 text-success' : 'bi bi-clipboard'"></i>
-                                        <span>{{ copiadoJson ? 'Copiado!' : 'Copiar JSON' }}</span>
-                                    </button>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-sm btn-nav-action py-1 px-3 d-flex align-items-center gap-1 rounded-pill" 
+                                            style="font-size: 0.78rem;"
+                                            @click="baixarJson"
+                                            title="Baixar arquivo JSON"
+                                        >
+                                            <i class="bi bi-download text-warning"></i>
+                                            <span>Baixar .json</span>
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-sm btn-nav-action py-1 px-3 d-flex align-items-center gap-1 rounded-pill" 
+                                            style="font-size: 0.78rem;"
+                                            @click="copiarTexto(jsonFormatado, 'json')"
+                                        >
+                                            <i :class="copiadoJson ? 'bi bi-check2 text-success' : 'bi bi-clipboard'"></i>
+                                            <span>{{ copiadoJson ? 'Copiado!' : 'Copiar JSON' }}</span>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="p-3" style="max-height: 60vh; overflow-y: auto;">
                                     <pre class="m-0 font-monospace" style="color: #a5b4fc; font-size: 0.82rem; line-height: 1.5; white-space: pre-wrap;"><code>{{ jsonFormatado }}</code></pre>
@@ -2226,6 +2309,86 @@ if (!function_exists('renderGrid')) {
                 const formatarDecimal = (val) => Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 const formatarJson = (val) => JSON.stringify(val);
 
+                // Funções de Exportação Rápida (T-016)
+                const copiadoPhp = ref(false);
+
+                const gerarArrayPhpLiteral = (dados) => {
+                    if (!dados || dados.length === 0) return '[]';
+                    let php = "[\n";
+                    for (const item of dados) {
+                        php += "    [\n";
+                        for (const [key, val] of Object.entries(item)) {
+                            let strVal;
+                            if (val === null) {
+                                strVal = 'null';
+                            } else if (typeof val === 'boolean') {
+                                strVal = val ? 'true' : 'false';
+                            } else if (typeof val === 'number') {
+                                strVal = String(val);
+                            } else if (typeof val === 'object') {
+                                strVal = JSON.stringify(val);
+                            } else {
+                                strVal = "'" + String(val).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
+                            }
+                            php += `        '${key}' => ${strVal},\n`;
+                        }
+                        php += "    ],\n";
+                    }
+                    php += "]";
+                    return php;
+                };
+
+                const copiarArrayPhp = async () => {
+                    const texto = gerarArrayPhpLiteral(resultado.value);
+                    try {
+                        await navigator.clipboard.writeText(texto);
+                        copiadoPhp.value = true;
+                        setTimeout(() => copiadoPhp.value = false, 2000);
+                    } catch (e) {
+                        console.error('Falha ao copiar Array PHP:', e);
+                    }
+                };
+
+                const baixarCsv = () => {
+                    if (!resultado.value || resultado.value.length === 0) return;
+                    const cols = colunas.value;
+                    let csv = '\uFEFF'; // BOM UTF-8 para Excel
+                    csv += cols.map(c => `"${String(c).replace(/"/g, '""')}"`).join(';') + '\r\n';
+
+                    for (const linha of resultado.value) {
+                        const linhaArr = cols.map(col => {
+                            const val = linha[col];
+                            if (val === null || val === undefined) return '""';
+                            if (typeof val === 'boolean') return val ? '"Sim"' : '"Não"';
+                            if (typeof val === 'object') return `"${JSON.stringify(val).replace(/"/g, '""')}"`;
+                            return `"${String(val).replace(/"/g, '""')}"`;
+                        });
+                        csv += linhaArr.join(';') + '\r\n';
+                    }
+
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `linq-${cenarioAtual.value}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                };
+
+                const baixarJson = () => {
+                    const blob = new Blob([jsonFormatado.value], { type: 'application/json;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `linq-${cenarioAtual.value}.json`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                };
+
                 const copiarTexto = async (texto, tipo) => {
                     try {
                         await navigator.clipboard.writeText(texto);
@@ -2288,6 +2451,7 @@ if (!function_exists('renderGrid')) {
                     copiadoCodigo,
                     copiadoJson,
                     copiadoNativo,
+                    copiadoPhp,
                     benchData,
                     codigoNativo,
                     iteracoesBench,
@@ -2297,6 +2461,9 @@ if (!function_exists('renderGrid')) {
                     restaurarPadrao,
                     calcularPercentual,
                     executarBenchmark,
+                    baixarCsv,
+                    baixarJson,
+                    copiarArrayPhp,
                     isNull,
                     isBool,
                     isDecimal,

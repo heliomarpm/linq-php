@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Aprimorar experiência interativa da demo, benchmarks e sinergia com heliomarpm/db-php\
-> **Status:** em planejamento | **Progresso:** 15/16 (94%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-25
+> **Status:** concluído | **Progresso:** 16/16 (100%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-25
 
 ## Em progresso
 
@@ -23,15 +23,13 @@
 
 ### Baixa Prioridade
 
-- [ ] **T-016 · P3 · Adicionar ferramenta de exportação rápida (CSV, JSON e Array PHP) na demo**
-  - **Origem:** manual (utilitários de dados)
-  - **Contexto:** Facilitar a extração dos dados transformados para uso imediato em relatórios ou seeds de banco de dados.
-  - **Critérios de Aceite:**
-    - Botão para download direto do resultado transformado em formato `.csv`.
-    - Botão para copiar o resultado em formato de Array PHP literal (`['campo' => 'valor']`).
-    - Botão para copiar JSON formatado.
+(nenhuma)
 
 ## Concluídas recentemente
+
+- [x] **T-016 · P3 · Adicionar ferramenta de exportação rápida (CSV, JSON e Array PHP) na demo** (2026-10-25)
+  - Arquivos: [demo/index.php](../demo/index.php)
+  - Evidência: Botão de download direto do resultado transformado em formato `.csv` com codificação UTF-8 e BOM via Blob no cliente e endpoint backend `?export=csv` com compatibilidade PHP 8.4; botão para copiar resultado em formato de Array literal em PHP (`['campo' => 'valor']`) com feedback visual no clipboard; botões de download e cópia de JSON formatado tanto na barra de abas quanto na aba JSON; 100 testes passando (643 asserções); PHPStan nível 5 com 0 erros; Pint formatado.
 
 - [x] **T-015 · P2 · Adicionar painel de benchmark comparativo ao vivo (LinqPHP vs PHP Nativo)** (2026-10-25)
   - Arquivos: [demo/index.php](../demo/index.php)
