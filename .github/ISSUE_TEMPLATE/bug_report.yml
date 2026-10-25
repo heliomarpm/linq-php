@@ -80,7 +80,7 @@ body:
     id: linq-version
     attributes:
       label: "Versão do LinqPHP"
-      placeholder: "ex.: 0.1.0 ou commit hash"
+      placeholder: "ex.: 2.1.0 ou commit hash"
     validations:
       required: false
 

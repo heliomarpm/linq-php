@@ -22,18 +22,23 @@ Agradecemos pelo seu interesse em contribuir com o LinqPHP! Sua ajuda torna esta
 * Adicione ou atualize os testes unitários (`PHPUnit`) para cobrir suas mudanças.
 * Execute a suíte de validação antes de submeter o PR:
   ```bash
+  composer check
   composer test
-  composer phpstan
   composer bench
   ```
 * Se adicionar novos métodos ou alterar comportamentos, atualize a documentação no `README.md`.
 
 ## 📦 Scripts do Projeto
 
+* `composer format` — Verifica a conformidade de formatação com Laravel Pint (PSR-12).
+* `composer format:fix` — Corrige automaticamente o estilo de código com Laravel Pint.
+* `composer lint` — Executa a análise estática formal de código com PHPStan.
+* `composer refactor` — Analisa padrões e refatorações com Rector (dry-run).
 * `composer test` — Executa a suíte de testes unitários com PHPUnit.
-* `composer bench` — Roda a suíte customizada de benchmarks de desempenho.
-* `composer phpstan` — Executa a análise estática formal de código.
-* `composer qa` — Executa a bateria completa de validação de qualidade (testes, benchmarks e análise estática).
+* `composer bench` — Executa a suíte customizada de benchmarks de desempenho em memória.
+* `composer perform` — Executa benchmarks formais com PHPBench.
+* `composer check` — Executa a suíte de validação de código (formatação, lint e refatoração).
+* `composer qa` — Executa a bateria completa de qualidade e performance (testes e benchmarks).
 
 ## 📝 Formato de Mensagens de Commit
 
