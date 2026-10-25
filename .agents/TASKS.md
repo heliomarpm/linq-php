@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Aprimorar experiência interativa da demo, benchmarks e sinergia com heliomarpm/db-php\
-> **Status:** em planejamento | **Progresso:** 13/16 (81%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-25
+> **Status:** em planejamento | **Progresso:** 14/16 (88%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-25
 
 ## Em progresso
 
@@ -18,14 +18,6 @@
 (nenhuma)
 
 ### Média Prioridade
-
-- [ ] **T-014 · P2 · Implementar reatividade com Vue.js 3 via CDN e endpoint JSON na demo**
-  - **Origem:** manual (experiência do usuário)
-  - **Contexto:** Permitir alternar cenários, rodar o editor de código e filtrar tabelas de dados instantaneamente sem reload de página.
-  - **Critérios de Aceite:**
-    - Vue 3 via CDN montado na aplicação da demo.
-    - Endpoint JSON serverless retornando dados, telemetria e metadados de execução.
-    - Atualização em tempo real das abas de resultado (Grid Tabela, Código e JSON Bruto).
 
 - [ ] **T-015 · P2 · Adicionar painel de benchmark comparativo ao vivo (LinqPHP vs PHP Nativo)**
   - **Origem:** manual (evidência de performance)
@@ -45,6 +37,10 @@
     - Botão para copiar JSON formatado.
 
 ## Concluídas recentemente
+
+- [x] **T-014 · P2 · Implementar reatividade com Vue.js 3 via CDN e endpoint JSON na demo** (2026-10-25)
+  - Arquivos: [demo/index.php](../demo/index.php)
+  - Evidência: Vue 3 via CDN montado na aplicação com bootstrapping em window.__LINQ_DATA__; endpoint JSON serverless com suporte a ?api=1 e payloads POST json/form; alternância instantânea de cenários sem reload de página via pushState; abas de resultado dinâmicas (Grid Tabela com busca em tempo real, Código LINQ com cópia para clipboard e JSON Bruto formatado); 100 testes unitários passando (643 asserções); PHPStan nível 5 com 0 erros; benchmarks validados.
 
 - [x] **T-013 · P2 · Modernizar layout da demo com Dark Theme coordenado (Roxo/Laranja Neon)** (2026-10-25)
   - Arquivos: [demo/index.php](../demo/index.php)

@@ -447,6 +447,20 @@ $cenarios = [
     ],
 ];
 
+// Suporte a payload JSON no corpo da requisição (Fetch API / Vue 3)
+$rawInput = file_get_contents('php://input');
+if ($rawInput !== false && $rawInput !== '') {
+    $jsonInput = json_decode($rawInput, true);
+    if (is_array($jsonInput)) {
+        if (!empty($jsonInput['cenario']) && is_string($jsonInput['cenario'])) {
+            $_GET['cenario'] = $jsonInput['cenario'];
+        }
+        if (isset($jsonInput['codigo']) && is_string($jsonInput['codigo'])) {
+            $_POST['codigo_customizado'] = $jsonInput['codigo'];
+        }
+    }
+}
+
 // Identifica o cenário atual pela URL
 $cenarioAtual = $_GET['cenario'] ?? 'join_triplo';
 if (!array_key_exists($cenarioAtual, $cenarios)) {
@@ -530,6 +544,51 @@ try {
     $linq->elapsedTime = '0.000000';
     $linq->memoryUsed = '0.00 MB';
     $resultado = [];
+}
+
+// Resposta para Endpoint JSON (API)
+$isApiRequest = isset($_GET['api'])
+    || ($_GET['format'] ?? '') === 'json'
+    || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json') && !isset($_GET['html']));
+
+if ($isApiRequest) {
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+    }
+    echo json_encode([
+        'success'      => $erroExecucao === null,
+        'cenario'      => $cenarioAtual,
+        'meta'         => [
+            'titulo' => $dadosCenario['titulo'],
+            'tag'    => $dadosCenario['tag'],
+            'cor'    => $dadosCenario['cor'],
+            'desc'   => $dadosCenario['desc'],
+        ],
+        'codigo'       => $codigoAtivo,
+        'codigoPadrao' => $dadosCenario['codigo'],
+        'isCustom'     => $isCustomCode,
+        'colunas'      => $resultado !== [] && is_array($resultado[0]) ? array_keys($resultado[0]) : [],
+        'resultado'    => $resultado,
+        'telemetria'   => [
+            'elapsedTime' => $linq->elapsedTime ?? '0.000000',
+            'memoryUsed'  => $linq->memoryUsed ?? '0.00 MB',
+            'count'       => $linq->count ?? count($resultado),
+        ],
+        'erro'         => $erroExecucao,
+    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    exit;
+}
+
+// Metadados serializáveis dos cenários para bootstrapping do Vue 3
+$cenariosMeta = [];
+foreach ($cenarios as $key => $c) {
+    $cenariosMeta[$key] = [
+        'titulo' => $c['titulo'],
+        'tag'    => $c['tag'],
+        'cor'    => $c['cor'],
+        'desc'   => $c['desc'],
+        'codigo' => $c['codigo'],
+    ];
 }
 
 // ==========================================
@@ -631,7 +690,12 @@ if (!function_exists('renderGrid')) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
     <style>
+        [v-cloak] {
+            opacity: 0;
+        }
+
         :root {
             --brand-dark-bg: #0d1117;
             --brand-card-bg: #161b22;
@@ -791,6 +855,33 @@ if (!function_exists('renderGrid')) {
             box-shadow: 0 6px 18px var(--brand-orange-glow);
             transform: translateY(-1px);
         }
+
+        .custom-result-tabs .nav-link {
+            background: #161b22;
+            border: 1px solid var(--brand-border);
+            color: var(--brand-text-secondary);
+            font-size: 0.82rem;
+            transition: all 0.2s ease;
+        }
+
+        .custom-result-tabs .nav-link:hover {
+            color: #ffffff;
+            border-color: var(--brand-purple);
+        }
+
+        .custom-result-tabs .nav-link.active {
+            background: var(--brand-gradient);
+            color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 0 12px var(--brand-purple-glow);
+        }
+
+        .form-control:focus {
+            background-color: #161b22 !important;
+            border-color: var(--brand-purple) !important;
+            box-shadow: 0 0 0 0.2rem var(--brand-purple-glow) !important;
+            color: #f0f6fc !important;
+        }
     </style>
 </head>
 
@@ -824,7 +915,7 @@ if (!function_exists('renderGrid')) {
         </div>
     </nav>
 
-    <div class="container-fluid px-4">
+    <div id="app" class="container-fluid px-4" v-cloak>
 
         <!-- Barra de Seleção de Cenários -->
         <div class="row mb-4">
@@ -840,7 +931,12 @@ if (!function_exists('renderGrid')) {
                     </div>
                     <div class="d-flex flex-wrap gap-2 pt-1">
                         <?php foreach ($cenarios as $key => $cenario): ?>
-                            <a class="scenario-pill <?= $key === $cenarioAtual ? 'active' : '' ?>" href="?cenario=<?= $key ?>">
+                            <a 
+                                class="scenario-pill" 
+                                :class="{ 'active': cenarioAtual === '<?= $key ?>' }" 
+                                href="?cenario=<?= $key ?>"
+                                @click.prevent="selecionarCenario('<?= $key ?>')"
+                            >
                                 <span class="badge rounded-pill tag-pill" style="background: rgba(255, 255, 255, 0.15);"><?= $cenario['tag'] ?></span>
                                 <span><?= $cenario['titulo'] ?></span>
                             </a>
@@ -900,74 +996,69 @@ if (!function_exists('renderGrid')) {
                         <div>
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <span class="badge rounded-pill tag-pill" style="background: rgba(139, 92, 246, 0.2); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.45);">
-                                    <?= $dadosCenario['tag'] ?>
+                                    {{ cenarioAtualObj.tag || '<?= $dadosCenario['tag'] ?>' }}
                                 </span>
-                                <?php if ($isCustomCode): ?>
-                                    <span class="badge rounded-pill tag-pill" style="background: rgba(255, 122, 0, 0.25); color: #fdba74; border: 1px solid rgba(255, 122, 0, 0.45);">
-                                        ⚡ Código Editado
-                                    </span>
-                                <?php endif; ?>
+                                <span v-if="isCustomCode" class="badge rounded-pill tag-pill" style="background: rgba(255, 122, 0, 0.25); color: #fdba74; border: 1px solid rgba(255, 122, 0, 0.45);">
+                                    ⚡ Código Editado
+                                </span>
                             </div>
-                            <h4 class="fw-bold text-white mb-1" style="letter-spacing: -0.02em;"><?= $dadosCenario['titulo'] ?></h4>
-                            <p class="mb-0" style="color: #8b949e; font-size: 0.92rem;"><?= $dadosCenario['desc'] ?></p>
+                            <h4 class="fw-bold text-white mb-1" style="letter-spacing: -0.02em;">{{ cenarioAtualObj.titulo || '<?= $dadosCenario['titulo'] ?>' }}</h4>
+                            <p class="mb-0" style="color: #8b949e; font-size: 0.92rem;">{{ cenarioAtualObj.desc || '<?= $dadosCenario['desc'] ?>' }}</p>
                         </div>
                     </div>
 
-                    <?php if ($cenarioAtual === 'do_banco_ao_relatorio'): ?>
-                        <div class="alert border-0 shadow-sm d-flex flex-wrap align-items-center justify-content-between p-3 my-3 rounded-3" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(255, 122, 0, 0.15) 100%); border: 1px solid rgba(139, 92, 246, 0.35) !important;">
-                            <div class="d-flex align-items-center gap-3">
-                                <span class="fs-4">🗄️</span>
-                                <div>
-                                    <div class="fw-bold text-white" style="font-size: 0.9rem;">Consulta SQL Real com heliomarpm/db-php</div>
-                                    <div class="small" style="color: #cbd5e1;">
-                                        Este cenário executa <code>DB::query(...)</code> em tabela SQLite real em memória (<code>vendas_sql</code>) com parâmetros nomeados (<code>:status</code>) e encadeia direto no LinqPHP via <code>-&gt;linq()</code> para enriquecimento relacional.
-                                    </div>
+                    <div v-if="cenarioAtual === 'do_banco_ao_relatorio'" class="alert border-0 shadow-sm d-flex flex-wrap align-items-center justify-content-between p-3 my-3 rounded-3" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(255, 122, 0, 0.15) 100%); border: 1px solid rgba(139, 92, 246, 0.35) !important;">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="fs-4">🗄️</span>
+                            <div>
+                                <div class="fw-bold text-white" style="font-size: 0.9rem;">Consulta SQL Real com heliomarpm/db-php</div>
+                                <div class="small" style="color: #cbd5e1;">
+                                    Este cenário executa <code>DB::query(...)</code> em tabela SQLite real em memória (<code>vendas_sql</code>) com parâmetros nomeados (<code>:status</code>) e encadeia direto no LinqPHP via <code>-&gt;linq()</code> para enriquecimento relacional.
                                 </div>
                             </div>
-                            <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
-                                <a href="https://db-php.vercel.app/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-nav-action px-3 py-2 fw-semibold rounded-pill d-flex align-items-center gap-1 text-nowrap" style="font-size: 0.8rem; border-color: rgba(255, 122, 0, 0.4); color: #fdba74;">
-                                    <span>Demo DbPHP</span>
-                                    <i class="bi bi-arrow-up-right small"></i>
-                                </a>
-                                <a href="https://github.com/heliomarpm/db-php" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-nav-action px-2 py-2 fw-semibold rounded-pill d-flex align-items-center gap-1 text-nowrap" style="font-size: 0.8rem;">
-                                    <i class="bi bi-github"></i>
-                                    <span>GitHub</span>
-                                </a>
-                            </div>
                         </div>
-                    <?php endif; ?>
+                        <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
+                            <a href="https://db-php.vercel.app/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-nav-action px-3 py-2 fw-semibold rounded-pill d-flex align-items-center gap-1 text-nowrap" style="font-size: 0.8rem; border-color: rgba(255, 122, 0, 0.4); color: #fdba74;">
+                                <span>Demo DbPHP</span>
+                                <i class="bi bi-arrow-up-right small"></i>
+                            </a>
+                            <a href="https://github.com/heliomarpm/db-php" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-nav-action px-2 py-2 fw-semibold rounded-pill d-flex align-items-center gap-1 text-nowrap" style="font-size: 0.8rem;">
+                                <i class="bi bi-github"></i>
+                                <span>GitHub</span>
+                            </a>
+                        </div>
+                    </div>
 
                     <!-- Mensagem de Erro (se houver) -->
-                    <?php if ($erroExecucao !== null): ?>
-                        <div class="alert shadow-sm border-0 d-flex align-items-start gap-3 my-3 rounded-3 p-3" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4) !important; color: #fca5a5;">
-                            <span class="fs-4">⚠️</span>
-                            <div>
-                                <h6 class="fw-bold mb-1 text-danger">Falha na Execução do Código:</h6>
-                                <div class="font-monospace small text-break"><?= htmlspecialchars($erroExecucao) ?></div>
-                            </div>
+                    <div v-if="erroExecucao" class="alert shadow-sm border-0 d-flex align-items-start gap-3 my-3 rounded-3 p-3" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4) !important; color: #fca5a5;">
+                        <span class="fs-4">⚠️</span>
+                        <div>
+                            <h6 class="fw-bold mb-1 text-danger">Falha na Execução do Código:</h6>
+                            <div class="font-monospace small text-break">{{ erroExecucao }}</div>
                         </div>
-                    <?php endif; ?>
+                    </div>
 
                     <!-- Card de Telemetria / Performance -->
                     <div class="hud-telemetry p-3 my-3 shadow-sm d-flex flex-wrap justify-content-between align-items-center gap-3">
                         <div class="d-flex align-items-center gap-2">
                             <span class="small fw-bold text-uppercase" style="letter-spacing: 0.05em; color: #8b949e; font-size: 0.72rem;">TELEMETRIA LINQ:</span>
                             <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background: rgba(139, 92, 246, 0.2); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.45);">
-                                ⏱️ <?= $linq->elapsedTime ?>s
+                                ⏱️ {{ telemetria.elapsedTime }}s
                             </span>
                             <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background: rgba(0, 163, 255, 0.18); color: #7dd3fc; border: 1px solid rgba(0, 163, 255, 0.35);">
-                                💾 <?= $linq->memoryUsed ?>
+                                💾 {{ telemetria.memoryUsed }}
                             </span>
+                            <span v-if="carregando" class="spinner-border spinner-border-sm text-purple-light ms-1" role="status"></span>
                         </div>
                         <div>
                             <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background: rgba(255, 122, 0, 0.2); color: #fdba74; border: 1px solid rgba(255, 122, 0, 0.4); font-size: 0.85rem;">
-                                📝 <?= $linq->count ?> <?= $linq->count === 1 ? 'linha gerada' : 'linhas geradas' ?>
+                                📝 {{ telemetria.count }} {{ telemetria.count === 1 ? 'linha gerada' : 'linhas geradas' }}
                             </span>
                         </div>
                     </div>
 
                     <!-- Bloco de Código Editável (Sandbox) -->
-                    <form method="POST" action="?cenario=<?= urlencode($cenarioAtual) ?>" id="formEditor" class="mt-2 mb-4">
+                    <form method="POST" :action="'?cenario=' + encodeURIComponent(cenarioAtual)" id="formEditor" class="mt-2 mb-4" @submit.prevent="executarCodigo">
                         <div class="card border-0 shadow-sm rounded-3 overflow-hidden" style="background-color: #0b0f19; border: 1px solid #30363d !important;">
                             <div class="d-flex flex-wrap justify-content-between align-items-center py-2 px-3" style="background-color: #161b22; border-bottom: 1px solid #30363d;">
                                 <div class="d-flex align-items-center gap-2">
@@ -975,20 +1066,39 @@ if (!function_exists('renderGrid')) {
                                     <span class="small d-none d-sm-inline" style="color: #8b949e;">(PHP 8.1+)</span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
-                                    <?php if ($isCustomCode): ?>
-                                        <a href="?cenario=<?= urlencode($cenarioAtual) ?>" class="btn btn-sm btn-nav-action py-1 px-2" style="font-size: 0.78rem;">
-                                            <i class="bi bi-arrow-counterclockwise"></i> Restaurar Padrão
-                                        </a>
-                                    <?php endif; ?>
-                                    <button type="submit" class="btn btn-sm btn-gradient-run py-1 px-3 d-flex align-items-center gap-1" style="font-size: 0.82rem;">
-                                        <i class="bi bi-play-fill fs-6"></i>
-                                        <span>Simular / Executar</span>
+                                    <button 
+                                        v-if="isCustomCode" 
+                                        type="button" 
+                                        class="btn btn-sm btn-nav-action py-1 px-2" 
+                                        style="font-size: 0.78rem;"
+                                        @click="restaurarPadrao"
+                                    >
+                                        <i class="bi bi-arrow-counterclockwise"></i> Restaurar Padrão
+                                    </button>
+                                    <button 
+                                        type="submit" 
+                                        class="btn btn-sm btn-gradient-run py-1 px-3 d-flex align-items-center gap-1" 
+                                        style="font-size: 0.82rem;"
+                                        :disabled="carregando"
+                                    >
+                                        <span v-if="carregando" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                        <i v-else class="bi bi-play-fill fs-6"></i>
+                                        <span>{{ carregando ? 'Executando...' : 'Simular / Executar' }}</span>
                                         <span class="d-none d-md-inline opacity-75 small">(Ctrl+Enter)</span>
                                     </button>
                                 </div>
                             </div>
                             <div class="p-2">
-                                <textarea name="codigo_customizado" id="codigoEditor" class="form-control font-monospace border-0 bg-transparent p-2" rows="8" spellcheck="false" style="font-family: 'JetBrains Mono', Consolas, monospace; font-size: 0.88rem; line-height: 1.5; resize: vertical; outline: none; box-shadow: none; color: #38bdf8 !important;"><?= htmlspecialchars($codigoAtivo) ?></textarea>
+                                <textarea 
+                                    name="codigo_customizado" 
+                                    id="codigoEditor" 
+                                    v-model="codigoAtivo"
+                                    @keydown="handleKeydown"
+                                    class="form-control font-monospace border-0 bg-transparent p-2" 
+                                    rows="8" 
+                                    spellcheck="false" 
+                                    style="font-family: 'JetBrains Mono', Consolas, monospace; font-size: 0.88rem; line-height: 1.5; resize: vertical; outline: none; box-shadow: none; color: #38bdf8 !important;"
+                                ></textarea>
                             </div>
                             <div class="d-flex flex-wrap justify-content-between align-items-center py-2 px-3" style="background-color: #0b0f19; border-top: 1px solid #21262d; font-size: 0.75rem;">
                                 <span style="color: #8b949e;">
@@ -999,17 +1109,183 @@ if (!function_exists('renderGrid')) {
                         </div>
                     </form>
 
-                    <!-- Tabela de Saída -->
+                    <!-- Abas de Navegação do Resultado (Grid Tabela, Código, JSON Bruto) -->
                     <div class="mt-2">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="fw-bold text-uppercase mb-0" style="font-size: 0.78rem; letter-spacing: 0.05em; color: #8b949e;">
-                                🎯 Resultado Projetado
-                            </h6>
-                            <span class="badge rounded-pill" style="background: #21262d; border: 1px solid #30363d; color: #8b949e;">
-                                <?= count($resultado) ?> linhas retornadas
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                            <ul class="nav nav-pills custom-result-tabs gap-2 mb-0">
+                                <li class="nav-item">
+                                    <button 
+                                        type="button" 
+                                        class="nav-link rounded-pill px-3 py-1 fw-semibold d-flex align-items-center gap-2"
+                                        :class="{ 'active': abaAtiva === 'tabela' }"
+                                        @click="abaAtiva = 'tabela'"
+                                    >
+                                        <i class="bi bi-table"></i>
+                                        <span>Grid Tabela</span>
+                                        <span class="badge rounded-pill" :class="abaAtiva === 'tabela' ? 'bg-white text-dark' : 'bg-dark text-secondary'" style="font-size: 0.7rem;">
+                                            {{ resultado.length }}
+                                        </span>
+                                    </button>
+                                </li>
+                                <li class="nav-item">
+                                    <button 
+                                        type="button" 
+                                        class="nav-link rounded-pill px-3 py-1 fw-semibold d-flex align-items-center gap-2"
+                                        :class="{ 'active': abaAtiva === 'codigo' }"
+                                        @click="abaAtiva = 'codigo'"
+                                    >
+                                        <i class="bi bi-code-slash"></i>
+                                        <span>Código LINQ</span>
+                                    </button>
+                                </li>
+                                <li class="nav-item">
+                                    <button 
+                                        type="button" 
+                                        class="nav-link rounded-pill px-3 py-1 fw-semibold d-flex align-items-center gap-2"
+                                        :class="{ 'active': abaAtiva === 'json' }"
+                                        @click="abaAtiva = 'json'"
+                                    >
+                                        <i class="bi bi-braces"></i>
+                                        <span>JSON Bruto</span>
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <span class="badge rounded-pill" style="background: #21262d; border: 1px solid #30363d; color: #8b949e; font-size: 0.75rem;">
+                                {{ resultado.length }} {{ resultado.length === 1 ? 'linha retornada' : 'linhas retornadas' }}
                             </span>
                         </div>
-                        <?= renderGrid('Dados Processados', $resultado, 'bg-dark', $linq->count) ?>
+
+                        <!-- Conteúdo da Aba 1: Grid Tabela -->
+                        <div v-show="abaAtiva === 'tabela'">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                                <div class="input-group input-group-sm" style="max-width: 320px;">
+                                    <span class="input-group-text border-end-0" style="background: #161b22; border-color: #30363d; color: #8b949e;">
+                                        <i class="bi bi-search"></i>
+                                    </span>
+                                    <input 
+                                        type="text" 
+                                        v-model="filtroTabela" 
+                                        class="form-control border-start-0" 
+                                        placeholder="Filtrar dados na tabela..." 
+                                        style="background: #161b22; border-color: #30363d; color: #f0f6fc; font-size: 0.8rem;"
+                                    >
+                                    <button 
+                                        v-if="filtroTabela" 
+                                        class="btn btn-outline-secondary border-start-0" 
+                                        type="button" 
+                                        @click="filtroTabela = ''"
+                                        style="border-color: #30363d; background: #161b22; color: #8b949e;"
+                                    >
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
+                                <div v-if="filtroTabela" class="small text-secondary">
+                                    Filtrando: <span class="text-white fw-bold">{{ linhasFiltradas.length }}</span> de <span class="text-white fw-bold">{{ resultado.length }}</span>
+                                </div>
+                            </div>
+
+                            <div v-if="linhasFiltradas.length === 0" class="alert alert-secondary py-3 mb-3 text-secondary text-center rounded-3" style="background: #161b22; border: 1px solid #30363d; font-size: 0.85rem;">
+                                <i class="bi bi-inbox me-2"></i>Nenhum registro encontrado.
+                            </div>
+
+                            <div v-else class="card mb-3 rounded-3 overflow-hidden shadow-sm" style="background: #161b22; border: 1px solid #30363d;">
+                                <div class="card-header d-flex justify-content-between align-items-center py-2 px-3" style="background: #21262d; border-bottom: 1px solid #30363d;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span style="width: 8px; height: 8px; border-radius: 50%; background-color: #FF7A00; display: inline-block; box-shadow: 0 0 8px #FF7A00;"></span>
+                                        <span class="fw-semibold text-white" style="font-size: 0.85rem;">Dados Processados</span>
+                                    </div>
+                                    <span class="badge rounded-pill fw-semibold" style="font-size: 0.72rem; background: rgba(255, 122, 0, 0.18); color: #fdba74; border: 1px solid rgba(255, 122, 0, 0.4);">
+                                        {{ linhasFiltradas.length }} itens
+                                    </span>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-dark table-hover mb-0 align-middle" style="font-size: 0.82rem; background: #161b22; border-color: #30363d;">
+                                            <thead style="background: #1c2128; border-bottom: 1px solid #30363d;">
+                                                <tr>
+                                                    <th v-for="col in colunas" :key="col" class="text-secondary py-2 px-2" style="font-weight: 600; font-size: 0.74rem; letter-spacing: 0.04em; background: #1c2128; border-color: #30363d;">
+                                                        {{ col.toUpperCase() }}
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-for="(linha, index) in linhasFiltradas" :key="index" style="border-color: #21262d;">
+                                                    <td v-for="col in colunas" :key="col" class="py-2 px-2" style="background: #161b22; color: #c9d1d9; border-color: #21262d;">
+                                                        <span v-if="isNull(linha[col])" class="badge font-monospace" style="font-size: 0.68rem; background: rgba(110, 118, 129, 0.2); color: #8b949e; border: 1px solid #30363d;">null</span>
+                                                        <span v-else-if="isBool(linha[col])" class="badge" :style="linha[col] ? 'background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.35);' : 'background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35);'">
+                                                            {{ linha[col] ? 'Sim' : 'Não' }}
+                                                        </span>
+                                                        <span v-else-if="isStatus(col)" class="badge rounded-pill text-uppercase" style="font-size: 0.68rem;" :style="obterEstiloStatus(linha[col])">
+                                                            {{ linha[col] }}
+                                                        </span>
+                                                        <span v-else-if="isVip(col)" class="badge" :style="linha[col] ? 'background: rgba(255, 122, 0, 0.2); color: #fb923c; border: 1px solid rgba(255, 122, 0, 0.4);' : 'background: rgba(110, 118, 129, 0.15); color: #8b949e; border: 1px solid #30363d;'">
+                                                            {{ linha[col] ? 'VIP ⭐' : 'Comum' }}
+                                                        </span>
+                                                        <span v-else-if="isDecimal(linha[col])" class="fw-semibold text-light">
+                                                            {{ formatarDecimal(linha[col]) }}
+                                                        </span>
+                                                        <code v-else-if="isObject(linha[col])" class="small text-info">
+                                                            {{ formatarJson(linha[col]) }}
+                                                        </code>
+                                                        <span v-else>{{ linha[col] }}</span>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Conteúdo da Aba 2: Código LINQ Executado -->
+                        <div v-show="abaAtiva === 'codigo'">
+                            <div class="card border-0 rounded-3 overflow-hidden shadow-sm" style="background: #0b0f19; border: 1px solid #30363d !important;">
+                                <div class="d-flex justify-content-between align-items-center py-2 px-3" style="background: #161b22; border-bottom: 1px solid #30363d;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="bi bi-file-earmark-code text-purple-light"></i>
+                                        <span class="text-white fw-bold small">Pipeline PHP Executado</span>
+                                    </div>
+                                    <button 
+                                        type="button" 
+                                        class="btn btn-sm btn-nav-action py-1 px-3 d-flex align-items-center gap-1 rounded-pill" 
+                                        style="font-size: 0.78rem;"
+                                        @click="copiarTexto(codigoAtivo, 'codigo')"
+                                    >
+                                        <i :class="copiadoCodigo ? 'bi bi-check2 text-success' : 'bi bi-clipboard'"></i>
+                                        <span>{{ copiadoCodigo ? 'Copiado!' : 'Copiar Código' }}</span>
+                                    </button>
+                                </div>
+                                <div class="p-3">
+                                    <pre class="m-0 font-monospace" style="color: #38bdf8; font-size: 0.85rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word;"><code>{{ codigoAtivo }}</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Conteúdo da Aba 3: JSON Bruto -->
+                        <div v-show="abaAtiva === 'json'">
+                            <div class="card border-0 rounded-3 overflow-hidden shadow-sm" style="background: #0b0f19; border: 1px solid #30363d !important;">
+                                <div class="d-flex justify-content-between align-items-center py-2 px-3" style="background: #161b22; border-bottom: 1px solid #30363d;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="bi bi-braces text-warning"></i>
+                                        <span class="text-white fw-bold small">Payload JSON Completo</span>
+                                        <span class="badge rounded-pill bg-dark text-secondary" style="font-size: 0.7rem;">{{ resultado.length }} registros</span>
+                                    </div>
+                                    <button 
+                                        type="button" 
+                                        class="btn btn-sm btn-nav-action py-1 px-3 d-flex align-items-center gap-1 rounded-pill" 
+                                        style="font-size: 0.78rem;"
+                                        @click="copiarTexto(jsonFormatado, 'json')"
+                                    >
+                                        <i :class="copiadoJson ? 'bi bi-check2 text-success' : 'bi bi-clipboard'"></i>
+                                        <span>{{ copiadoJson ? 'Copiado!' : 'Copiar JSON' }}</span>
+                                    </button>
+                                </div>
+                                <div class="p-3" style="max-height: 60vh; overflow-y: auto;">
+                                    <pre class="m-0 font-monospace" style="color: #a5b4fc; font-size: 0.82rem; line-height: 1.5; white-space: pre-wrap;"><code>{{ jsonFormatado }}</code></pre>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1039,24 +1315,247 @@ if (!function_exists('renderGrid')) {
     </footer>
 
     <script>
-        const editor = document.getElementById('codigoEditor');
-        const form = document.getElementById('formEditor');
+        window.__LINQ_DATA__ = {
+            cenarios: <?= json_encode($cenariosMeta, JSON_UNESCAPED_UNICODE) ?>,
+            cenarioAtual: <?= json_encode($cenarioAtual, JSON_UNESCAPED_UNICODE) ?>,
+            initialResult: <?= json_encode([
+                'codigo'       => $codigoAtivo,
+                'codigoPadrao' => $dadosCenario['codigo'],
+                'isCustom'     => $isCustomCode,
+                'colunas'      => $resultado !== [] && is_array($resultado[0]) ? array_keys($resultado[0]) : [],
+                'resultado'    => $resultado,
+                'telemetria'   => [
+                    'elapsedTime' => $linq->elapsedTime ?? '0.000000',
+                    'memoryUsed'  => $linq->memoryUsed ?? '0.00 MB',
+                    'count'       => $linq->count ?? count($resultado),
+                ],
+                'erro'         => $erroExecucao,
+            ], JSON_UNESCAPED_UNICODE) ?>
+        };
 
-        if (editor && form) {
-            // Suporte para indentação com tecla TAB e envio com Ctrl+Enter
-            editor.addEventListener('keydown', function(e) {
-                if (e.key === 'Tab') {
-                    e.preventDefault();
-                    const start = this.selectionStart;
-                    const end = this.selectionEnd;
-                    this.value = this.value.substring(0, start) + "    " + this.value.substring(end);
-                    this.selectionStart = this.selectionEnd = start + 4;
-                } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                    e.preventDefault();
-                    form.submit();
-                }
-            });
-        }
+        const { createApp, ref, computed, onMounted } = Vue;
+        const initial = window.__LINQ_DATA__ || {};
+
+        createApp({
+            setup() {
+                const cenarios = ref(initial.cenarios || {});
+                const cenarioAtual = ref(initial.cenarioAtual || 'join_triplo');
+                const codigoAtivo = ref(initial.initialResult?.codigo || '');
+                const codigoPadrao = ref(initial.initialResult?.codigoPadrao || '');
+                const resultado = ref(initial.initialResult?.resultado || []);
+                const colunas = ref(initial.initialResult?.colunas || []);
+                const telemetria = ref(initial.initialResult?.telemetria || { elapsedTime: '0.000000', memoryUsed: '0.00 MB', count: 0 });
+                const erroExecucao = ref(initial.initialResult?.erro || null);
+                const carregando = ref(false);
+                const abaAtiva = ref('tabela');
+                const filtroTabela = ref('');
+                const copiadoCodigo = ref(false);
+                const copiadoJson = ref(false);
+
+                const cenarioAtualObj = computed(() => cenarios.value[cenarioAtual.value] || {});
+
+                const isCustomCode = computed(() => {
+                    const clean = str => (str || '').replace(/\r\n/g, '\n').trim();
+                    return clean(codigoAtivo.value) !== clean(codigoPadrao.value);
+                });
+
+                const linhasFiltradas = computed(() => {
+                    if (!filtroTabela.value.trim()) {
+                        return resultado.value;
+                    }
+                    const termo = filtroTabela.value.toLowerCase().trim();
+                    return resultado.value.filter(linha => {
+                        return Object.values(linha).some(val => {
+                            if (val === null || val === undefined) return false;
+                            return String(val).toLowerCase().includes(termo);
+                        });
+                    });
+                });
+
+                const jsonFormatado = computed(() => {
+                    const payload = {
+                        cenario: cenarioAtual.value,
+                        telemetria: telemetria.value,
+                        count: resultado.value.length,
+                        data: resultado.value
+                    };
+                    return JSON.stringify(payload, null, 2);
+                });
+
+                const selecionarCenario = async (key) => {
+                    if (cenarioAtual.value === key && !isCustomCode.value) return;
+                    cenarioAtual.value = key;
+                    const meta = cenarios.value[key];
+                    if (meta) {
+                        codigoAtivo.value = meta.codigo;
+                        codigoPadrao.value = meta.codigo;
+                    }
+                    window.history.pushState(null, '', `?cenario=${key}`);
+                    await carregarCenario(key);
+                };
+
+                const carregarCenario = async (key) => {
+                    carregando.value = true;
+                    erroExecucao.value = null;
+                    try {
+                        const res = await fetch(`?api=1&cenario=${encodeURIComponent(key)}`);
+                        const data = await res.json();
+                        if (data.success) {
+                            resultado.value = data.resultado || [];
+                            colunas.value = data.colunas || [];
+                            telemetria.value = data.telemetria || {};
+                            codigoAtivo.value = data.codigo;
+                            codigoPadrao.value = data.codigoPadrao;
+                            erroExecucao.value = null;
+                        } else {
+                            erroExecucao.value = data.erro || 'Falha ao carregar cenário';
+                            resultado.value = [];
+                            colunas.value = [];
+                        }
+                    } catch (err) {
+                        erroExecucao.value = 'Erro de rede: ' + err.message;
+                    } finally {
+                        carregando.value = false;
+                    }
+                };
+
+                const executarCodigo = async () => {
+                    carregando.value = true;
+                    erroExecucao.value = null;
+                    try {
+                        const res = await fetch(`?api=1&cenario=${encodeURIComponent(cenarioAtual.value)}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                cenario: cenarioAtual.value,
+                                codigo: codigoAtivo.value
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            resultado.value = data.resultado || [];
+                            colunas.value = data.colunas || [];
+                            telemetria.value = data.telemetria || {};
+                            erroExecucao.value = null;
+                        } else {
+                            erroExecucao.value = data.erro || 'Erro na execução';
+                            resultado.value = [];
+                            colunas.value = [];
+                            telemetria.value = data.telemetria || { elapsedTime: '0.000000', memoryUsed: '0.00 MB', count: 0 };
+                        }
+                    } catch (err) {
+                        erroExecucao.value = 'Erro de rede ao executar código: ' + err.message;
+                    } finally {
+                        carregando.value = false;
+                    }
+                };
+
+                const restaurarPadrao = async () => {
+                    const meta = cenarios.value[cenarioAtual.value];
+                    if (meta) {
+                        codigoAtivo.value = meta.codigo;
+                    }
+                    await executarCodigo();
+                };
+
+                const isNull = (val) => val === null || val === undefined;
+                const isBool = (val) => typeof val === 'boolean';
+                const isDecimal = (val) => typeof val === 'number' && !Number.isInteger(val);
+                const isObject = (val) => typeof val === 'object' && val !== null;
+                const isStatus = (col) => col === 'status';
+                const isVip = (col) => col === 'vip';
+
+                const obterEstiloStatus = (status) => {
+                    switch (status) {
+                        case 'concluido':
+                            return 'background: rgba(34, 197, 94, 0.18); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4);';
+                        case 'pendente':
+                            return 'background: rgba(245, 158, 11, 0.18); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);';
+                        case 'cancelado':
+                            return 'background: rgba(239, 68, 68, 0.18); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4);';
+                        default:
+                            return 'background: rgba(148, 163, 184, 0.18); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.4);';
+                    }
+                };
+
+                const formatarDecimal = (val) => Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const formatarJson = (val) => JSON.stringify(val);
+
+                const copiarTexto = async (texto, tipo) => {
+                    try {
+                        await navigator.clipboard.writeText(texto);
+                        if (tipo === 'codigo') {
+                            copiadoCodigo.value = true;
+                            setTimeout(() => copiadoCodigo.value = false, 2000);
+                        } else {
+                            copiadoJson.value = true;
+                            setTimeout(() => copiadoJson.value = false, 2000);
+                        }
+                    } catch (e) {
+                        console.error('Falha ao copiar:', e);
+                    }
+                };
+
+                const handleKeydown = (e) => {
+                    if (e.key === 'Tab') {
+                        e.preventDefault();
+                        const textarea = e.target;
+                        const start = textarea.selectionStart;
+                        const end = textarea.selectionEnd;
+                        textarea.value = textarea.value.substring(0, start) + "    " + textarea.value.substring(end);
+                        textarea.selectionStart = textarea.selectionEnd = start + 4;
+                        codigoAtivo.value = textarea.value;
+                    } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                        e.preventDefault();
+                        executarCodigo();
+                    }
+                };
+
+                onMounted(() => {
+                    window.addEventListener('popstate', () => {
+                        const params = new URLSearchParams(window.location.search);
+                        const cenario = params.get('cenario') || 'join_triplo';
+                        if (cenarios.value[cenario]) {
+                            selecionarCenario(cenario);
+                        }
+                    });
+                });
+
+                return {
+                    cenarios,
+                    cenarioAtual,
+                    cenarioAtualObj,
+                    codigoAtivo,
+                    codigoPadrao,
+                    isCustomCode,
+                    resultado,
+                    colunas,
+                    linhasFiltradas,
+                    telemetria,
+                    erroExecucao,
+                    carregando,
+                    abaAtiva,
+                    filtroTabela,
+                    jsonFormatado,
+                    copiadoCodigo,
+                    copiadoJson,
+                    selecionarCenario,
+                    executarCodigo,
+                    restaurarPadrao,
+                    isNull,
+                    isBool,
+                    isDecimal,
+                    isObject,
+                    isStatus,
+                    isVip,
+                    obterEstiloStatus,
+                    formatarDecimal,
+                    formatarJson,
+                    copiarTexto,
+                    handleKeydown
+                };
+            }
+        }).mount('#app');
     </script>
 </body>
 
