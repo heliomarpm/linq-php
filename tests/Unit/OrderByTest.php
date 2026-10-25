@@ -238,4 +238,3 @@ class OrderByTest extends TestCase
         ]);
     }
 }
-

@@ -93,4 +93,3 @@ class FirstOrDefaultTest extends TestCase
         $this->assertSame($this->users[1], $result);
     }
 }
-

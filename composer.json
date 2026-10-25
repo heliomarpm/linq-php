@@ -33,7 +33,7 @@
     }
   },
   "scripts": {
-    "format": "pint --test --parallel --max-processes=4",
+    "format": "pint --test --parallel --max-processes=4 --dirty",
     "format:fix": "pint --parallel --max-processes=4 --repair --dirty",
     "format:full": "pint --parallel --max-processes=4 --repair",
     "format:def": "pint --preset=psr12 --parallel --max-processes=4 --repair",
