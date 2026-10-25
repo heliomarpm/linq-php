@@ -62,14 +62,21 @@ $linq = LinqPHP::from($data);
 
 ```
 
-#### 💡 Dica: Consultando dados diretamente do Banco de Dados 
+#### 💡 Dica (Uso Opcional): Consultando dados do Banco de Dados com DbPHP
 
-Para extrair dados do MySQL ou SQLite com alta performance e telemetria, conheça a biblioteca companheira [heliomarpm/db-php](https://github.com/heliomarpm/db-php):
+Para extrair dados do MySQL, SQLite ou PostgreSQL com alta performance, zero dependências e telemetria nativa, utilize a biblioteca parceira [heliomarpm/db-php](https://github.com/heliomarpm/db-php) ([Demo interativa](https://db-php.vercel.app/)):
+
+```bash
+composer require heliomarpm/db-php
+```
+
+O método `->linq()` do **DbPHP** integra-se perfeitamente ao **LinqPHP**, permitindo encadear filtros e transformações em memória direto da query SQL:
 
 ```php
 use HeliomarPM\DbPHP\DB;
-// Consulta o banco e já transforma direto em uma coleção LinqPHP:
-$ativos = DB::query("SELECT * FROM clientes WHERE status = ?", ["ativo"])
+
+// Consulta o banco e continua o pipeline diretamente no LinqPHP via ->linq():
+$ativos = DB::query("SELECT id, nome, limite_credito, status FROM clientes WHERE status = :status", ["status" => "ativo"])
     ->linq()
     ->where(fn($c) => $c['limite_credito'] > 1000)
     ->orderByKey('nome')

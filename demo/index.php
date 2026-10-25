@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use HeliomarPM\DbPHP\DB;
 use HeliomarPM\LinqPHP\JoinType;
 use HeliomarPM\LinqPHP\LinqPHP;
 
@@ -56,6 +57,29 @@ $vendas = [
     ['id_venda' => 15, 'produto_id' => 108, 'cliente_id' => 1, 'qtd' => 1, 'canal' => 'online', 'status' => 'concluido'],
     ['id_venda' => 16, 'produto_id' => 107, 'cliente_id' => 5, 'qtd' => 1, 'canal' => 'loja',   'status' => 'concluido'],
 ];
+
+// ==========================================
+// 1.1. BANCO DE DADOS EM MEMÓRIA (DbPHP)
+// ==========================================
+if (class_exists(DB::class)) {
+    DB::sqlite();
+
+    DB::execute("CREATE TABLE IF NOT EXISTS vendas_sql (
+        id_venda INTEGER PRIMARY KEY,
+        produto_id INTEGER,
+        cliente_id INTEGER,
+        qtd INTEGER,
+        canal TEXT,
+        status TEXT
+    )");
+
+    foreach ($vendas as $v) {
+        DB::execute(
+            "INSERT INTO vendas_sql (id_venda, produto_id, cliente_id, qtd, canal, status) VALUES (?, ?, ?, ?, ?, ?)",
+            [$v['id_venda'], $v['produto_id'], $v['cliente_id'], $v['qtd'], $v['canal'], $v['status']]
+        );
+    }
+}
 
 // ==========================================
 // 2. DEFINIÇÃO DOS CENÁRIOS DE TESTE AVANÇADOS
@@ -369,6 +393,58 @@ $cenarios = [
             return $obj;
         },
     ],
+
+    'do_banco_ao_relatorio' => [
+        'titulo' => 'Do Banco ao Relatório (DbPHP + LinqPHP)',
+        'tag'    => 'DB-PHP + LINQ',
+        'cor'    => 'warning',
+        'desc'   => 'Executa consulta SQL real parametrizada via heliomarpm/db-php e encadeia diretamente no LinqPHP através de ->linq().',
+        'codigo' => <<<PHP_WRAP
+        // Consulta SQL real parametrizada via DbPHP encadeando diretamente no LinqPHP via ->linq():
+        \$linq = DB::query("
+            SELECT id_venda, produto_id, cliente_id, qtd
+            FROM vendas_sql
+            WHERE status = :status
+        ", ['status' => 'concluido'])
+            ->linq()
+            ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+            ->join(\$clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
+            ->where(['vip', '=', true])
+            ->orderByKey('id_venda', 'asc')
+            ->select([
+                'id_venda'     => 'Código Venda',
+                'nome_cliente' => 'Cliente VIP',
+                'cidade'       => 'Cidade',
+                'uf'           => 'UF',
+                'nome_produto' => 'Produto Comprado',
+                'qtd'          => 'Quantidade',
+                'preco'        => 'Valor Unitário'
+            ])
+            ->toObject();
+        PHP_WRAP,
+        'run' => function () use ($produtos, $clientes) {
+            return DB::query("
+                SELECT id_venda, produto_id, cliente_id, qtd
+                FROM vendas_sql
+                WHERE status = :status
+            ", ['status' => 'concluido'])
+                ->linq()
+                ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
+                ->join($clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
+                ->where(['vip', '=', true])
+                ->orderByKey('id_venda', 'asc')
+                ->select([
+                    'id_venda'     => 'Código Venda',
+                    'nome_cliente' => 'Cliente VIP',
+                    'cidade'       => 'Cidade',
+                    'uf'           => 'UF',
+                    'nome_produto' => 'Produto Comprado',
+                    'qtd'          => 'Quantidade',
+                    'preco'        => 'Valor Unitário',
+                ])
+                ->toObject();
+        },
+    ],
 ];
 
 // Identifica o cenário atual pela URL
@@ -389,14 +465,15 @@ $linq = null;
 $resultado = [];
 
 // Função avaliadora do sandbox interativo
-$avaliarLinq = function (string $rawCode): stdClass {
+$avaliarLinq = function (string $rawCode) use ($clientes, $produtos, $produtosOutlet, $vendas): stdClass {
     $cleanCode = trim($rawCode);
-    $prefix = "use HeliomarPM\\LinqPHP\\LinqPHP;\nuse HeliomarPM\\LinqPHP\\JoinType;\n";
-    if (preg_match('/^(LinqPHP::|\(?new\s+LinqPHP)/i', $cleanCode)) {
-        $cleanCode = "return " . $cleanCode;
+    $prefix = "use HeliomarPM\\LinqPHP\\LinqPHP;\nuse HeliomarPM\\LinqPHP\\JoinType;\nuse HeliomarPM\\DbPHP\\DB;\n";
+    if (preg_match('/^(LinqPHP::|\(?new\s+LinqPHP|DB::|\(?new\s+DB)/i', $cleanCode)) {
+        $cleanCode = "return " . rtrim($cleanCode, ';') . ";";
+    } else {
+        // Garante que o retorno do script ou da variável $linq seja obtido mesmo se o código tiver closures internas
+        $cleanCode .= "\nreturn \$item ?? \$linq ?? \$resultado ?? \$result ?? \$dbResult ?? \$dados ?? null;";
     }
-    // Garante que o retorno do script ou da variável $linq seja obtido mesmo se o código tiver closures internas
-    $cleanCode .= "\nreturn \$item ?? \$linq ?? \$resultado ?? \$result ?? \$dados ?? null;";
     $startTime = microtime(true);
     $startMemory = memory_get_usage(true);
     $evalResult = eval($prefix . $cleanCode);
@@ -406,7 +483,9 @@ $avaliarLinq = function (string $rawCode): stdClass {
     $endTime = microtime(true);
     $elapsedTime = number_format($endTime - $startTime, 6);
     $memoryUsed = sprintf("%5.2f MB", (memory_get_peak_usage(true) - $startMemory) / 1024 / 1024);
-    if ($evalResult instanceof LinqPHP) {
+    if ($evalResult instanceof HeliomarPM\DbPHP\Results\QueryResult) {
+        $evalResult = $evalResult->linq()->toObject();
+    } elseif ($evalResult instanceof LinqPHP) {
         $evalResult = $evalResult->toObject();
     } elseif (is_array($evalResult)) {
         $obj = new stdClass();
@@ -612,7 +691,7 @@ if (!function_exists('renderGrid')) {
                 <span class="navbar-brand mb-0 h1 d-flex align-items-center gap-2">
                     <span>⚡</span>
                     <span>LinqPHP</span>
-                    <span class="badge bg-white text-dark rounded-pill fw-semibold" style="font-size: 0.7rem;">v2.0.0</span>
+                    <span class="badge bg-white text-dark rounded-pill fw-semibold" style="font-size: 0.7rem;">v2.1.0</span>
                 </span>
                 <span class="text-white-50 small d-none d-lg-inline">Laboratório Interativo & Benchmark DX</span>
             </div>
@@ -622,6 +701,14 @@ if (!function_exists('renderGrid')) {
                         <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
                     </svg>
                     <span>Repositório GitHub</span>
+                </a>
+                <a href="https://packagist.org/packages/heliomarpm/linq-php" target="_blank" class="btn btn-sm btn-outline-warning px-3">
+                    <i class="bi bi-box-seam me-1"></i> Packagist
+                </a>
+                <span>&nbsp;&nbsp;</span>
+                <a href="https://db-php.vercel.app/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-info d-flex align-items-center gap-2 fw-semibold px-3 py-2 shadow-sm rounded-pill text-white" style="font-size: 0.82rem; border-color: rgba(255,255,255,0.4); text-decoration: none;" title="Acesse a demonstração da biblioteca parceira DbPHP">
+                    <span>🗄️</span>
+                    <span>DbPHP Demo</span>
                 </a>
             </div>
         </div>
@@ -659,15 +746,37 @@ if (!function_exists('renderGrid')) {
             <div class="col-lg-4 data-sources">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="text-secondary fw-bold text-uppercase mb-0" style="letter-spacing: 0.05em;">
-                        🗄️ Coleções de Origem
+                        🗄️ Coleções & Tabelas
                     </h6>
-                    <span class="text-muted small">4 Datasets</span>
+                    <span class="text-muted small">4 Origens + SQLite</span>
                 </div>
 
                 <?= renderGrid('Clientes', $clientes, 'bg-indigo', count($clientes)) ?>
                 <?= renderGrid('Produtos', $produtos, 'bg-dark', count($produtos)) ?>
                 <?= renderGrid('Produtos Outlet', $produtosOutlet, 'bg-secondary', count($produtosOutlet)) ?>
-                <?= renderGrid('Vendas', $vendas, 'bg-primary', count($vendas)) ?>
+                <?= renderGrid('Vendas (Array)', $vendas, 'bg-primary', count($vendas)) ?>
+
+                <?php if (class_exists(DB::class)): ?>
+                    <div class="card shadow-sm border-0 rounded-3 mb-3" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #f8fafc;">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-warning text-dark tag-pill">SQLite :memory:</span>
+                                <span class="text-white-50 small">DbPHP Nativo</span>
+                            </div>
+                            <div class="fw-bold mb-1" style="font-size: 0.88rem;">
+                                <span>🗄️ Tabela <code>vendas_sql</code></span>
+                            </div>
+                            <div class="small text-secondary mb-2" style="font-size: 0.78rem;">
+                                Conectada via <code>DB::sqlite()</code>. Pronta para consultas SQL diretas com <code>DB::query()</code> no editor.
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="https://db-php.vercel.app/" target="_blank" class="btn btn-xs btn-outline-warning rounded-pill py-1 px-2" style="font-size: 0.72rem; text-decoration: none;">
+                                    Demo DbPHP ↗
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <!-- Coluna da Direita: Resultado do Cenário Selecionado -->
@@ -685,6 +794,29 @@ if (!function_exists('renderGrid')) {
                             <p class="text-muted mb-0"><?= $dadosCenario['desc'] ?></p>
                         </div>
                     </div>
+
+                    <?php if ($cenarioAtual === 'do_banco_ao_relatorio'): ?>
+                        <div class="alert alert-warning border-0 shadow-sm d-flex flex-wrap align-items-center justify-content-between p-3 my-3 rounded-3" style="background: linear-gradient(135deg, rgba(254, 243, 199, 0.9) 0%, rgba(253, 230, 138, 0.9) 100%);">
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="fs-4">🗄️</span>
+                                <div>
+                                    <div class="fw-bold text-dark" style="font-size: 0.9rem;">Consulta SQL Real com heliomarpm/db-php</div>
+                                    <div class="small text-secondary">
+                                        Este cenário executa <code>DB::query(...)</code> em tabela SQLite real em memória (<code>vendas_sql</code>) com parâmetros nomeados (<code>:status</code>) e encadeia direto no LinqPHP via <code>-&gt;linq()</code> para enriquecimento relacional.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
+                                <a href="https://db-php.vercel.app/" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-dark px-3 py-2 fw-semibold rounded-pill d-flex align-items-center gap-1 text-nowrap" style="font-size: 0.8rem;">
+                                    <span>Demo DbPHP</span>
+                                    <span>↗</span>
+                                </a>
+                                <a href="https://github.com/heliomarpm/db-php" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-dark px-2 py-2 fw-semibold rounded-pill d-flex align-items-center gap-1 text-nowrap" style="font-size: 0.8rem;">
+                                    <span>GitHub</span>
+                                </a>
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
                     <!-- Mensagem de Erro (se houver) -->
                     <?php if ($erroExecucao !== null): ?>
@@ -740,7 +872,7 @@ if (!function_exists('renderGrid')) {
                             </div>
                             <div class="d-flex flex-wrap justify-content-between align-items-center py-2 px-3 border-top border-secondary-subtle" style="background-color: #0b1120; font-size: 0.75rem;">
                                 <span class="text-secondary">
-                                    <strong class="text-light">Variáveis disponíveis:</strong> <code class="text-info">$vendas</code>, <code class="text-info">$produtos</code>, <code class="text-info">$produtosOutlet</code>, <code class="text-info">$clientes</code> | <code class="text-warning">JoinType::*</code>
+                                    <strong class="text-light">Variáveis disponíveis:</strong> <code class="text-info">$vendas</code>, <code class="text-info">$produtos</code>, <code class="text-info">$produtosOutlet</code>, <code class="text-info">$clientes</code> | <code class="text-warning">JoinType::*</code>, <code class="text-warning">DB::query()</code> (tabela <code class="text-info">vendas_sql</code>)
                                 </span>
                                 <span class="text-white-50 d-none d-md-inline">💡 Use Tab para indentar e Ctrl+Enter para executar</span>
                             </div>

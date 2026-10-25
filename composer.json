@@ -78,6 +78,7 @@
     "phpbench/phpbench": "^1.7",
     "phpstan/phpstan": "*",
     "laravel/pint": "^1.32",
-    "rector/rector": "^2.7"
+    "rector/rector": "^2.7",
+    "heliomarpm/db-php": "^1.0"
   }
 }

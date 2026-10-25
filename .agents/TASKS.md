@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Aprimorar experiência interativa da demo, benchmarks e sinergia com heliomarpm/db-php\
-> **Status:** em planejamento | **Progresso:** 11/16 (68%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-24
+> **Status:** em planejamento | **Progresso:** 12/16 (75%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-25
 
 ## Em progresso
 
@@ -15,13 +15,7 @@
 
 ### Alta Prioridade
 
-- [ ] **T-012 · P1 · Integrar interoperabilidade e cross-promotion com heliomarpm/db-php na demo e README**
-  - **Origem:** manual (sinergia entre bibliotecas da suíte)
-  - **Contexto:** Consolidar `linq-php` e `db-php` como ferramentas complementares no mesmo ecossistema open-source.
-  - **Critérios de Aceite:**
-    - Botão de navegação cruzada adicionado no cabeçalho da demo apontando para `https://db-php.vercel.app/` (e repositório GitHub).
-    - Novo cenário de teste na demo: *"Do Banco ao Relatório (com DbPHP)"*, demonstrando consulta SQL fluente conectada ao LinqPHP via `->linq()`.
-    - Seção de sugestão/integração no `README.md` destacando o pacote parceiro `heliomarpm/db-php`.
+(nenhuma)
 
 ### Média Prioridade
 
@@ -58,6 +52,10 @@
     - Botão para copiar JSON formatado.
 
 ## Concluídas recentemente
+
+- [x] **T-012 · P1 · Integrar interoperabilidade e cross-promotion com heliomarpm/db-php na demo e README** (2026-10-25)
+  - Arquivos: [demo/index.php](../demo/index.php), [README.md](../README.md)
+  - Evidência: Botão de navegação cruzada para `https://db-php.vercel.app/` adicionado na navbar da demo; novo cenário interativo *"Do Banco ao Relatório (com DbPHP)"* demonstrando integração SQL fluente com `->linq()` e banner contextual; seção de sinergia aprimorada no `README.md` com comando de instalação e link da demo; 100 testes unitários passando (643 asserções) e análise PHPStan com 0 erros.
 
 - [x] **T-010 · P2 · Suportar Callables/Closures nas funções de ordenação (`orderBy` / `orderByKey`)** (2026-10-24)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/OrderByTest.php](../tests/Unit/OrderByTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)
