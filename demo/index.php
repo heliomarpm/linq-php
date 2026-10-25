@@ -1410,9 +1410,9 @@ if (!function_exists('renderGrid')) {
                     </div>
                     <div class="d-flex flex-wrap gap-2 pt-1">
                         <?php foreach ($cenarios as $key => $cenario): ?>
-                            <a 
-                                class="scenario-pill" 
-                                :class="{ 'active': cenarioAtual === '<?= $key ?>' }" 
+                            <a
+                                class="scenario-pill"
+                                :class="{ 'active': cenarioAtual === '<?= $key ?>' }"
                                 href="?cenario=<?= $key ?>"
                                 @click.prevent="selecionarCenario('<?= $key ?>')"
                             >
@@ -1545,18 +1545,18 @@ if (!function_exists('renderGrid')) {
                                     <span class="small d-none d-sm-inline" style="color: #8b949e;">(PHP 8.1+)</span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
-                                    <button 
-                                        v-if="isCustomCode" 
-                                        type="button" 
-                                        class="btn btn-sm btn-nav-action py-1 px-2" 
+                                    <button
+                                        v-if="isCustomCode"
+                                        type="button"
+                                        class="btn btn-sm btn-nav-action py-1 px-2"
                                         style="font-size: 0.78rem;"
                                         @click="restaurarPadrao"
                                     >
                                         <i class="bi bi-arrow-counterclockwise"></i> Restaurar Padrão
                                     </button>
-                                    <button 
-                                        type="submit" 
-                                        class="btn btn-sm btn-gradient-run py-1 px-3 d-flex align-items-center gap-1" 
+                                    <button
+                                        type="submit"
+                                        class="btn btn-sm btn-gradient-run py-1 px-3 d-flex align-items-center gap-1"
                                         style="font-size: 0.82rem;"
                                         :disabled="carregando"
                                     >
@@ -1568,14 +1568,14 @@ if (!function_exists('renderGrid')) {
                                 </div>
                             </div>
                             <div class="p-2">
-                                <textarea 
-                                    name="codigo_customizado" 
-                                    id="codigoEditor" 
+                                <textarea
+                                    name="codigo_customizado"
+                                    id="codigoEditor"
                                     v-model="codigoAtivo"
                                     @keydown="handleKeydown"
-                                    class="form-control font-monospace border-0 bg-transparent p-2" 
-                                    rows="8" 
-                                    spellcheck="false" 
+                                    class="form-control font-monospace border-0 bg-transparent p-2"
+                                    rows="8"
+                                    spellcheck="false"
                                     style="font-family: 'JetBrains Mono', Consolas, monospace; font-size: 0.88rem; line-height: 1.5; resize: vertical; outline: none; box-shadow: none; color: #38bdf8 !important;"
                                 ></textarea>
                             </div>
@@ -1593,8 +1593,8 @@ if (!function_exists('renderGrid')) {
                         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                             <ul class="nav nav-pills custom-result-tabs gap-2 mb-0">
                                 <li class="nav-item">
-                                    <button 
-                                        type="button" 
+                                    <button
+                                        type="button"
                                         class="nav-link rounded-pill px-3 py-1 fw-semibold d-flex align-items-center gap-2"
                                         :class="{ 'active': abaAtiva === 'tabela' }"
                                         @click="abaAtiva = 'tabela'"
@@ -1607,8 +1607,8 @@ if (!function_exists('renderGrid')) {
                                     </button>
                                 </li>
                                 <li class="nav-item">
-                                    <button 
-                                        type="button" 
+                                    <button
+                                        type="button"
                                         class="nav-link rounded-pill px-3 py-1 fw-semibold d-flex align-items-center gap-2"
                                         :class="{ 'active': abaAtiva === 'codigo' }"
                                         @click="abaAtiva = 'codigo'"
@@ -1618,8 +1618,8 @@ if (!function_exists('renderGrid')) {
                                     </button>
                                 </li>
                                 <li class="nav-item">
-                                    <button 
-                                        type="button" 
+                                    <button
+                                        type="button"
                                         class="nav-link rounded-pill px-3 py-1 fw-semibold d-flex align-items-center gap-2"
                                         :class="{ 'active': abaAtiva === 'json' }"
                                         @click="abaAtiva = 'json'"
@@ -1629,8 +1629,8 @@ if (!function_exists('renderGrid')) {
                                     </button>
                                 </li>
                                 <li class="nav-item">
-                                    <button 
-                                        type="button" 
+                                    <button
+                                        type="button"
                                         class="nav-link rounded-pill px-3 py-1 fw-semibold d-flex align-items-center gap-2"
                                         :class="{ 'active': abaAtiva === 'bench' }"
                                         @click="abaAtiva = 'bench'"
@@ -1650,9 +1650,10 @@ if (!function_exists('renderGrid')) {
                                 </span>
 
                                 <!-- Ferramentas de Exportação Rápida -->
+                                <!--
                                 <div class="btn-group btn-group-sm" role="group">
-                                    <button 
-                                        type="button" 
+                                    <button
+                                        type="button"
                                         class="btn btn-sm btn-nav-action px-2 py-1 d-flex align-items-center gap-1 rounded-start-pill"
                                         style="font-size: 0.75rem;"
                                         @click="baixarCsv"
@@ -1662,8 +1663,8 @@ if (!function_exists('renderGrid')) {
                                         <i class="bi bi-filetype-csv text-success"></i>
                                         <span>CSV</span>
                                     </button>
-                                    <button 
-                                        type="button" 
+                                    <button
+                                        type="button"
                                         class="btn btn-sm btn-nav-action px-2 py-1 d-flex align-items-center gap-1"
                                         style="font-size: 0.75rem;"
                                         @click="copiarArrayPhp"
@@ -1673,8 +1674,8 @@ if (!function_exists('renderGrid')) {
                                         <i :class="copiadoPhp ? 'bi bi-check2 text-success' : 'bi bi-filetype-php text-info'"></i>
                                         <span>{{ copiadoPhp ? 'Copiado!' : 'Array PHP' }}</span>
                                     </button>
-                                    <button 
-                                        type="button" 
+                                    <button
+                                        type="button"
                                         class="btn btn-sm btn-nav-action px-2 py-1 d-flex align-items-center gap-1 rounded-end-pill"
                                         style="font-size: 0.75rem;"
                                         @click="copiarTexto(jsonFormatado, 'json')"
@@ -1685,6 +1686,7 @@ if (!function_exists('renderGrid')) {
                                         <span>{{ copiadoJson ? 'Copiado!' : 'JSON' }}</span>
                                     </button>
                                 </div>
+                                -->
                             </div>
                         </div>
 
@@ -1695,17 +1697,17 @@ if (!function_exists('renderGrid')) {
                                     <span class="input-group-text border-end-0" style="background: #161b22; border-color: #30363d; color: #8b949e;">
                                         <i class="bi bi-search"></i>
                                     </span>
-                                    <input 
-                                        type="text" 
-                                        v-model="filtroTabela" 
-                                        class="form-control border-start-0" 
-                                        placeholder="Filtrar dados na tabela..." 
+                                    <input
+                                        type="text"
+                                        v-model="filtroTabela"
+                                        class="form-control border-start-0"
+                                        placeholder="Filtrar dados na tabela..."
                                         style="background: #161b22; border-color: #30363d; color: #f0f6fc; font-size: 0.8rem;"
                                     >
-                                    <button 
-                                        v-if="filtroTabela" 
-                                        class="btn btn-outline-secondary border-start-0" 
-                                        type="button" 
+                                    <button
+                                        v-if="filtroTabela"
+                                        class="btn btn-outline-secondary border-start-0"
+                                        type="button"
                                         @click="filtroTabela = ''"
                                         style="border-color: #30363d; background: #161b22; color: #8b949e;"
                                     >
@@ -1778,9 +1780,9 @@ if (!function_exists('renderGrid')) {
                                         <i class="bi bi-file-earmark-code text-purple-light"></i>
                                         <span class="text-white fw-bold small">Pipeline PHP Executado</span>
                                     </div>
-                                    <button 
-                                        type="button" 
-                                        class="btn btn-sm btn-nav-action py-1 px-3 d-flex align-items-center gap-1 rounded-pill" 
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-nav-action py-1 px-3 d-flex align-items-center gap-1 rounded-pill"
                                         style="font-size: 0.78rem;"
                                         @click="copiarTexto(codigoAtivo, 'codigo')"
                                     >
@@ -1804,9 +1806,9 @@ if (!function_exists('renderGrid')) {
                                         <span class="badge rounded-pill bg-dark text-secondary" style="font-size: 0.7rem;">{{ resultado.length }} registros</span>
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
-                                        <button 
-                                            type="button" 
-                                            class="btn btn-sm btn-nav-action py-1 px-3 d-flex align-items-center gap-1 rounded-pill" 
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-nav-action py-1 px-3 d-flex align-items-center gap-1 rounded-pill"
                                             style="font-size: 0.78rem;"
                                             @click="baixarJson"
                                             title="Baixar arquivo JSON"
@@ -1814,9 +1816,9 @@ if (!function_exists('renderGrid')) {
                                             <i class="bi bi-download text-warning"></i>
                                             <span>Baixar .json</span>
                                         </button>
-                                        <button 
-                                            type="button" 
-                                            class="btn btn-sm btn-nav-action py-1 px-3 d-flex align-items-center gap-1 rounded-pill" 
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-nav-action py-1 px-3 d-flex align-items-center gap-1 rounded-pill"
                                             style="font-size: 0.78rem;"
                                             @click="copiarTexto(jsonFormatado, 'json')"
                                         >
@@ -1853,11 +1855,11 @@ if (!function_exists('renderGrid')) {
                                     <div class="d-flex flex-wrap align-items-center gap-2">
                                         <span class="small text-secondary fw-semibold">Iterações:</span>
                                         <div class="d-flex gap-1">
-                                            <button 
-                                                v-for="it in [100, 500, 1000, 2000]" 
-                                                :key="it" 
-                                                type="button" 
-                                                class="bench-pill" 
+                                            <button
+                                                v-for="it in [100, 500, 1000, 2000]"
+                                                :key="it"
+                                                type="button"
+                                                class="bench-pill"
                                                 :class="{ 'active': iteracoesBench === it }"
                                                 @click="executarBenchmark(it)"
                                                 :disabled="carregandoBench"
@@ -1865,8 +1867,8 @@ if (!function_exists('renderGrid')) {
                                                 {{ it }}
                                             </button>
                                         </div>
-                                        <button 
-                                            type="button" 
+                                        <button
+                                            type="button"
                                             class="btn btn-sm btn-gradient-run py-1 px-3 d-flex align-items-center gap-2 rounded-pill ms-2"
                                             @click="executarBenchmark()"
                                             :disabled="carregandoBench"
@@ -1986,9 +1988,9 @@ if (!function_exists('renderGrid')) {
                                         <span class="text-secondary">{{ calcularPercentual(benchData.native?.usPerOp, benchData.linq?.usPerOp) }}%</span>
                                     </div>
                                     <div class="progress" style="height: 10px; background-color: #21262d;">
-                                        <div 
-                                            class="progress-bar" 
-                                            role="progressbar" 
+                                        <div
+                                            class="progress-bar"
+                                            role="progressbar"
                                             :style="{ width: calcularPercentual(benchData.native?.usPerOp, benchData.linq?.usPerOp) + '%', background: '#22c55e' }"
                                         ></div>
                                     </div>
@@ -2000,9 +2002,9 @@ if (!function_exists('renderGrid')) {
                                         <span class="text-secondary">100% (Baseline + Overhead)</span>
                                     </div>
                                     <div class="progress" style="height: 10px; background-color: #21262d;">
-                                        <div 
-                                            class="progress-bar" 
-                                            role="progressbar" 
+                                        <div
+                                            class="progress-bar"
+                                            role="progressbar"
                                             style="width: 100%; background: var(--brand-gradient);"
                                         ></div>
                                     </div>
@@ -2018,9 +2020,9 @@ if (!function_exists('renderGrid')) {
                                                 <i class="bi bi-file-earmark-code text-purple-light"></i>
                                                 <span class="text-white fw-bold small">Pipeline LinqPHP</span>
                                             </div>
-                                            <button 
-                                                type="button" 
-                                                class="btn btn-sm btn-nav-action py-1 px-3 d-flex align-items-center gap-1 rounded-pill" 
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-nav-action py-1 px-3 d-flex align-items-center gap-1 rounded-pill"
                                                 style="font-size: 0.75rem;"
                                                 @click="copiarTexto(codigoAtivo, 'codigo')"
                                             >
@@ -2041,9 +2043,9 @@ if (!function_exists('renderGrid')) {
                                                 <i class="bi bi-cpu text-success"></i>
                                                 <span class="text-white fw-bold small">Equivalente em PHP Puro (Procedural)</span>
                                             </div>
-                                            <button 
-                                                type="button" 
-                                                class="btn btn-sm btn-nav-action py-1 px-3 d-flex align-items-center gap-1 rounded-pill" 
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-nav-action py-1 px-3 d-flex align-items-center gap-1 rounded-pill"
                                                 style="font-size: 0.75rem;"
                                                 @click="copiarTexto(codigoNativo, 'nativo')"
                                             >
