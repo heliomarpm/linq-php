@@ -5,6 +5,16 @@ Todas as alterações notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+# [2.1.0](https://github.com/heliomarpm/linq-php/compare/v2.0.1...v2.1.0) (2026-10-25)
+
+
+### Features
+
+* **core:** ✨ adicionar método terminal firstOrDefault ([4cbd306](https://github.com/heliomarpm/linq-php/commit/4cbd3063e8fc8eb8cf1fcb81c443898fa4f5062e))
+* **join:** ✨ adicionar métodos auxiliares para operações de join ([f8605a1](https://github.com/heliomarpm/linq-php/commit/f8605a1a590ec0bfd96242709a4ddeb033ab5eac))
+* **sort:** ✨ aprimorar ordenação em orderByKey e orderBy ([663d07c](https://github.com/heliomarpm/linq-php/commit/663d07c3ee96501c3097823fbe4aee70cec1703f))
+* **sort:** ✨ suportar closures e funções nas operações de ordenação ([b45ffca](https://github.com/heliomarpm/linq-php/commit/b45ffcaac876de5eb7dfce9834775c26e63b4af0))
+
 ## [2.0.1](https://github.com/heliomarpm/linq-php/compare/v2.0.0...v2.0.1) (2026-10-15)
 
 
