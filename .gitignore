@@ -1,4 +1,5 @@
 .qodo/
 vendor/
+composer.lock
 *.cache
 **/.php-cs-fixer.dist.php
