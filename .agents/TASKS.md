@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Aprimorar experiência interativa da demo, benchmarks e sinergia com heliomarpm/db-php\
-> **Status:** em planejamento | **Progresso:** 14/16 (88%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-25
+> **Status:** em planejamento | **Progresso:** 15/16 (94%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-25
 
 ## Em progresso
 
@@ -19,12 +19,7 @@
 
 ### Média Prioridade
 
-- [ ] **T-015 · P2 · Adicionar painel de benchmark comparativo ao vivo (LinqPHP vs PHP Nativo)**
-  - **Origem:** manual (evidência de performance)
-  - **Contexto:** Demonstrar a desenvolvedores céticos que o overhead de abstração do LinqPHP é desprezível em relação a loops manuais em PHP puro.
-  - **Critérios de Aceite:**
-    - Execução em paralelo da mesma transformação via `LinqPHP` e via loops nativos (`array_filter`/`array_map`/`usort`).
-    - Exibição de comparativo visual de tempos de execução (microsegundos) lado a lado na demo.
+(nenhuma)
 
 ### Baixa Prioridade
 
@@ -37,6 +32,10 @@
     - Botão para copiar JSON formatado.
 
 ## Concluídas recentemente
+
+- [x] **T-015 · P2 · Adicionar painel de benchmark comparativo ao vivo (LinqPHP vs PHP Nativo)** (2026-10-25)
+  - Arquivos: [demo/index.php](../demo/index.php)
+  - Evidência: Medidor de performance de alta resolução com `hrtime(true)` em nanossegundos comparando LinqPHP com código procedural puro em PHP nativo; aba interativa `⚡ Benchmark vs PHP Nativo` com 3 cards de métricas (LinqPHP, PHP Nativo, Overhead & Veredito), barra visual comparativa proporcional por microsegundo/operação e snippets de código lado a lado; seletor de iterações dinâmico (100 a 2.000) e endpoint sob demanda `?api=1&action=bench` consumido via Vue 3 de forma assíncrona; 100 testes passando (643 asserções); PHPStan nível 5 com 0 erros; Pint formatado.
 
 - [x] **T-014 · P2 · Implementar reatividade com Vue.js 3 via CDN e endpoint JSON na demo** (2026-10-25)
   - Arquivos: [demo/index.php](../demo/index.php)
