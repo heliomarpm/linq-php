@@ -66,6 +66,9 @@
       "composer install"
     ]
   },
+  "suggest": {
+    "heliomarpm/db-php": "Driver de banco de dados leve (PDO/MySQLi) com integração nativa para coleções LINQ"
+  },
   "minimum-stability": "stable",
   "require": {
     "php": ">=8.1"

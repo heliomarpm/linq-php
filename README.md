@@ -62,6 +62,22 @@ $linq = LinqPHP::from($data);
 
 ```
 
+#### 💡 Dica: Consultando dados diretamente do Banco de Dados 
+
+Para extrair dados do MySQL ou SQLite com alta performance e telemetria, conheça a biblioteca companheira [heliomarpm/db-php](https://github.com/heliomarpm/db-php):
+
+```php
+use HeliomarPM\DbPHP\DB;
+// Consulta o banco e já transforma direto em uma coleção LinqPHP:
+$ativos = DB::query("SELECT * FROM clientes WHERE status = ?", ["ativo"])
+    ->linq()
+    ->where(fn($c) => $c['limite_credito'] > 1000)
+    ->orderByKey('nome')
+    ->toArray();
+```
+
+---
+
 ### `where()` - Filtragem de Dados
 
 Aceita arrays de condições simples ou funções (closures) para filtros complexos.
