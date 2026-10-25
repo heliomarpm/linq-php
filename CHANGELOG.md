@@ -5,6 +5,21 @@ Todas as alterações notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+# [2.2.0](https://github.com/heliomarpm/linq-php/compare/v2.1.0...v2.2.0) (2026-10-25)
+
+
+### Features
+
+* **core:** ✨ implementar métodos de agregação escalar rápida ([8b807e4](https://github.com/heliomarpm/linq-php/commit/8b807e42aa9287c59547f4173d1246f23722f179))
+* **demo:** ⚡ adicionar painel de benchmark comparativo ao vivo ([774e850](https://github.com/heliomarpm/linq-php/commit/774e850e4b8879de6eb37c10333981e870a9649b))
+* **demo:** ✨ implementar reatividade com vue 3 e endpoint json ([db8384e](https://github.com/heliomarpm/linq-php/commit/db8384e316b70cd3a9be0298545c41c3d533edb1))
+* **demo:** 📦 adicionar ferramentas de exportação (CSV, JSON, Array PHP) ([d03b6d2](https://github.com/heliomarpm/linq-php/commit/d03b6d2e4074e24177c9766deeafef4416675217))
+
+
+### Performance Improvements
+
+* **core:** ⚡ otimizar loops internos de where, groupBy e join ([f518040](https://github.com/heliomarpm/linq-php/commit/f5180408fdeab4c4ebbd853e0dc62364183200d4))
+
 # [2.1.0](https://github.com/heliomarpm/linq-php/compare/v2.0.1...v2.1.0) (2026-10-25)
 
 
