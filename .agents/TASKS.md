@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
-> **Meta:** Aprimorar experiência interativa da demo, benchmarks e sinergia com heliomarpm/db-php\
-> **Status:** concluído | **Progresso:** 18/18 (100%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-25
+> **Meta:** Executar quick wins de correção de autoloading PSR-4, sincronização de CI e otimizações de performance\
+> **Status:** em progresso | **Progresso:** 19/29 (65%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-26
 
 ## Em progresso
 
@@ -15,17 +15,67 @@
 
 ### Alta Prioridade
 
-(nenhuma)
+- [ ] **T-020 · P1 · Sincronizar `composer.lock` e restaurar validação estrita no CI**
+  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 1.2 e 1.3)
+  - Arquivos: [composer.json](../composer.json), [composer.lock](../composer.lock), [.github/workflows/ci.yml](../.github/workflows/ci.yml)
+  - DoD: `composer.lock` regerado e sincronizado com `composer.json`; `composer validate --strict` passando sem erros; matriz do CI alinhada às versões suportadas.
+
+- [ ] **T-021 · P1 · Pré-computar templates nulos em `join()` eliminando overhead de `nullFillRightOnly`**
+  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 3.1)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
+  - DoD: Array nulo gerado uma única vez antes dos loops de `LEFT`, `RIGHT` e `FULL JOIN`; suíte de testes 100% verde; redução de tempo medido em benchmarks com junções externas.
 
 ### Média Prioridade
 
-(nenhuma)
+- [ ] **T-022 · P2 · Unificar blocos de Reflection duplicados em `orderByKey()` e `orderBy()`**
+  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 2.1 e 2.2)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
+  - DoD: Método auxiliar privado para ordenação com callable reutilizado; duplicações eliminadas; testes unitários passando.
+
+- [ ] **T-023 · P2 · Implementar fast-path de chave simples em `groupBy()`**
+  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 3.2)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
+  - DoD: Fast-path implementado para `count($groupingFields) === 1`, eliminando `array_intersect_key` e `implode` repetitivos; benchmarks demonstrando ganho expressivo de latência.
+
+- [ ] **T-026 · P2 · Otimizar alocação de memória no `select()` com atribuição direta**
+  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 3.4)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
+  - DoD: Eliminar chamadas de `array_replace` e `array_intersect_key` linha a linha em `select()`.
+
+- [ ] **T-027 · P2 · Otimizar memória em `groupBy()` com acumulação O(1) de médias**
+  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 3.3)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
+  - DoD: Acumular soma e contagem em vez de alocar listas com todos os floats na memória.
+
+- [ ] **T-028 · P2 · Implementar fast-path de esquema idêntico em `unionAll()`**
+  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 3.5)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
+  - DoD: Quando ambas as coleções tiverem as mesmas chaves, usar `array_merge` direto sem normalizar linha a linha.
 
 ### Baixa Prioridade
 
-(nenhuma)
+- [ ] **T-024 · P3 · Portabilizar script `reset` no `composer.json` para PHP multiplataforma**
+  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 1.6)
+  - Arquivos: [composer.json](../composer.json)
+  - DoD: `composer reset` funcionando nativamente em Windows, Linux e macOS sem depender do utilitário `rm`.
+
+- [ ] **T-025 · P3 · Delegar cálculo em `avg()` diretamente para `sum()`**
+  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 2.3)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
+  - DoD: Loop duplicado em `avg()` substituído por chamada a `sum()`.
+
+- [ ] **T-029 · P3 · Suportar `caseSensitive: true` e `mb_strtolower` em `where()`**
+  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 1.4)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
+  - DoD: Opção de comparação sensível a maiúsculas/minúsculas e tratamento seguro de acentuação UTF-8.
+
+
 
 ## Concluídas recentemente
+
+- [x] **T-019 · P0 · Extrair enum `JoinType` para `src/JoinType.php` corrigindo autoloading PSR-4** (2026-10-26)
+  - Arquivos: [src/JoinType.php](../src/JoinType.php), [src/LinqPHP.php](../src/LinqPHP.php)
+  - Evidência: Enum `JoinType` extraído para seu próprio arquivo PSR-4 isolado; autoloading via `vendor/autoload.php` testado com sucesso direto sem carregar `LinqPHP` previamente; 117 testes unitários passando 100% verde (667 asserções); PHPStan nível 5 com 0 erros; Pint aprovado.
 
 - [x] **T-018 · P2 · Implementar métodos terminais de agregação escalar rápida (`sum`, `avg`, `min`, `max`, `count`)** (2026-10-25)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/ScalarAggregationsTest.php](../tests/Unit/ScalarAggregationsTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)

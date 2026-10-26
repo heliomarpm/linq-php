@@ -7,14 +7,6 @@ use InvalidArgumentException;
 use ReflectionFunction;
 use stdClass;
 
-enum JoinType: string
-{
-    case INNER = 'INNER';
-    case LEFT = 'LEFT';
-    case RIGHT = 'RIGHT';
-    case FULL = 'FULL';
-}
-
 class LinqPHP
 {
     private array $data;
