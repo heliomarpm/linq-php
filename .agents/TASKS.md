@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar plano de melhorias, segurança, performance e novos métodos LINQ do Assessment Fase 2\
-> **Status:** em progresso | **Progresso:** 33/46 (71%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
+> **Status:** em progresso | **Progresso:** 34/47 (72%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
 
 ## Em progresso
 
@@ -151,6 +151,10 @@
 
 
 ## Concluídas recentemente
+
+- [x] **T-047 · P2 · Evitar quebra e repetição de linhas em `printRow` em telas menores** (2026-10-27)
+  - Arquivos: [benchmarks/BenchmarkRunner.php](../benchmarks/BenchmarkRunner.php)
+  - Evidência: Eliminação completa do efeito cascata e repetição de linhas em terminais estreitos (< 177 colunas); implementação de detecção de largura de tela (`getTerminalWidth`) e TTY (`canFitFullRow`); exibição de feedback de progresso compacto (`printProgress`) de até 75 caracteres durante os benchmarks intermediários; renderização atômica da linha formatada definitiva com `PHP_EOL` apenas ao concluir a suíte; centralização de `printGithubAnnotations` ao final da execução global; tabela de benchmark perfeitamente alinhada e limpa sem duplicações; 125 testes unitários passando 100% verde (700 asserções); Pint e PHPStan nível 5 aprovados sem erros.
 
 - [x] **T-033 · P1 · Corrigir risco de colisão e desordenação em `groupBy()` multi-chave** (2026-10-27)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/GroupByTest.php](../tests/Unit/GroupByTest.php)

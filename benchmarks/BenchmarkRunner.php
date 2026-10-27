@@ -43,17 +43,28 @@ class BenchmarkRunner
             $this->runBenchmark($suite, $dataSizes, $index % 2 === 1);
         }
 
+        $this->printGithubAnnotations();
+
         echo PHP_EOL;
     }
 
     private function runBenchmark(BenchmarkSuite $suite, array $dataSizes, bool $isEven = false): void
     {
         $results = [];
+        $totalWidth = self::NAME_WIDTH + count($dataSizes) * (self::COL_WIDTH + 2);
+        $canFit = $this->canFitFullRow($totalWidth);
 
-        // imprime linha inicial com status pendente em todas as colunas
-        $this->printRow($suite->name(), $results, $dataSizes, $isEven);
+        if ($canFit) {
+            // Em terminais que acomodam toda a largura, inicializa com status pendente (...)
+            $this->printRow($suite->name(), $results, $dataSizes, $isEven, false);
+        }
 
         foreach ($dataSizes as $dataSize) {
+            if (!$canFit) {
+                // Em telas menores, exibe indicador compacto de progresso que nunca quebra a tela
+                $this->printProgress($suite->name(), $dataSize);
+            }
+
             $data = Data\DataFactory::generate($dataSize);
 
             $startTime = microtime(true);
@@ -66,15 +77,65 @@ class BenchmarkRunner
                 'memory' => (memory_get_peak_usage(true) - $startMemory) / 1024 / 1024,
             ];
 
-            // reimprime a MESMA linha, agora com mais uma coluna preenchida
-            $this->printRow($suite->name(), $results, $dataSizes, $isEven);
+            if ($canFit) {
+                // Reimprime a mesma linha na tela larga atualizando a coluna
+                $this->printRow($suite->name(), $results, $dataSizes, $isEven, false);
+            }
         }
 
-        $this->printGithubAnnotations();
+        if (!$canFit) {
+            // Limpa o indicador de progresso compacto
+            echo "\r\e[2K";
+        }
 
-        echo PHP_EOL;
+        // Imprime a linha definitiva completa com quebra de linha atômica
+        $this->printRow($suite->name(), $results, $dataSizes, $isEven, true);
     }
 
+    private function canFitFullRow(int $totalWidth): bool
+    {
+        if (getenv('GITHUB_ACTIONS') === 'true' || !stream_isatty(STDOUT)) {
+            return false;
+        }
+
+        return $this->getTerminalWidth() >= $totalWidth;
+    }
+
+    private function getTerminalWidth(): int
+    {
+        $columns = getenv('COLUMNS');
+        if ($columns !== false && is_numeric($columns)) {
+            return (int)$columns;
+        }
+
+        if (DIRECTORY_SEPARATOR !== '\\') {
+            $cols = @exec('tput cols 2>/dev/null');
+            if (is_numeric($cols) && (int)$cols > 0) {
+                return (int)$cols;
+            }
+        } else {
+            $mode = @shell_exec('mode con');
+            if ($mode && preg_match('/(?:Columns|Colunas):\s*(\d+)/i', $mode, $matches)) {
+                return (int)$matches[1];
+            }
+        }
+
+        return 80;
+    }
+
+    private function printProgress(string $name, int $dataSize): void
+    {
+        if (getenv('GITHUB_ACTIONS') === 'true' || !stream_isatty(STDOUT)) {
+            return;
+        }
+
+        $sizeFormatted = number_format($dataSize, 0, '', '.');
+        $msg = sprintf("  ⏳ Executando: %s (%s registros)...", $name, $sizeFormatted);
+        $msg = mb_strimwidth($msg, 0, 75, '...');
+
+        echo "\r\e[2K" . self::COLOR_CYAN . $msg . self::COLOR_RESET;
+        flush();
+    }
 
     // 2. Método auxiliar para decidir a cor baseado na velocidade
     private function getColorForTime(float $seconds): string
@@ -108,7 +169,7 @@ class BenchmarkRunner
         echo self::COLOR_DARK_GRAY . str_repeat('=', $separatorLength) . self::COLOR_RESET . PHP_EOL;
     }
 
-    private function printRow(string $name, array $results, array $dataSizes, bool $isEven = false): void
+    private function printRow(string $name, array $results, array $dataSizes, bool $isEven = false, bool $isFinal = true): void
     {
         $bg = $isEven ? self::BG_ZEBRA : '';
 
@@ -149,6 +210,11 @@ class BenchmarkRunner
         }
 
         echo self::COLOR_RESET;
+
+        if ($isFinal) {
+            echo PHP_EOL;
+        }
+
         flush(); // Empurra a saída para o terminal
     }
 
