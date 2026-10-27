@@ -99,4 +99,104 @@ class WhereTest extends TestCase
         $this->assertEquals($expectedResult, $result);
     }
 
+    public function testWhereWithCaseInsensitiveUtf8Accents(): void
+    {
+        $data = [
+            ['id' => 1, 'nome' => 'JOÃO SILVA', 'cidade' => 'SÃO PAULO'],
+            ['id' => 2, 'nome' => 'Maçã Fresca', 'item' => 'ÁGUA MINERAL'],
+        ];
+
+        // Comparação com acentuação UTF-8 case-insensitive padrão
+        $result = LinqPHP::from($data)
+            ->where(['nome', '=', 'joão silva'])
+            ->toArray();
+
+        $this->assertCount(1, $result);
+        $this->assertSame(1, $result[0]['id']);
+
+        $resultContains = LinqPHP::from($data)
+            ->where(['item', 'contains', 'água'])
+            ->toArray();
+
+        $this->assertCount(1, $resultContains);
+        $this->assertSame(2, $resultContains[0]['id']);
+
+        $resultIn = LinqPHP::from($data)
+            ->where(['nome', 'in', ['maçã fresca', 'outro']])
+            ->toArray();
+
+        $this->assertCount(1, $resultIn);
+        $this->assertSame(2, $resultIn[0]['id']);
+    }
+
+    public function testWhereWithCaseSensitiveExactMatch(): void
+    {
+        $data = [
+            ['id' => 1, 'token' => 'TokenABC'],
+            ['id' => 2, 'token' => 'tokenabc'],
+        ];
+
+        // Com caseSensitive: true, apenas o item com o case idêntico é retornado
+        $resultUpper = LinqPHP::from($data)
+            ->where(['token', '=', 'TokenABC'], caseSensitive: true)
+            ->toArray();
+
+        $this->assertCount(1, $resultUpper);
+        $this->assertSame(1, $resultUpper[0]['id']);
+
+        $resultLower = LinqPHP::from($data)
+            ->where(['token', '=', 'tokenabc'], caseSensitive: true)
+            ->toArray();
+
+        $this->assertCount(1, $resultLower);
+        $this->assertSame(2, $resultLower[0]['id']);
+
+        // Com caseSensitive: false (padrão), ambos combinam com a busca
+        $resultDefault = LinqPHP::from($data)
+            ->where(['token', '=', 'TOKENABC'])
+            ->toArray();
+
+        $this->assertCount(2, $resultDefault);
+    }
+
+    public function testWhereWithCaseSensitiveOperators(): void
+    {
+        $data = [
+            ['id' => 1, 'sku' => 'PROD-A-100'],
+            ['id' => 2, 'sku' => 'prod-b-200'],
+        ];
+
+        // startswith sensível
+        $this->assertCount(1, LinqPHP::from($data)->where(['sku', 'startswith', 'PROD-A'], caseSensitive: true)->toArray());
+        $this->assertCount(0, LinqPHP::from($data)->where(['sku', 'startswith', 'prod-a'], caseSensitive: true)->toArray());
+
+        // contains sensível
+        $this->assertCount(1, LinqPHP::from($data)->where(['sku', 'contains', 'A-100'], caseSensitive: true)->toArray());
+        $this->assertCount(0, LinqPHP::from($data)->where(['sku', 'contains', 'a-100'], caseSensitive: true)->toArray());
+
+        // endswith sensível
+        $this->assertCount(1, LinqPHP::from($data)->where(['sku', 'endswith', '200'], caseSensitive: true)->toArray());
+
+        // in sensível
+        $this->assertCount(1, LinqPHP::from($data)->where(['sku', 'in', ['PROD-A-100', 'INEXISTENTE']], caseSensitive: true)->toArray());
+        $this->assertCount(0, LinqPHP::from($data)->where(['sku', 'in', ['prod-a-100']], caseSensitive: true)->toArray());
+    }
+
+    public function testWhereWithCaseSensitiveMultipleConditions(): void
+    {
+        $data = [
+            ['id' => 1, 'code' => 'ALPHA', 'category' => 'TOOLS'],
+            ['id' => 2, 'code' => 'alpha', 'category' => 'tools'],
+        ];
+
+        $result = LinqPHP::from($data)
+            ->where([
+                ['code', '=', 'ALPHA'],
+                ['category', '=', 'TOOLS'],
+            ], caseSensitive: true)
+            ->toArray();
+
+        $this->assertCount(1, $result);
+        $this->assertSame(1, $result[0]['id']);
+    }
 }

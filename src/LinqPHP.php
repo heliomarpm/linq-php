@@ -359,6 +359,7 @@ class LinqPHP
      * Aceita arrays de condições simples ou funções (closures) para filtros complexos.
      *
      * @param mixed $conditions As condições para filtrar o array de dados. Pode ser um array simples, uma função, ou um array de arrays/funções.
+     * @param bool $caseSensitive Define se a comparação de strings deve ser sensível a maiúsculas/minúsculas (padrão: false).
      * @return LinqPHP O array de dados filtrado.
      *
      * * Exemplo de uso:
@@ -404,7 +405,7 @@ class LinqPHP
      * $result = LinqPHP::from($data)->where($conditions)->toArray();
      * ```
      */
-    public function where(mixed $conditions): self
+    public function where(mixed $conditions, bool $caseSensitive = false): self
     {
         // Fast-path 1: Se for uma closure/função única, executa direto sem wrapper
         if (is_callable($conditions) && !is_array($conditions)) {
@@ -413,7 +414,7 @@ class LinqPHP
             return $this;
         }
 
-        $normalizedConditions = $this->normalizeWhereConditions($conditions);
+        $normalizedConditions = $this->normalizeWhereConditions($conditions, $caseSensitive);
 
         // Fast-path 2: Condição única estruturada (ex: ['status', '=', 'concluido'])
         if (count($normalizedConditions) === 1 && is_array($normalizedConditions[0]) && count($normalizedConditions[0]) === 3) {
@@ -425,8 +426,8 @@ class LinqPHP
             $filtered = [];
             foreach ($this->data as $item) {
                 $itemValue = $item[$key] ?? null;
-                if (is_string($itemValue)) {
-                    $itemValue = strtolower($itemValue);
+                if (!$caseSensitive && is_string($itemValue)) {
+                    $itemValue = $this->toLower($itemValue);
                 }
                 if ($this->evaluateOperatorMatch($itemValue, $operator, $value)) {
                     $filtered[] = $item;
@@ -440,7 +441,7 @@ class LinqPHP
 
         $resultadosFiltrados = array_filter(
             $this->data,
-            fn(array $item): bool => $this->matchesConditions($item, $normalizedConditions)
+            fn(array $item): bool => $this->matchesConditions($item, $normalizedConditions, $caseSensitive)
         );
 
         $this->data = array_values($resultadosFiltrados);
@@ -1248,7 +1249,7 @@ class LinqPHP
         return array_fill_keys($keysToNull, null);
     }
 
-    private function normalizeWhereConditions(mixed $conditions): array
+    private function normalizeWhereConditions(mixed $conditions, bool $caseSensitive = false): array
     {
         if (is_callable($conditions) || !is_array($conditions)) {
             $conditions = [$conditions];
@@ -1262,10 +1263,19 @@ class LinqPHP
         $normalizedConditions = [];
         foreach ($conditions as $cond) {
             if (is_array($cond) && count($cond) === 3) {
+                $val = $cond[2];
+                if (!$caseSensitive) {
+                    if (is_string($val)) {
+                        $val = $this->toLower($val);
+                    } elseif (is_array($val)) {
+                        $val = array_map(fn($v) => is_string($v) ? $this->toLower($v) : $v, $val);
+                    }
+                }
+
                 $normalizedConditions[] = [
                     $cond[0],
                     strtolower((string)$cond[1]),
-                    is_string($cond[2]) ? strtolower($cond[2]) : $cond[2],
+                    $val,
                 ];
             } else {
                 $normalizedConditions[] = $cond;
@@ -1275,7 +1285,7 @@ class LinqPHP
         return $normalizedConditions;
     }
 
-    private function matchesConditions(array $item, array $normalizedConditions): bool
+    private function matchesConditions(array $item, array $normalizedConditions, bool $caseSensitive = false): bool
     {
         foreach ($normalizedConditions as $condition) {
             if (is_callable($condition)) {
@@ -1291,8 +1301,8 @@ class LinqPHP
                 $value = $condition[2];
 
                 $itemValue = $item[$key] ?? null;
-                if (is_string($itemValue)) {
-                    $itemValue = strtolower($itemValue);
+                if (!$caseSensitive && is_string($itemValue)) {
+                    $itemValue = $this->toLower($itemValue);
                 }
 
                 if (!$this->evaluateOperatorMatch($itemValue, $operator, $value)) {
@@ -1302,6 +1312,11 @@ class LinqPHP
         }
 
         return true;
+    }
+
+    private function toLower(string $str): string
+    {
+        return function_exists('mb_strtolower') ? mb_strtolower($str, 'UTF-8') : strtolower($str);
     }
 
     private function evaluateOperatorMatch(mixed $itemValue, string $operator, mixed $value): bool

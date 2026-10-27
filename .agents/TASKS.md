@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar quick wins de correção de autoloading PSR-4, sincronização de CI e otimizações de performance\
-> **Status:** em progresso | **Progresso:** 29/32 (90%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
+> **Status:** em progresso | **Progresso:** 30/32 (93%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
 
 ## Em progresso
 
@@ -23,11 +23,6 @@
 
 ### Baixa Prioridade
 
-- [ ] **T-029 · P3 · Suportar `caseSensitive: true` e `mb_strtolower` em `where()`**
-  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 1.4)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
-  - DoD: Opção de comparação sensível a maiúsculas/minúsculas e tratamento seguro de acentuação UTF-8.
-
 - [ ] **T-030 · P3 · Implementar coloração zebrada (linhas alternadas) na grid de benchmarks CLI**
   - Origem: manual
   - Arquivos: [benchmarks/BenchmarkRunner.php](../benchmarks/BenchmarkRunner.php)
@@ -41,6 +36,10 @@
 
 
 ## Concluídas recentemente
+
+- [x] **T-029 · P3 · Suportar `caseSensitive: true` e `mb_strtolower` em `where()`** (2026-10-27)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/WhereTest.php](../tests/Unit/WhereTest.php)
+  - Evidência: Parâmetro opcional `bool $caseSensitive = false` implementado em `where()`, `normalizeWhereConditions()` e `matchesConditions()`; conversão segura de UTF-8 via `mb_strtolower` com fallback nativo prevenindo corrupção de acentuação; suporte a buscas exatas sensíveis a maiúsculas/minúsculas para `=`, `in`, `startswith`, `endswith` e `contains`; 4 novos testes unitários adicionados totalizando 122 testes (688 asserções) 100% verde; PHPStan nível 5 e Pint aprovados sem erros.
 
 - [x] **T-025 · P3 · Delegar cálculo em `avg()` diretamente para `sum()`** (2026-10-27)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
