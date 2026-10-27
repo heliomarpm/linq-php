@@ -32,7 +32,7 @@ jobs:
         run: composer validate --strict
 
       - name: 📥 Instalar Dependências
-        run: composer install --prefer-dist --no-progress --no-interaction
+        run: composer install --prefer-dist --no-progress --no-interaction || composer update --prefer-dist --no-progress --no-interaction
 
       - name: 🔎 Análise Estática (PHPStan)
         run: composer lint

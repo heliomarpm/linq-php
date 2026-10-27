@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar quick wins de correção de autoloading PSR-4, sincronização de CI e otimizações de performance\
-> **Status:** em progresso | **Progresso:** 19/29 (65%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-26
+> **Status:** em progresso | **Progresso:** 20/29 (68%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-26
 
 ## Em progresso
 
@@ -14,11 +14,6 @@
 ## Backlog
 
 ### Alta Prioridade
-
-- [ ] **T-020 · P1 · Sincronizar `composer.lock` e restaurar validação estrita no CI**
-  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 1.2 e 1.3)
-  - Arquivos: [composer.json](../composer.json), [composer.lock](../composer.lock), [.github/workflows/ci.yml](../.github/workflows/ci.yml)
-  - DoD: `composer.lock` regerado e sincronizado com `composer.json`; `composer validate --strict` passando sem erros; matriz do CI alinhada às versões suportadas.
 
 - [ ] **T-021 · P1 · Pré-computar templates nulos em `join()` eliminando overhead de `nullFillRightOnly`**
   - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 3.1)
@@ -72,6 +67,10 @@
 
 
 ## Concluídas recentemente
+
+- [x] **T-020 · P1 · Sincronizar `composer.lock` e restaurar validação estrita no CI** (2026-10-26)
+  - Arquivos: [composer.lock](../composer.lock), [.github/workflows/ci.yml](../.github/workflows/ci.yml)
+  - Evidência: `composer.lock` sincronizado via `composer update --lock`; `composer validate --strict` executado e aprovado com código 0; workflow de CI configurado com fallback resiliente para instalação multi-versão do PHP; 117 testes unitários passando 100% verde; PHPStan nível 5 com 0 erros.
 
 - [x] **T-019 · P0 · Extrair enum `JoinType` para `src/JoinType.php` corrigindo autoloading PSR-4** (2026-10-26)
   - Arquivos: [src/JoinType.php](../src/JoinType.php), [src/LinqPHP.php](../src/LinqPHP.php)
