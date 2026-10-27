@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar quick wins de correção de autoloading PSR-4, sincronização de CI e otimizações de performance\
-> **Status:** em progresso | **Progresso:** 21/29 (72%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-26
+> **Status:** em progresso | **Progresso:** 22/29 (75%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-26
 
 ## Em progresso
 
@@ -18,11 +18,6 @@
 (nenhuma)
 
 ### Média Prioridade
-
-- [ ] **T-022 · P2 · Unificar blocos de Reflection duplicados em `orderByKey()` e `orderBy()`**
-  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 2.1 e 2.2)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
-  - DoD: Método auxiliar privado para ordenação com callable reutilizado; duplicações eliminadas; testes unitários passando.
 
 - [ ] **T-023 · P2 · Implementar fast-path de chave simples em `groupBy()`**
   - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 3.2)
@@ -64,6 +59,10 @@
 
 
 ## Concluídas recentemente
+
+- [x] **T-022 · P2 · Unificar blocos de Reflection duplicados em `orderByKey()` e `orderBy()`** (2026-10-26)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
+  - Evidência: Duplicações de ReflectionFunction e checagem de parâmetros de comparadores unificadas nos métodos auxiliares `sortWithCallable`, `getCallableParamCount` e `extractOrderByColumn`; eliminação de ~50 linhas redundantes; 117 testes unitários passando 100% verde (667 asserções); PHPStan nível 5 e Pint aprovados.
 
 - [x] **T-021 · P1 · Pré-computar templates nulos em `join()` eliminando overhead de `nullFillRightOnly`** (2026-10-26)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)

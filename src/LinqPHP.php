@@ -694,21 +694,7 @@ class LinqPHP
         $isDesc = is_bool($descending) ? $descending : strtolower((string)$descending) === 'desc';
 
         if ($key instanceof Closure || (is_callable($key) && !is_string($key))) {
-            $ref = new ReflectionFunction(Closure::fromCallable($key));
-            if ($ref->getNumberOfParameters() === 2) {
-                if ($isDesc) {
-                    usort($this->data, static fn($a, $b) => $key($b, $a));
-                } else {
-                    usort($this->data, $key);
-                }
-            } else {
-                $values = array_map($key, $this->data);
-                if (!$isDesc) {
-                    array_multisort($values, $this->data);
-                } else {
-                    array_multisort($values, SORT_DESC, $this->data);
-                }
-            }
+            $this->sortWithCallable($key, $isDesc);
             $this->endTime = microtime(true);
             return $this;
         }
@@ -718,21 +704,7 @@ class LinqPHP
 
         if ($data === []) {
             if (is_callable($key)) {
-                $ref = new ReflectionFunction(Closure::fromCallable($key));
-                if ($ref->getNumberOfParameters() === 2) {
-                    if ($isDesc) {
-                        usort($this->data, static fn($a, $b) => $key($b, $a));
-                    } else {
-                        usort($this->data, $key);
-                    }
-                } else {
-                    $values = array_map($key, $this->data);
-                    if (!$isDesc) {
-                        array_multisort($values, $this->data);
-                    } else {
-                        array_multisort($values, SORT_DESC, $this->data);
-                    }
-                }
+                $this->sortWithCallable($key, $isDesc);
                 $this->endTime = microtime(true);
                 return $this;
             }
@@ -812,11 +784,8 @@ class LinqPHP
                 $candDir = $firstValue[1] ?? false;
             }
 
-            if ($candCallable !== null) {
-                $ref = new ReflectionFunction(Closure::fromCallable($candCallable));
-                if ($ref->getNumberOfParameters() === 2) {
-                    return $this->orderByKey($candCallable, $candDir);
-                }
+            if ($candCallable !== null && $this->getCallableParamCount($candCallable) === 2) {
+                return $this->orderByKey($candCallable, $candDir);
             }
         }
 
@@ -850,27 +819,11 @@ class LinqPHP
             }
 
             if ($callable !== null) {
-                $ref = new ReflectionFunction(Closure::fromCallable($callable));
-                if ($ref->getNumberOfParameters() === 2) {
-                    throw new InvalidArgumentException(
-                        "Comparator callables with two parameters cannot be combined with multiple fields in orderBy."
-                    );
-                }
-                $column = array_map($callable, $this->data);
+                $column = $this->extractOrderByColumn($callable);
             } else {
                 $column = array_column($this->data, (string)$field);
                 if ($column === []) {
-                    if (is_callable($field)) {
-                        $ref = new ReflectionFunction(Closure::fromCallable($field));
-                        if ($ref->getNumberOfParameters() === 2) {
-                            throw new InvalidArgumentException(
-                                "Comparator callables with two parameters cannot be combined with multiple fields in orderBy."
-                            );
-                        }
-                        $column = array_map($field, $this->data);
-                    } else {
-                        throw new InvalidArgumentException("This field does not exist for sorting.");
-                    }
+                    $column = $this->extractOrderByColumn($field);
                 }
             }
 
@@ -1348,6 +1301,44 @@ class LinqPHP
                 unset($group);
             }
         }
+    }
+
+    private function getCallableParamCount(callable $callable): int
+    {
+        $ref = new ReflectionFunction(Closure::fromCallable($callable));
+        return $ref->getNumberOfParameters();
+    }
+
+    private function sortWithCallable(callable $callable, bool $isDesc): void
+    {
+        if ($this->getCallableParamCount($callable) === 2) {
+            if ($isDesc) {
+                usort($this->data, static fn($a, $b) => $callable($b, $a));
+            } else {
+                usort($this->data, $callable);
+            }
+        } else {
+            $values = array_map($callable, $this->data);
+            if (!$isDesc) {
+                array_multisort($values, $this->data);
+            } else {
+                array_multisort($values, SORT_DESC, $this->data);
+            }
+        }
+    }
+
+    private function extractOrderByColumn(mixed $fieldOrCallable): array
+    {
+        if (is_callable($fieldOrCallable)) {
+            if ($this->getCallableParamCount($fieldOrCallable) === 2) {
+                throw new InvalidArgumentException(
+                    "Comparator callables with two parameters cannot be combined with multiple fields in orderBy."
+                );
+            }
+            return array_map($fieldOrCallable, $this->data);
+        }
+
+        throw new InvalidArgumentException("This field does not exist for sorting.");
     }
 
     private function statisticUsage(): array
