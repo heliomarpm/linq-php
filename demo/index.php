@@ -3,6 +3,14 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/db_fallback.php';
 
+// Servir Favicon estático imediatamente para /favicon.ico ou /favicon.svg
+if (in_array(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), ['/favicon.ico', '/favicon.svg'], true)) {
+    header('Content-Type: image/svg+xml');
+    header('Cache-Control: public, max-age=604800, immutable');
+    readfile(__DIR__ . '/favicon.svg');
+    exit;
+}
+
 use HeliomarPM\DbPHP\DB;
 use HeliomarPM\LinqPHP\JoinType;
 use HeliomarPM\LinqPHP\LinqPHP;
@@ -1731,6 +1739,8 @@ if (!function_exists('renderGrid')) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LinqPHP · Laboratório Interativo & Benchmark DX</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%238B5CF6'/%3E%3Cstop offset='50%25' stop-color='%236366F1'/%3E%3Cstop offset='100%25' stop-color='%23FF7A00'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='%23161b22'/%3E%3Crect width='30' height='30' x='1' y='1' rx='7' fill='none' stroke='url(%23g)' stroke-width='1.5'/%3E%3Cpath d='M18 4L9 17h6l-2 11 11-14h-6l3-10z' fill='url(%23g)'/%3E%3C/svg%3E">
+    <link rel="alternate icon" href="/favicon.svg" type="image/svg+xml">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
