@@ -1113,15 +1113,7 @@ class LinqPHP
             return null;
         }
 
-        $total = 0;
-        $isCallable = is_callable($field);
-
-        foreach ($this->data as $item) {
-            $val = $isCallable ? $field($item) : ($item[$field] ?? 0);
-            $total += is_numeric($val) ? $val : 0;
-        }
-
-        return (float)($total / $count);
+        return (float)($this->sum($field) / $count);
     }
 
     /**

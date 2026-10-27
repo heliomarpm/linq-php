@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar quick wins de correção de autoloading PSR-4, sincronização de CI e otimizações de performance\
-> **Status:** em progresso | **Progresso:** 28/32 (87%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
+> **Status:** em progresso | **Progresso:** 29/32 (90%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
 
 ## Em progresso
 
@@ -23,11 +23,6 @@
 
 ### Baixa Prioridade
 
-- [ ] **T-025 · P3 · Delegar cálculo em `avg()` diretamente para `sum()`**
-  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 2.3)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
-  - DoD: Loop duplicado em `avg()` substituído por chamada a `sum()`.
-
 - [ ] **T-029 · P3 · Suportar `caseSensitive: true` e `mb_strtolower` em `where()`**
   - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 1.4)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
@@ -46,6 +41,10 @@
 
 
 ## Concluídas recentemente
+
+- [x] **T-025 · P3 · Delegar cálculo em `avg()` diretamente para `sum()`** (2026-10-27)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
+  - Evidência: Loop duplicado de acumulação e verificação de tipagem numérica em `avg()` substituído por chamada direta a `$this->sum($field)`; divisão por `$count` mantida; early-return com `null` para coleção vazia preservado; 118 testes unitários passando 100% verde (668 asserções); `composer check` (Pint, PHPStan nível 5 e Rector) aprovado sem erros.
 
 - [x] **T-032 · P2 · Revisar e alinhar scripts equivalentes em PHP nativo no benchmark da demo** (2026-10-27)
   - Arquivos: [demo/index.php](../demo/index.php)
