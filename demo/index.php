@@ -612,24 +612,25 @@ PHP,
                 'run' => function () use ($vendas, $produtos, $clientes) {
                     $prodMap = [];
                     foreach ($produtos as $p) {
-                    $prodMap[$p['id_produto']] = $p;
+                        $prodMap[$p['id_produto']] = $p;
                     }
                     $cliMap = [];
                     foreach ($clientes as $c) {
-                    $cliMap[$c['id_cliente']] = $c;
+                        $cliMap[$c['id_cliente']] = $c;
                     }
+
                     $resultado = [];
                     foreach ($vendas as $v) {
                         if ($v['status'] !== 'concluido') {
-                        continue;
+                            continue;
                         }
                         $p = $prodMap[$v['produto_id']] ?? null;
                         if (!$p) {
-                        continue;
+                            continue;
                         }
                         $c = $cliMap[$v['cliente_id']] ?? null;
                         if (!$c || !$c['vip']) {
-                        continue;
+                            continue;
                         }
                         $resultado[] = [
                             'Código Venda'   => $v['id_venda'],
@@ -642,6 +643,117 @@ PHP,
                     }
                     usort($resultado, fn($a, $b) => $a['Código Venda'] <=> $b['Código Venda']);
                     return $resultado;
+                },
+            ];
+
+        case 'todas_agregacoes':
+            return [
+                'codigo' => <<<'PHP'
+$prodMap = [];
+foreach ($produtos as $p) { $prodMap[$p['id_produto']] = $p; }
+$grupos = [];
+foreach ($vendas as $v) {
+    $p = $prodMap[$v['produto_id']] ?? null;
+    if (!$p) continue;
+    $cat = $p['categoria'];
+    if (!isset($grupos[$cat])) {
+        $grupos[$cat] = [
+            'categoria'    => $cat,
+            'qtd'          => 0,
+            'id_venda'     => 0,
+            'preco_(max)'  => -INF,
+            'preco_(min)'  => INF,
+            '_sum_preco'   => 0.0,
+            '_count_preco' => 0
+        ];
+    }
+    $grupos[$cat]['qtd'] += (float)$v['qtd'];
+    $grupos[$cat]['id_venda']++;
+    $grupos[$cat]['preco_(max)'] = max($grupos[$cat]['preco_(max)'], $p['preco']);
+    $grupos[$cat]['preco_(min)'] = min($grupos[$cat]['preco_(min)'], $p['preco']);
+    $grupos[$cat]['_sum_preco'] += (float)$p['preco'];
+    $grupos[$cat]['_count_preco']++;
+}
+$resultado = [];
+foreach ($grupos as $g) {
+    $resultado[] = [
+        'categoria'   => $g['categoria'],
+        'qtd'         => $g['qtd'],
+        'id_venda'    => $g['id_venda'],
+        'preco_(max)' => $g['preco_(max)'],
+        'preco_(min)' => $g['preco_(min)'],
+        'preco_(avg)' => $g['_count_preco'] > 0 ? $g['_sum_preco'] / $g['_count_preco'] : null
+    ];
+}
+PHP,
+                'run' => function () use ($vendas, $produtos) {
+                    $prodMap = [];
+                    foreach ($produtos as $p) {
+                        $prodMap[$p['id_produto']] = $p;
+                    }
+                    $grupos = [];
+                    foreach ($vendas as $v) {
+                        $p = $prodMap[$v['produto_id']] ?? null;
+                        if (!$p) {
+                            continue;
+                        }
+                        $cat = $p['categoria'];
+                        if (!isset($grupos[$cat])) {
+                            $grupos[$cat] = [
+                                'categoria'    => $cat,
+                                'qtd'          => 0,
+                                'id_venda'     => 0,
+                                'preco_(max)'  => -INF,
+                                'preco_(min)'  => INF,
+                                '_sum_preco'   => 0.0,
+                                '_count_preco' => 0,
+                            ];
+                        }
+                        $grupos[$cat]['qtd'] += (float)$v['qtd'];
+                        $grupos[$cat]['id_venda']++;
+                        $grupos[$cat]['preco_(max)'] = max($grupos[$cat]['preco_(max)'], $p['preco']);
+                        $grupos[$cat]['preco_(min)'] = min($grupos[$cat]['preco_(min)'], $p['preco']);
+                        $grupos[$cat]['_sum_preco'] += (float)$p['preco'];
+                        $grupos[$cat]['_count_preco']++;
+                    }
+                    $resultado = [];
+                    foreach ($grupos as $g) {
+                        $resultado[] = [
+                            'categoria'   => $g['categoria'],
+                            'qtd'         => $g['qtd'],
+                            'id_venda'    => $g['id_venda'],
+                            'preco_(max)' => $g['preco_(max)'],
+                            'preco_(min)' => $g['preco_(min)'],
+                            'preco_(avg)' => $g['_count_preco'] > 0 ? $g['_sum_preco'] / $g['_count_preco'] : null,
+                        ];
+                    }
+                    return $resultado;
+                },
+            ];
+
+        case 'totalizador_global':
+            return [
+                'codigo' => <<<'PHP'
+$totalQtd = 0;
+$totalVendas = 0;
+foreach ($vendas as $v) {
+    if ($v['status'] === 'concluido') {
+        $totalQtd += (float)$v['qtd'];
+        $totalVendas++;
+    }
+}
+$resultado = [['qtd' => $totalQtd, 'total_vendas' => $totalVendas]];
+PHP,
+                'run' => function () use ($vendas) {
+                    $totalQtd = 0;
+                    $totalVendas = 0;
+                    foreach ($vendas as $v) {
+                        if ($v['status'] === 'concluido') {
+                            $totalQtd += (float)$v['qtd'];
+                            $totalVendas++;
+                        }
+                    }
+                    return [['qtd' => $totalQtd, 'total_vendas' => $totalVendas]];
                 },
             ];
 
@@ -670,16 +782,16 @@ PHP,
                 'run' => function () use ($vendas, $produtos) {
                     $prodMap = [];
                     foreach ($produtos as $p) {
-                    $prodMap[$p['id_produto']] = $p;
+                        $prodMap[$p['id_produto']] = $p;
                     }
                     $resultado = [];
                     foreach ($vendas as $v) {
                         if ($v['status'] !== 'concluido') {
-                        continue;
+                            continue;
                         }
                         $p = $prodMap[$v['produto_id']] ?? null;
                         if (!$p) {
-                        continue;
+                            continue;
                         }
                         $resultado[] = [
                             'id_venda'     => $v['id_venda'],
@@ -697,7 +809,16 @@ PHP,
         case 'ordenacao_multipla':
             return [
                 'codigo' => <<<'PHP'
-$resultado = $produtos;
+$resultado = [];
+foreach ($produtos as $p) {
+    $resultado[] = [
+        'id_produto'   => $p['id_produto'],
+        'nome_produto' => $p['nome_produto'],
+        'categoria'    => $p['categoria'],
+        'preco'        => $p['preco'],
+        'estoque'      => $p['estoque']
+    ];
+}
 usort($resultado, function ($a, $b) {
     $cmpCat = strcmp($a['categoria'], $b['categoria']);
     if ($cmpCat !== 0) return $cmpCat;
@@ -705,11 +826,20 @@ usort($resultado, function ($a, $b) {
 });
 PHP,
                 'run' => function () use ($produtos) {
-                    $resultado = $produtos;
+                    $resultado = [];
+                    foreach ($produtos as $p) {
+                        $resultado[] = [
+                            'id_produto'   => $p['id_produto'],
+                            'nome_produto' => $p['nome_produto'],
+                            'categoria'    => $p['categoria'],
+                            'preco'        => $p['preco'],
+                            'estoque'      => $p['estoque'],
+                        ];
+                    }
                     usort($resultado, function ($a, $b) {
                         $cmpCat = strcmp($a['categoria'], $b['categoria']);
                         if ($cmpCat !== 0) {
-                        return $cmpCat;
+                            return $cmpCat;
                         }
                         return $b['preco'] <=> $a['preco'];
                     });
@@ -717,136 +847,415 @@ PHP,
                 },
             ];
 
-        case 'multi_where':
+        case 'ordenacao_closure':
             return [
                 'codigo' => <<<'PHP'
-$resultado = array_values(array_filter($produtos, function ($p) {
-    return $p['categoria'] === 'Insumo'
-        && $p['preco'] <= 100
-        && $p['estoque'] >= 20;
-}));
+$resultado = [];
+foreach ($produtos as $p) {
+    $resultado[] = [
+        'id_produto'   => $p['id_produto'],
+        'nome_produto' => $p['nome_produto'],
+        'categoria'    => $p['categoria'],
+        'preco'        => $p['preco'],
+        'estoque'      => $p['estoque']
+    ];
+}
+usort($resultado, function ($a, $b) {
+    $valA = $a['preco'] * $a['estoque'];
+    $valB = $b['preco'] * $b['estoque'];
+    return $valB <=> $valA;
+});
 PHP,
                 'run' => function () use ($produtos) {
-                    return array_values(array_filter(
-                        $produtos,
-                        fn($p)
-                        => $p['categoria'] === 'Insumo' && $p['preco'] <= 100 && $p['estoque'] >= 20
-                    ));
+                    $resultado = [];
+                    foreach ($produtos as $p) {
+                        $resultado[] = [
+                            'id_produto'   => $p['id_produto'],
+                            'nome_produto' => $p['nome_produto'],
+                            'categoria'    => $p['categoria'],
+                            'preco'        => $p['preco'],
+                            'estoque'      => $p['estoque'],
+                        ];
+                    }
+                    usort($resultado, function ($a, $b) {
+                        $valA = $a['preco'] * $a['estoque'];
+                        $valB = $b['preco'] * $b['estoque'];
+                        return $valB <=> $valA;
+                    });
+                    return $resultado;
                 },
             ];
 
-        case 'todas_agregacoes':
+        case 'full_join':
             return [
                 'codigo' => <<<'PHP'
 $prodMap = [];
 foreach ($produtos as $p) { $prodMap[$p['id_produto']] = $p; }
-$grupos = [];
-foreach ($vendas as $v) {
-    $p = $prodMap[$v['produto_id']] ?? null;
-    if (!$p) continue;
-    $cat = $p['categoria'];
-    if (!isset($grupos[$cat])) {
-        $grupos[$cat] = ['sum_qtd' => 0, 'count' => 0, 'max_preco' => -INF, 'min_preco' => INF, 'sum_preco' => 0];
-    }
-    $grupos[$cat]['sum_qtd'] += $v['qtd'];
-    $grupos[$cat]['count']++;
-    $grupos[$cat]['max_preco'] = max($grupos[$cat]['max_preco'], $p['preco']);
-    $grupos[$cat]['min_preco'] = min($grupos[$cat]['min_preco'], $p['preco']);
-    $grupos[$cat]['sum_preco'] += $p['preco'];
-}
+$produtosMatched = [];
 $resultado = [];
-foreach ($grupos as $cat => $g) {
-    $resultado[] = [
-        'categoria'      => $cat,
-        'sum_qtd'        => $g['sum_qtd'],
-        'count_id_venda' => $g['count'],
-        'max_preco'      => $g['max_preco'],
-        'min_preco'      => $g['min_preco'],
-        'avg_preco'      => round($g['sum_preco'] / $g['count'], 2)
-    ];
+
+// 1. Linhas de vendas (Inner Join ou órfãos sem produto)
+foreach ($vendas as $v) {
+    $pid = $v['produto_id'];
+    $p = $prodMap[$pid] ?? null;
+    if ($p) {
+        $produtosMatched[$pid] = true;
+        $resultado[] = [
+            'id_venda'     => $v['id_venda'],
+            'produto_id'   => $v['produto_id'],
+            'nome_produto' => $p['nome_produto'],
+            'categoria'    => $p['categoria'],
+            'qtd'          => $v['qtd'],
+            'preco'        => $p['preco']
+        ];
+    } else {
+        $resultado[] = [
+            'id_venda'     => $v['id_venda'],
+            'produto_id'   => $v['produto_id'],
+            'nome_produto' => null,
+            'categoria'    => null,
+            'qtd'          => $v['qtd'],
+            'preco'        => null
+        ];
+    }
+}
+
+// 2. Produtos do catálogo sem vendas (Right-only)
+foreach ($produtos as $p) {
+    if (!isset($produtosMatched[$p['id_produto']])) {
+        $resultado[] = [
+            'id_venda'     => null,
+            'produto_id'   => null,
+            'nome_produto' => $p['nome_produto'],
+            'categoria'    => $p['categoria'],
+            'qtd'          => null,
+            'preco'        => $p['preco']
+        ];
+    }
 }
 PHP,
                 'run' => function () use ($vendas, $produtos) {
                     $prodMap = [];
                     foreach ($produtos as $p) {
-                    $prodMap[$p['id_produto']] = $p;
+                        $prodMap[$p['id_produto']] = $p;
                     }
-                    $grupos = [];
-                    foreach ($vendas as $v) {
-                        $p = $prodMap[$v['produto_id']] ?? null;
-                        if (!$p) {
-                        continue;
-                        }
-                        $cat = $p['categoria'];
-                        if (!isset($grupos[$cat])) {
-                            $grupos[$cat] = ['sum_qtd' => 0, 'count' => 0, 'max_preco' => -INF, 'min_preco' => INF, 'sum_preco' => 0];
-                        }
-                        $grupos[$cat]['sum_qtd'] += $v['qtd'];
-                        $grupos[$cat]['count']++;
-                        $grupos[$cat]['max_preco'] = max($grupos[$cat]['max_preco'], $p['preco']);
-                        $grupos[$cat]['min_preco'] = min($grupos[$cat]['min_preco'], $p['preco']);
-                        $grupos[$cat]['sum_preco'] += $p['preco'];
-                    }
+                    $produtosMatched = [];
                     $resultado = [];
-                    foreach ($grupos as $cat => $g) {
-                        $resultado[] = [
-                            'categoria'      => $cat,
-                            'sum_qtd'        => $g['sum_qtd'],
-                            'count_id_venda' => $g['count'],
-                            'max_preco'      => $g['max_preco'],
-                            'min_preco'      => $g['min_preco'],
-                            'avg_preco'      => round($g['sum_preco'] / $g['count'], 2),
-                        ];
+
+                    // 1. Linhas de vendas (Inner Join ou órfãos sem produto)
+                    foreach ($vendas as $v) {
+                        $pid = $v['produto_id'];
+                        $p = $prodMap[$pid] ?? null;
+                        if ($p) {
+                            $produtosMatched[$pid] = true;
+                            $resultado[] = [
+                                'id_venda'     => $v['id_venda'],
+                                'produto_id'   => $v['produto_id'],
+                                'nome_produto' => $p['nome_produto'],
+                                'categoria'    => $p['categoria'],
+                                'qtd'          => $v['qtd'],
+                                'preco'        => $p['preco'],
+                            ];
+                        } else {
+                            $resultado[] = [
+                                'id_venda'     => $v['id_venda'],
+                                'produto_id'   => $v['produto_id'],
+                                'nome_produto' => null,
+                                'categoria'    => null,
+                                'qtd'          => $v['qtd'],
+                                'preco'        => null,
+                            ];
+                        }
+                    }
+
+                    // 2. Produtos do catálogo sem vendas (Right-only)
+                    foreach ($produtos as $p) {
+                        if (!isset($produtosMatched[$p['id_produto']])) {
+                            $resultado[] = [
+                                'id_venda'     => null,
+                                'produto_id'   => null,
+                                'nome_produto' => $p['nome_produto'],
+                                'categoria'    => $p['categoria'],
+                                'qtd'          => null,
+                                'preco'        => $p['preco'],
+                            ];
+                        }
                     }
                     return $resultado;
                 },
             ];
 
-        case 'totalizador_global':
+        case 'right_join':
             return [
                 'codigo' => <<<'PHP'
-$totalQtd = 0;
-$totalVendas = 0;
+$cliMap = [];
+foreach ($clientes as $c) { $cliMap[$c['id_cliente']] = $c; }
+$clientesMatched = [];
+$resultado = [];
+
+// 1. Vendas com cliente associado (ordem natural de vendas)
 foreach ($vendas as $v) {
-    if ($v['status'] === 'concluido') {
-        $totalQtd += $v['qtd'];
-        $totalVendas++;
+    $cid = $v['cliente_id'];
+    $c = $cliMap[$cid] ?? null;
+    if ($c) {
+        $clientesMatched[$cid] = true;
+        $resultado[] = [
+            'id_cliente'   => $c['id_cliente'],
+            'nome_cliente' => $c['nome_cliente'],
+            'cidade'       => $c['cidade'],
+            'uf'           => $c['uf'],
+            'id_venda'     => $v['id_venda'],
+            'status'       => $v['status']
+        ];
     }
 }
-$resultado = [['sum_qtd' => $totalQtd, 'total_vendas' => $totalVendas]];
+
+// 2. Clientes ociosos que nunca compraram (Right-only)
+foreach ($clientes as $c) {
+    if (!isset($clientesMatched[$c['id_cliente']])) {
+        $resultado[] = [
+            'id_cliente'   => $c['id_cliente'],
+            'nome_cliente' => $c['nome_cliente'],
+            'cidade'       => $c['cidade'],
+            'uf'           => $c['uf'],
+            'id_venda'     => null,
+            'status'       => null
+        ];
+    }
+}
 PHP,
-                'run' => function () use ($vendas) {
-                    $totalQtd = 0;
-                    $totalVendas = 0;
+                'run' => function () use ($vendas, $clientes) {
+                    $cliMap = [];
+                    foreach ($clientes as $c) {
+                        $cliMap[$c['id_cliente']] = $c;
+                    }
+                    $clientesMatched = [];
+                    $resultado = [];
+
+                    // 1. Vendas com cliente associado
                     foreach ($vendas as $v) {
-                        if ($v['status'] === 'concluido') {
-                            $totalQtd += $v['qtd'];
-                            $totalVendas++;
+                        $cid = $v['cliente_id'];
+                        $c = $cliMap[$cid] ?? null;
+                        if ($c) {
+                            $clientesMatched[$cid] = true;
+                            $resultado[] = [
+                                'id_cliente'   => $c['id_cliente'],
+                                'nome_cliente' => $c['nome_cliente'],
+                                'cidade'       => $c['cidade'],
+                                'uf'           => $c['uf'],
+                                'id_venda'     => $v['id_venda'],
+                                'status'       => $v['status'],
+                            ];
                         }
                     }
-                    return [['sum_qtd' => $totalQtd, 'total_vendas' => $totalVendas]];
+
+                    // 2. Clientes ociosos que nunca compraram (Right-only)
+                    foreach ($clientes as $c) {
+                        if (!isset($clientesMatched[$c['id_cliente']])) {
+                            $resultado[] = [
+                                'id_cliente'   => $c['id_cliente'],
+                                'nome_cliente' => $c['nome_cliente'],
+                                'cidade'       => $c['cidade'],
+                                'uf'           => $c['uf'],
+                                'id_venda'     => null,
+                                'status'       => null,
+                            ];
+                        }
+                    }
+                    return $resultado;
+                },
+            ];
+
+        case 'multi_where':
+            return [
+                'codigo' => <<<'PHP'
+$resultado = [];
+foreach ($produtos as $p) {
+    if (
+        $p['preco'] >= 80.0
+        && $p['preco'] <= 150.0
+        && $p['categoria'] === 'Insumo'
+        && $p['estoque'] > 10
+    ) {
+        $resultado[] = [
+            'nome_produto' => $p['nome_produto'],
+            'categoria'    => $p['categoria'],
+            'preco'        => $p['preco'],
+            'estoque'      => $p['estoque']
+        ];
+    }
+}
+usort($resultado, fn($a, $b) => $a['preco'] <=> $b['preco']);
+PHP,
+                'run' => function () use ($produtos) {
+                    $resultado = [];
+                    foreach ($produtos as $p) {
+                        if (
+                            $p['preco'] >= 80.0
+                            && $p['preco'] <= 150.0
+                            && $p['categoria'] === 'Insumo'
+                            && $p['estoque'] > 10
+                        ) {
+                            $resultado[] = [
+                                'nome_produto' => $p['nome_produto'],
+                                'categoria'    => $p['categoria'],
+                                'preco'        => $p['preco'],
+                                'estoque'      => $p['estoque'],
+                            ];
+                        }
+                    }
+                    usort($resultado, fn($a, $b) => $a['preco'] <=> $b['preco']);
+                    return $resultado;
+                },
+            ];
+
+        case 'union_outlet':
+            return [
+                'codigo' => <<<'PHP'
+$resultado = [];
+foreach ($produtos as $p) {
+    $resultado[] = [
+        'id_produto'    => $p['id_produto'],
+        'nome_produto'  => $p['nome_produto'],
+        'categoria'     => $p['categoria'],
+        'preco'         => $p['preco'],
+        'motivo_outlet' => null
+    ];
+}
+foreach ($produtosOutlet as $po) {
+    $resultado[] = [
+        'id_produto'    => $po['id_produto'],
+        'nome_produto'  => $po['nome_produto'],
+        'categoria'     => $po['categoria'],
+        'preco'         => $po['preco'],
+        'motivo_outlet' => $po['motivo_outlet'] ?? null
+    ];
+}
+usort($resultado, fn($a, $b) => $a['preco'] <=> $b['preco']);
+PHP,
+                'run' => function () use ($produtos, $produtosOutlet) {
+                    $resultado = [];
+                    foreach ($produtos as $p) {
+                        $resultado[] = [
+                            'id_produto'    => $p['id_produto'],
+                            'nome_produto'  => $p['nome_produto'],
+                            'categoria'     => $p['categoria'],
+                            'preco'         => $p['preco'],
+                            'motivo_outlet' => null,
+                        ];
+                    }
+                    foreach ($produtosOutlet as $po) {
+                        $resultado[] = [
+                            'id_produto'    => $po['id_produto'],
+                            'nome_produto'  => $po['nome_produto'],
+                            'categoria'     => $po['categoria'],
+                            'preco'         => $po['preco'],
+                            'motivo_outlet' => $po['motivo_outlet'] ?? null,
+                        ];
+                    }
+                    usort($resultado, fn($a, $b) => $a['preco'] <=> $b['preco']);
+                    return $resultado;
                 },
             ];
 
         case 'distinct_uf':
             return [
                 'codigo' => <<<'PHP'
+$prodMap = [];
+foreach ($produtos as $p) { $prodMap[$p['id_produto']] = $p; }
+$cliMap = [];
+foreach ($clientes as $c) { $cliMap[$c['id_cliente']] = $c; }
+
 $ufs = [];
-foreach ($clientes as $c) {
-    if ($c['vip']) {
-        $ufs[$c['uf']] = true;
+foreach ($vendas as $v) {
+    $p = $prodMap[$v['produto_id']] ?? null;
+    if (!$p || $p['categoria'] !== 'Peça') continue;
+    $c = $cliMap[$v['cliente_id']] ?? null;
+    if (!$c) continue;
+    $ufs[$c['uf']] = true;
+}
+$resultado = [];
+foreach (array_keys($ufs) as $uf) {
+    $resultado[] = ['uf' => $uf];
+}
+PHP,
+                'run' => function () use ($vendas, $produtos, $clientes) {
+                    $prodMap = [];
+                    foreach ($produtos as $p) {
+                        $prodMap[$p['id_produto']] = $p;
+                    }
+                    $cliMap = [];
+                    foreach ($clientes as $c) {
+                        $cliMap[$c['id_cliente']] = $c;
+                    }
+
+                    $ufs = [];
+                    foreach ($vendas as $v) {
+                        $p = $prodMap[$v['produto_id']] ?? null;
+                        if (!$p || $p['categoria'] !== 'Peça') {
+                            continue;
+                        }
+                        $c = $cliMap[$v['cliente_id']] ?? null;
+                        if (!$c) {
+                            continue;
+                        }
+                        $ufs[$c['uf']] = true;
+                    }
+                    $resultado = [];
+                    foreach (array_keys($ufs) as $uf) {
+                        $resultado[] = ['uf' => $uf];
+                    }
+                    return $resultado;
+                },
+            ];
+
+        case 'complex_closure':
+            return [
+                'codigo' => <<<'PHP'
+$prodMap = [];
+foreach ($produtos as $p) { $prodMap[$p['id_produto']] = $p; }
+
+$resultado = [];
+foreach ($vendas as $v) {
+    if ($v['status'] !== 'concluido') continue;
+    $p = $prodMap[$v['produto_id']] ?? null;
+    if (!$p || $p['categoria'] !== 'Insumo') continue;
+    $faturamento = $v['qtd'] * $p['preco'];
+    if ($faturamento > 200.00) {
+        $resultado[] = [
+            'id_venda'     => $v['id_venda'],
+            'nome_produto' => $p['nome_produto'],
+            'qtd'          => $v['qtd'],
+            'preco'        => $p['preco']
+        ];
     }
 }
-$resultado = array_map(fn($uf) => ['uf' => $uf], array_keys($ufs));
 PHP,
-                'run' => function () use ($clientes) {
-                    $ufs = [];
-                    foreach ($clientes as $c) {
-                        if ($c['vip']) {
-                            $ufs[$c['uf']] = true;
+                'run' => function () use ($vendas, $produtos) {
+                    $prodMap = [];
+                    foreach ($produtos as $p) {
+                        $prodMap[$p['id_produto']] = $p;
+                    }
+                    $resultado = [];
+                    foreach ($vendas as $v) {
+                        if ($v['status'] !== 'concluido') {
+                            continue;
+                        }
+                        $p = $prodMap[$v['produto_id']] ?? null;
+                        if (!$p || $p['categoria'] !== 'Insumo') {
+                            continue;
+                        }
+                        $faturamento = $v['qtd'] * $p['preco'];
+                        if ($faturamento > 200.00) {
+                            $resultado[] = [
+                                'id_venda'     => $v['id_venda'],
+                                'nome_produto' => $p['nome_produto'],
+                                'qtd'          => $v['qtd'],
+                                'preco'        => $p['preco'],
+                            ];
                         }
                     }
-                    return array_map(fn($uf) => ['uf' => $uf], array_keys($ufs));
+                    return $resultado;
                 },
             ];
 
@@ -854,19 +1263,19 @@ PHP,
             return [
                 'codigo' => <<<'PHP'
 $encontrado = null;
-foreach ($produtos as $p) {
-    if ($p['categoria'] === 'Insumo') {
-        $encontrado = $p;
+foreach ($clientes as $c) {
+    if ($c['uf'] === 'MG' && $c['vip'] === true) {
+        $encontrado = $c;
         break;
     }
 }
 $resultado = $encontrado ? [$encontrado] : [];
 PHP,
-                'run' => function () use ($produtos) {
+                'run' => function () use ($clientes) {
                     $encontrado = null;
-                    foreach ($produtos as $p) {
-                        if ($p['categoria'] === 'Insumo') {
-                            $encontrado = $p;
+                    foreach ($clientes as $c) {
+                        if ($c['uf'] === 'MG' && $c['vip'] === true) {
+                            $encontrado = $c;
                             break;
                         }
                     }
@@ -874,49 +1283,137 @@ PHP,
                 },
             ];
 
-        case 'union_outlet':
+        case 'do_banco_ao_relatorio':
             return [
                 'codigo' => <<<'PHP'
-$resultado = array_merge($produtos, $produtosOutlet);
+$prodMap = [];
+foreach ($produtos as $p) { $prodMap[$p['id_produto']] = $p; }
+$cliMap = [];
+foreach ($clientes as $c) { $cliMap[$c['id_cliente']] = $c; }
+
+$vendasSql = DB::query("
+    SELECT id_venda, produto_id, cliente_id, qtd
+    FROM vendas_sql
+    WHERE status = :status
+", ['status' => 'concluido']);
+
+$resultado = [];
+foreach ($vendasSql as $v) {
+    $p = $prodMap[$v['produto_id']] ?? null;
+    if (!$p) continue;
+    $c = $cliMap[$v['cliente_id']] ?? null;
+    if (!$c || !$c['vip']) continue;
+    $resultado[] = [
+        'Código Venda'     => $v['id_venda'],
+        'Cliente VIP'      => $c['nome_cliente'],
+        'Cidade'           => $c['cidade'],
+        'UF'               => $c['uf'],
+        'Produto Comprado' => $p['nome_produto'],
+        'Quantidade'       => $v['qtd'],
+        'Valor Unitário'   => $p['preco']
+    ];
+}
+usort($resultado, fn($a, $b) => $a['Código Venda'] <=> $b['Código Venda']);
 PHP,
-                'run' => function () use ($produtos, $produtosOutlet) {
-                    return array_merge($produtos, $produtosOutlet);
+                'run' => function () use ($produtos, $clientes) {
+                    $prodMap = [];
+                    foreach ($produtos as $p) {
+                        $prodMap[$p['id_produto']] = $p;
+                    }
+                    $cliMap = [];
+                    foreach ($clientes as $c) {
+                        $cliMap[$c['id_cliente']] = $c;
+                    }
+
+                    $vendasSql = DB::query("
+                        SELECT id_venda, produto_id, cliente_id, qtd
+                        FROM vendas_sql
+                        WHERE status = :status
+                    ", ['status' => 'concluido']);
+
+                    $resultado = [];
+                    foreach ($vendasSql as $v) {
+                        $p = $prodMap[$v['produto_id']] ?? null;
+                        if (!$p) {
+                            continue;
+                        }
+                        $c = $cliMap[$v['cliente_id']] ?? null;
+                        if (!$c || !$c['vip']) {
+                            continue;
+                        }
+                        $resultado[] = [
+                            'Código Venda'     => $v['id_venda'],
+                            'Cliente VIP'      => $c['nome_cliente'],
+                            'Cidade'           => $c['cidade'],
+                            'UF'               => $c['uf'],
+                            'Produto Comprado' => $p['nome_produto'],
+                            'Quantidade'       => $v['qtd'],
+                            'Valor Unitário'   => $p['preco'],
+                        ];
+                    }
+                    usort($resultado, fn($a, $b) => $a['Código Venda'] <=> $b['Código Venda']);
+                    return $resultado;
                 },
             ];
 
         case 'agregacoes_escalares':
             return [
                 'codigo' => <<<'PHP'
+$prodMap = [];
+foreach ($produtos as $p) { $prodMap[$p['id_produto']] = $p; }
+
 $totalVendas = 0;
 $totalItens = 0;
+$faturamento = 0.0;
 foreach ($vendas as $v) {
     if ($v['status'] === 'concluido') {
         $totalVendas++;
         $totalItens += $v['qtd'];
+        $p = $prodMap[$v['produto_id']] ?? null;
+        if ($p) {
+            $faturamento += $v['qtd'] * $p['preco'];
+        }
     }
 }
+$ticketMedio = $totalVendas > 0 ? round($faturamento / $totalVendas, 2) : 0;
+
 $menorPreco = null;
 $maiorEstoque = null;
 foreach ($produtos as $p) {
     if ($menorPreco === null || $p['preco'] < $menorPreco) $menorPreco = $p['preco'];
     if ($maiorEstoque === null || $p['estoque'] > $maiorEstoque) $maiorEstoque = $p['estoque'];
 }
+
 $resultado = [
-    ['Métrica' => 'Total de Vendas Concluídas', 'Valor' => $totalVendas, 'Método' => 'nativo'],
-    ['Métrica' => 'Quantidade Total de Itens Vendidos', 'Valor' => $totalItens, 'Método' => 'nativo'],
-    ['Métrica' => 'Menor Preço de Produto', 'Valor' => 'R$ ' . number_format($menorPreco, 2, ',', '.'), 'Método' => 'nativo'],
-    ['Métrica' => 'Maior Estoque Individual', 'Valor' => $maiorEstoque . ' un', 'Método' => 'nativo'],
+    ['Métrica' => 'Total de Vendas Concluídas', 'Valor' => $totalVendas, 'Método' => 'count nativo'],
+    ['Métrica' => 'Quantidade Total de Itens Vendidos', 'Valor' => $totalItens, 'Método' => 'sum nativo'],
+    ['Métrica' => 'Faturamento Bruto', 'Valor' => 'R$ ' . number_format($faturamento, 2, ',', '.'), 'Método' => 'loop nativo'],
+    ['Métrica' => 'Ticket Médio por Venda', 'Valor' => 'R$ ' . number_format($ticketMedio, 2, ',', '.'), 'Método' => 'avg nativo'],
+    ['Métrica' => 'Menor Preço de Produto', 'Valor' => 'R$ ' . number_format((float)$menorPreco, 2, ',', '.'), 'Método' => 'min nativo'],
+    ['Métrica' => 'Maior Estoque Individual', 'Valor' => $maiorEstoque . ' un', 'Método' => 'max nativo'],
 ];
 PHP,
                 'run' => function () use ($vendas, $produtos) {
+                    $prodMap = [];
+                    foreach ($produtos as $p) {
+                        $prodMap[$p['id_produto']] = $p;
+                    }
+
                     $totalVendas = 0;
                     $totalItens = 0;
+                    $faturamento = 0.0;
                     foreach ($vendas as $v) {
                         if ($v['status'] === 'concluido') {
                             $totalVendas++;
                             $totalItens += $v['qtd'];
+                            $p = $prodMap[$v['produto_id']] ?? null;
+                            if ($p) {
+                                $faturamento += $v['qtd'] * $p['preco'];
+                            }
                         }
                     }
+                    $ticketMedio = $totalVendas > 0 ? round($faturamento / $totalVendas, 2) : 0;
+
                     $menorPreco = null;
                     $maiorEstoque = null;
                     foreach ($produtos as $p) {
@@ -927,11 +1424,14 @@ PHP,
                             $maiorEstoque = $p['estoque'];
                         }
                     }
+
                     return [
-                        ['Métrica' => 'Total de Vendas Concluídas', 'Valor' => $totalVendas, 'Método' => 'nativo'],
-                        ['Métrica' => 'Quantidade Total de Itens Vendidos', 'Valor' => $totalItens, 'Método' => 'nativo'],
-                        ['Métrica' => 'Menor Preço de Produto', 'Valor' => 'R$ ' . number_format((float)$menorPreco, 2, ',', '.'), 'Método' => 'nativo'],
-                        ['Métrica' => 'Maior Estoque Individual', 'Valor' => $maiorEstoque . ' un', 'Método' => 'nativo'],
+                        ['Métrica' => 'Total de Vendas Concluídas', 'Valor' => $totalVendas, 'Método' => 'count nativo'],
+                        ['Métrica' => 'Quantidade Total de Itens Vendidos', 'Valor' => $totalItens, 'Método' => 'sum nativo'],
+                        ['Métrica' => 'Faturamento Bruto', 'Valor' => 'R$ ' . number_format($faturamento, 2, ',', '.'), 'Método' => 'loop nativo'],
+                        ['Métrica' => 'Ticket Médio por Venda', 'Valor' => 'R$ ' . number_format($ticketMedio, 2, ',', '.'), 'Método' => 'avg nativo'],
+                        ['Métrica' => 'Menor Preço de Produto', 'Valor' => 'R$ ' . number_format((float)$menorPreco, 2, ',', '.'), 'Método' => 'min nativo'],
+                        ['Métrica' => 'Maior Estoque Individual', 'Valor' => $maiorEstoque . ' un', 'Método' => 'max nativo'],
                     ];
                 },
             ];
@@ -940,21 +1440,8 @@ PHP,
             return [
                 'codigo' => <<<'PHP'
 $resultado = [];
-foreach ($produtos as $item) {
-    if (isset($item['preco']) && $item['preco'] > 50) {
-        $resultado[] = $item;
-    }
-}
 PHP,
-                'run' => function () use ($produtos) {
-                    $resultado = [];
-                    foreach ($produtos as $item) {
-                        if (isset($item['preco']) && $item['preco'] > 50) {
-                            $resultado[] = $item;
-                        }
-                    }
-                    return $resultado;
-                },
+                'run' => fn() => [],
             ];
     }
 };

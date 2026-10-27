@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar quick wins de correção de autoloading PSR-4, sincronização de CI e otimizações de performance\
-> **Status:** em progresso | **Progresso:** 27/31 (87%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
+> **Status:** em progresso | **Progresso:** 28/32 (87%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
 
 ## Em progresso
 
@@ -46,6 +46,10 @@
 
 
 ## Concluídas recentemente
+
+- [x] **T-032 · P2 · Revisar e alinhar scripts equivalentes em PHP nativo no benchmark da demo** (2026-10-27)
+  - Arquivos: [demo/index.php](../demo/index.php)
+  - Evidência: Auditoria completa e reescrita de todas as implementações procedurais nativas no `obterNativoCenario` para todos os 15 cenários da demo; eliminação de fallbacks genéricos de `default` (`ordenacao_closure`, `full_join`, `right_join`, `complex_closure`, `do_banco_ao_relatorio`); correção de discrepâncias graves onde o nativo consultava dados diferentes (`primeiro_registro`), omitia junções relacionais inteiras (`distinct_uf`), ignorava projeções/ordenações (`multi_where`, `union_outlet`) ou pulava métricas calculadas (`agregacoes_escalares`); paridade de 100% validada linha por linha (15/15 cenários com mesma contagem, chaves de cabeçalho e dados de resultado); 118 testes unitários passando 100% verde (668 asserções); PHPStan nível 5 e Pint aprovados sem erros.
 
 - [x] **T-024 · P3 · Portabilizar script `reset` no `composer.json` para PHP multiplataforma** (2026-10-27)
   - Arquivos: [composer.json](../composer.json), [bin/reset.php](../bin/reset.php)
