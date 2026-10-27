@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar quick wins de correção de autoloading PSR-4, sincronização de CI e otimizações de performance\
-> **Status:** em progresso | **Progresso:** 22/29 (75%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-26
+> **Status:** em progresso | **Progresso:** 23/30 (76%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-26
 
 ## Em progresso
 
@@ -18,11 +18,6 @@
 (nenhuma)
 
 ### Média Prioridade
-
-- [ ] **T-023 · P2 · Implementar fast-path de chave simples em `groupBy()`**
-  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 3.2)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
-  - DoD: Fast-path implementado para `count($groupingFields) === 1`, eliminando `array_intersect_key` e `implode` repetitivos; benchmarks demonstrando ganho expressivo de latência.
 
 - [ ] **T-026 · P2 · Otimizar alocação de memória no `select()` com atribuição direta**
   - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 3.4)
@@ -56,9 +51,18 @@
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
   - DoD: Opção de comparação sensível a maiúsculas/minúsculas e tratamento seguro de acentuação UTF-8.
 
+- [ ] **T-030 · P3 · Implementar coloração zebrada (linhas alternadas) na grid de benchmarks CLI**
+  - Origem: manual
+  - Arquivos: [benchmarks/BenchmarkRunner.php](../benchmarks/BenchmarkRunner.php)
+  - DoD: Linhas pares com fundo/tonalidade sutil alternada via ANSI 256/TrueColor; alinhamento visual preservado; reset de cor garantido por linha.
+
 
 
 ## Concluídas recentemente
+
+- [x] **T-023 · P2 · Implementar fast-path de chave simples em `groupBy()`** (2026-10-26)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
+  - Evidência: Fast-path implementado para agrupamento por chave única (`count($groupingFields) === 1`), eliminando chamadas repetitivas de `array_intersect_key`, `array_flip` e `implode`; agrupamento composto otimizado reutilizando o cabeçalho interceptado; 117 testes unitários passando 100% verde (667 asserções); PHPStan nível 5 e Pint aprovados.
 
 - [x] **T-022 · P2 · Unificar blocos de Reflection duplicados em `orderByKey()` e `orderBy()`** (2026-10-26)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace HeliomarPM\LinqPHP\Benchmark;
 
 use Generator;
-use Heliomarpm\LinqPHP\JoinType;
+use HeliomarPM\LinqPHP\JoinType;
 use HeliomarPM\LinqPHP\LinqPHP;
 
 class BenchPerformance

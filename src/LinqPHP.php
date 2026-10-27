@@ -464,14 +464,29 @@ class LinqPHP
                     $this->groupByCustomAggregations($groupedResult, $groupKey, $aggregations, $duplicatedFields, $item);
                 }
             }
+        } elseif (count($groupingFields) === 1) {
+            // Fast-path para agrupamento por chave única (Single-Key)
+            $singleField = $groupingFields[0];
+            foreach ($this->data as $item) {
+                $val = $item[$singleField] ?? null;
+                $groupKey = (string)$val;
+
+                $groupedResult[$groupKey] ??= [$singleField => $val];
+
+                if (!$hasAggregations) {
+                    $this->groupByDefaultAggregations($groupedResult, $groupKey, $groupingFields, $item);
+                } else {
+                    $this->groupByCustomAggregations($groupedResult, $groupKey, $aggregations, $duplicatedFields, $item);
+                }
+            }
         } else {
+            // Agrupamento composto (Multi-Key)
             $groupingFieldsFlip = array_flip($groupingFields);
             foreach ($this->data as $item) {
-                // Gerar chave única para identificar o grupo
-                $groupKey = implode('_', array_intersect_key($item, $groupingFieldsFlip));
+                $groupHeader = array_intersect_key($item, $groupingFieldsFlip);
+                $groupKey = implode('_', $groupHeader);
 
-                // Inicializar grupo se ainda não existir
-                $groupedResult[$groupKey] ??= array_intersect_key($item, $groupingFieldsFlip);
+                $groupedResult[$groupKey] ??= $groupHeader;
 
                 if (!$hasAggregations) {
                     $this->groupByDefaultAggregations($groupedResult, $groupKey, $groupingFields, $item);
