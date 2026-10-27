@@ -80,18 +80,57 @@ class LinqPHP
      */
     public function unionAll(array $unionData): self
     {
-        // Caso venha um único objeto, converte em lista
         if ($this->data === []) {
-            $this->data = $unionData;
+            $this->data = $this->normalizeCollection($unionData);
+            $this->endTime = microtime(true);
             return $this;
         }
 
         if ($unionData === []) {
+            $this->endTime = microtime(true);
             return $this;
         }
 
         $unionData = $this->normalizeCollection($unionData);
-        // Coleta todas as chaves existentes em ambos os conjuntos
+
+        // Fast-path: verificar se ambas as coleções possuem o mesmo esquema de chaves
+        $firstLeft = reset($this->data);
+        $firstRight = reset($unionData);
+
+        if (is_array($firstLeft) && is_array($firstRight)) {
+            $leftKeys = array_keys($firstLeft);
+            $rightKeys = array_keys($firstRight);
+
+            if ($leftKeys === $rightKeys && $leftKeys !== []) {
+                $keyCount = count($leftKeys);
+                $isIdentical = true;
+
+                // Verificação rápida de homogeneidade em ambas as coleções
+                foreach ($this->data as $row) {
+                    if (!is_array($row) || count($row) !== $keyCount || array_keys($row) !== $leftKeys) {
+                        $isIdentical = false;
+                        break;
+                    }
+                }
+
+                if ($isIdentical) {
+                    foreach ($unionData as $row) {
+                        if (!is_array($row) || count($row) !== $keyCount || array_keys($row) !== $leftKeys) {
+                            $isIdentical = false;
+                            break;
+                        }
+                    }
+                }
+
+                if ($isIdentical) {
+                    $this->data = array_merge($this->data, $unionData);
+                    $this->endTime = microtime(true);
+                    return $this;
+                }
+            }
+        }
+
+        // Caminho heterogêneo: coleta todas as chaves existentes
         $allKeys = [];
 
         foreach ($this->data as $row) {
@@ -106,16 +145,19 @@ class LinqPHP
             }
         }
 
-        $allKeys = array_keys($allKeys);
+        // Pré-computa o molde nulo uma única vez (eliminando alocações repetitivas por linha)
+        $nullTemplate = array_fill_keys(array_keys($allKeys), null);
+        $result = [];
 
-        // Normaliza cada linha para conter todas as chaves
-        $normalize = static fn(array $row) => array_replace(array_fill_keys($allKeys, null), $row);
+        foreach ($this->data as $row) {
+            $result[] = array_replace($nullTemplate, $row);
+        }
 
-        $this->data = array_merge(
-            array_map($normalize, $this->data),
-            array_map($normalize, $unionData)
-        );
+        foreach ($unionData as $row) {
+            $result[] = array_replace($nullTemplate, $row);
+        }
 
+        $this->data = $result;
         $this->endTime = microtime(true);
         return $this;
     }

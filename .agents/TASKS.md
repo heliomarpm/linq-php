@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar quick wins de correção de autoloading PSR-4, sincronização de CI e otimizações de performance\
-> **Status:** em progresso | **Progresso:** 25/31 (80%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-26
+> **Status:** em progresso | **Progresso:** 26/31 (83%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-26
 
 ## Em progresso
 
@@ -19,10 +19,7 @@
 
 ### Média Prioridade
 
-- [ ] **T-028 · P2 · Implementar fast-path de esquema idêntico em `unionAll()`**
-  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 3.5)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
-  - DoD: Quando ambas as coleções tiverem as mesmas chaves, usar `array_merge` direto sem normalizar linha a linha.
+(nenhuma)
 
 ### Baixa Prioridade
 
@@ -54,6 +51,10 @@
 
 
 ## Concluídas recentemente
+
+- [x] **T-028 · P2 · Implementar fast-path de esquema idêntico em `unionAll()`** (2026-10-26)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/UnionAllTest.php](../tests/Unit/UnionAllTest.php)
+  - Evidência: Fast-path implementado para coleções com esquemas de chaves idênticos, realizando `array_merge` direto em nível C sem normalização de linhas; molde nulo (`$nullTemplate`) pré-computado uma única vez para coleções heterogêneas, eliminando chamadas repetitivas de `array_fill_keys` por linha; novo teste unitário `testUnionAllWithIdenticalKeys` adicionado; 118 testes unitários passando 100% verde (668 asserções); PHPStan nível 5 e Pint aprovados sem erros.
 
 - [x] **T-027 · P2 · Otimizar memória em `groupBy()` com acumulação O(1) de médias** (2026-10-26)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)

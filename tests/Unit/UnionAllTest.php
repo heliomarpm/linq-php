@@ -62,4 +62,26 @@ class UnionAllTest extends TestCase
         $result = LinqPHP::from($data1)->unionAll($data2)->toArray();
         $this->assertEquals($expected, $result);
     }
+
+    public function testUnionAllWithIdenticalKeys(): void
+    {
+        $data1 = [
+            ['id' => 1, 'name' => 'John', 'role' => 'admin'],
+            ['id' => 2, 'name' => 'Jane', 'role' => 'user'],
+        ];
+        $data2 = [
+            ['id' => 3, 'name' => 'Bob', 'role' => 'editor'],
+            ['id' => 4, 'name' => 'Alice', 'role' => 'user'],
+        ];
+
+        $expected = [
+            ['id' => 1, 'name' => 'John', 'role' => 'admin'],
+            ['id' => 2, 'name' => 'Jane', 'role' => 'user'],
+            ['id' => 3, 'name' => 'Bob', 'role' => 'editor'],
+            ['id' => 4, 'name' => 'Alice', 'role' => 'user'],
+        ];
+
+        $result = LinqPHP::from($data1)->unionAll($data2)->toArray();
+        $this->assertSame($expected, $result);
+    }
 }
