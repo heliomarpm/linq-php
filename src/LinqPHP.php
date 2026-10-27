@@ -178,6 +178,21 @@ class LinqPHP
         $matchedRightKeys = [];
         $singleLeft = count($leftFields) === 1 ? $leftFields[0] : null;
 
+        $isLeftOrFull = in_array($joinType, [JoinType::LEFT, JoinType::FULL], true);
+        $isRightOrFull = in_array($joinType, [JoinType::RIGHT, JoinType::FULL], true);
+
+        $rightKeys = ($isLeftOrFull || $isRightOrFull) && $joinData !== [] ? array_keys($joinData[0]) : [];
+        $leftKeysSample = ($isLeftOrFull || $isRightOrFull) && $this->data !== [] ? array_keys($this->data[0]) : [];
+        $rightKeysCount = count($rightKeys);
+        $leftKeysCount = count($leftKeysSample);
+
+        $rightNullTemplate = $isLeftOrFull && $joinData !== []
+            ? array_fill_keys(array_diff($rightKeys, $leftKeysSample), null)
+            : [];
+        $leftNullTemplate = $isRightOrFull && $this->data !== []
+            ? array_fill_keys(array_diff($leftKeysSample, $rightKeys), null)
+            : [];
+
         // ============================
         // INNER / LEFT / FULL
         // ============================
@@ -189,20 +204,26 @@ class LinqPHP
                     $result[] = array_merge($l, $r);
                 }
                 $matchedRightKeys[$key] = true;
-            } elseif (in_array($joinType, [JoinType::LEFT, JoinType::FULL], true)) {
-                $result[] = array_merge($l, $this->nullFillRightOnly($l, $joinData));
+            } elseif ($isLeftOrFull) {
+                $nullFill = count($l) === $leftKeysCount
+                    ? $rightNullTemplate
+                    : $this->nullFillRightOnly($l, $joinData);
+                $result[] = array_merge($l, $nullFill);
             }
         }
 
         // ============================
         // RIGHT / FULL
         // ============================
-        if (in_array($joinType, [JoinType::RIGHT, JoinType::FULL], true)) {
+        if ($isRightOrFull) {
             foreach ($joinData as $r) {
                 $key = $singleRight !== null ? (string)($r[$singleRight] ?? '') : $this->buildJoinKey($r, $rightFields);
 
                 if (!isset($matchedRightKeys[$key])) {
-                    $result[] = array_merge($this->nullFillRightOnly($r, $this->data), $r);
+                    $nullFill = count($r) === $rightKeysCount
+                        ? $leftNullTemplate
+                        : $this->nullFillRightOnly($r, $this->data);
+                    $result[] = array_merge($nullFill, $r);
                 }
             }
         }

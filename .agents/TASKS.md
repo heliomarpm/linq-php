@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar quick wins de correção de autoloading PSR-4, sincronização de CI e otimizações de performance\
-> **Status:** em progresso | **Progresso:** 20/29 (68%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-26
+> **Status:** em progresso | **Progresso:** 21/29 (72%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-26
 
 ## Em progresso
 
@@ -15,10 +15,7 @@
 
 ### Alta Prioridade
 
-- [ ] **T-021 · P1 · Pré-computar templates nulos em `join()` eliminando overhead de `nullFillRightOnly`**
-  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 3.1)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
-  - DoD: Array nulo gerado uma única vez antes dos loops de `LEFT`, `RIGHT` e `FULL JOIN`; suíte de testes 100% verde; redução de tempo medido em benchmarks com junções externas.
+(nenhuma)
 
 ### Média Prioridade
 
@@ -67,6 +64,10 @@
 
 
 ## Concluídas recentemente
+
+- [x] **T-021 · P1 · Pré-computar templates nulos em `join()` eliminando overhead de `nullFillRightOnly`** (2026-10-26)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
+  - Evidência: Templates de preenchimento nulo pré-computados em O(1) antes dos loops de LEFT, RIGHT e FULL JOIN com fallback seguro para linhas heterogêneas; redução de latência em ~3x no JoinFull (64ms vs 185ms para 50k registros) e JoinLeft (55ms vs 170ms); 117 testes unitários passando 100% verde (667 asserções); PHPStan e Pint aprovados.
 
 - [x] **T-020 · P1 · Sincronizar `composer.lock` e restaurar validação estrita no CI** (2026-10-26)
   - Arquivos: [composer.lock](../composer.lock), [.github/workflows/ci.yml](../.github/workflows/ci.yml)
