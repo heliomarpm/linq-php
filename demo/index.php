@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/db_fallback.php';
 
 use HeliomarPM\DbPHP\DB;
 use HeliomarPM\LinqPHP\JoinType;
@@ -1529,14 +1530,22 @@ if (($_GET['action'] ?? '') === 'bench' || ($jsonInput['action'] ?? '') === 'ben
         header('Content-Type: application/json; charset=utf-8');
     }
     $iteracoes = isset($_GET['iterations']) ? (int)$_GET['iterations'] : (isset($jsonInput['iterations']) ? (int)$jsonInput['iterations'] : 500);
-    $bench = $executarBenchmark($linqFn, $natData['run'], $iteracoes);
+    try {
+        $bench = $executarBenchmark($linqFn, $natData['run'], $iteracoes);
 
-    echo json_encode([
-        'success'   => true,
-        'cenario'   => $cenarioAtual,
-        'benchmark' => $bench,
-        'nativo'    => ['codigo' => $natData['codigo']],
-    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        echo json_encode([
+            'success'   => true,
+            'cenario'   => $cenarioAtual,
+            'benchmark' => $bench,
+            'nativo'    => ['codigo' => $natData['codigo']],
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    } catch (Throwable $e) {
+        echo json_encode([
+            'success'   => false,
+            'cenario'   => $cenarioAtual,
+            'erro'      => $e->getMessage(),
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    }
     exit;
 }
 
@@ -1577,7 +1586,14 @@ $isApiRequest = isset($_GET['api'])
     || ($_GET['format'] ?? '') === 'json'
     || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json') && !isset($_GET['html']));
 
-$benchInitial = $executarBenchmark($linqFn, $natData['run'], 200);
+$benchInitial = null;
+if ($erroExecucao === null) {
+    try {
+        $benchInitial = $executarBenchmark($linqFn, $natData['run'], 200);
+    } catch (Throwable) {
+        $benchInitial = null;
+    }
+}
 
 if ($isApiRequest) {
     if (!headers_sent()) {
@@ -1658,7 +1674,7 @@ if (!function_exists('renderGrid')) {
         $html .= "</div>";
         $html .= "<span class='badge rounded-pill fw-semibold' style='font-size: 0.72rem; {$badgeStyle}'>{$badgeCount} itens</span>";
         $html .= "</div>";
-        $html .= "<div class='card-body p-0'><div class='table-responsive'><table class='table table-sm table-dark table-hover mb-0 align-middle' style='font-size: 0.82rem; background: #161b22; border-color: #30363d;'>";
+        $html .= "<div class='card-body p-0'><div class='table-responsive'><table class='table table-sm table-dark table-hover table-zebra mb-0 align-middle' style='font-size: 0.82rem; background: #161b22; border-color: #30363d;'>";
         $html .= "<thead style='background: #1c2128; border-bottom: 1px solid #30363d;'><tr>";
 
         foreach ($colunas as $col) {
@@ -1698,7 +1714,7 @@ if (!function_exists('renderGrid')) {
                     $celula = htmlspecialchars((string)$valor);
                 }
 
-                $html .= "<td class='py-2 px-2' style='background: #161b22; color: #c9d1d9; border-color: #21262d;'>{$celula}</td>";
+                $html .= "<td class='py-2 px-2' style='color: #c9d1d9; border-color: #21262d;'>{$celula}</td>";
             }
             $html .= "</tr>";
         }
@@ -1947,6 +1963,42 @@ if (!function_exists('renderGrid')) {
             color: #ffffff;
             border-color: transparent;
             box-shadow: 0 0 10px var(--brand-purple-glow);
+        }
+
+        /* Grid de Resultados Zebrada e Dark Theme */
+        .table-zebra {
+            --zebra-odd: #161b22;
+            --zebra-even: #1c2129;
+            --zebra-hover: #262c36;
+            border-color: #30363d;
+            font-size: 0.82rem;
+        }
+
+        .table-zebra thead th {
+            background-color: #1c2128 !important;
+            border-bottom: 1px solid #30363d !important;
+            color: var(--brand-text-secondary);
+            font-weight: 600;
+            font-size: 0.74rem;
+            letter-spacing: 0.04em;
+        }
+
+        .table-zebra tbody tr {
+            border-color: #21262d;
+            transition: background-color 0.15s ease;
+        }
+
+        .table-zebra tbody tr:nth-child(odd) td {
+            background-color: var(--zebra-odd) !important;
+        }
+
+        .table-zebra tbody tr:nth-child(even) td {
+            background-color: var(--zebra-even) !important;
+        }
+
+        .table-zebra tbody tr:hover td {
+            background-color: var(--zebra-hover) !important;
+            color: #ffffff !important;
         }
     </style>
 </head>
@@ -2322,7 +2374,7 @@ if (!function_exists('renderGrid')) {
                                 </div>
                                 <div class="card-body p-0">
                                     <div class="table-responsive">
-                                        <table class="table table-sm table-dark table-hover mb-0 align-middle" style="font-size: 0.82rem; background: #161b22; border-color: #30363d;">
+                                        <table class="table table-sm table-dark table-hover table-zebra mb-0 align-middle" style="font-size: 0.82rem; border-color: #30363d;">
                                             <thead style="background: #1c2128; border-bottom: 1px solid #30363d;">
                                                 <tr>
                                                     <th v-for="col in colunas" :key="col" class="text-secondary py-2 px-2" style="font-weight: 600; font-size: 0.74rem; letter-spacing: 0.04em; background: #1c2128; border-color: #30363d;">
@@ -2332,7 +2384,7 @@ if (!function_exists('renderGrid')) {
                                             </thead>
                                             <tbody>
                                                 <tr v-for="(linha, index) in linhasFiltradas" :key="index" style="border-color: #21262d;">
-                                                    <td v-for="col in colunas" :key="col" class="py-2 px-2" style="background: #161b22; color: #c9d1d9; border-color: #21262d;">
+                                                    <td v-for="col in colunas" :key="col" class="py-2 px-2" style="color: #c9d1d9; border-color: #21262d;">
                                                         <span v-if="isNull(linha[col])" class="badge font-monospace" style="font-size: 0.68rem; background: rgba(110, 118, 129, 0.2); color: #8b949e; border: 1px solid #30363d;">null</span>
                                                         <span v-else-if="isBool(linha[col])" class="badge" :style="linha[col] ? 'background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.35);' : 'background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35);'">
                                                             {{ linha[col] ? 'Sim' : 'Não' }}

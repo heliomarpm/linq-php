@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar quick wins de correção de autoloading PSR-4, sincronização de CI e otimizações de performance\
-> **Status:** em progresso | **Progresso:** 31/32 (96%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
+> **Status:** concluído | **Progresso:** 32/32 (100%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
 
 ## Em progresso
 
@@ -23,14 +23,15 @@
 
 ### Baixa Prioridade
 
-- [ ] **T-031 · P3 · Implementar estilização de tabela zebrada na grid de resultados da demo web**
-  - Origem: manual
-  - Arquivos: [demo/index.php](../demo/index.php)
-  - DoD: Linhas pares da tabela com fundo sutil alternado; remoção de cor de fundo fixa inline nos `<td>`; alinhamento visual com o dark theme do projeto.
+(nenhuma)
 
 
 
 ## Concluídas recentemente
+
+- [x] **T-031 · P3 · Implementar estilização de tabela zebrada na grid de resultados da demo web** (2026-10-27)
+  - Arquivos: [demo/index.php](../demo/index.php)
+  - Evidência: Classe CSS `.table-zebra` implementada com tokens harmônicos dark theme (`--zebra-odd: #161b22`, `--zebra-even: #1c2129`, `--zebra-hover: #262c36`); remoção de cor de fundo fixa inline (`background: #161b22`) nos elementos `<td>` tanto no helper PHP `renderGrid()` quanto na tabela reativa Vue 3 de dados processados; suporte a efeito de hover interativo com contraste reforçado; integridade visual preservada em todos os 15 cenários; 122 testes unitários passando 100% verde (688 asserções); PHPStan nível 5 e Pint aprovados sem erros.
 
 - [x] **T-030 · P3 · Implementar coloração zebrada (linhas alternadas) na grid de benchmarks CLI** (2026-10-27)
   - Arquivos: [benchmarks/BenchmarkRunner.php](../benchmarks/BenchmarkRunner.php)
