@@ -545,10 +545,15 @@ class LinqPHP
             }
         } else {
             // Agrupamento composto (Multi-Key)
-            $groupingFieldsFlip = array_flip($groupingFields);
             foreach ($this->data as $item) {
-                $groupHeader = array_intersect_key($item, $groupingFieldsFlip);
-                $groupKey = implode('_', $groupHeader);
+                $groupHeader = [];
+                $keyParts = [];
+                foreach ($groupingFields as $field) {
+                    $val = $item[$field] ?? null;
+                    $groupHeader[$field] = $val;
+                    $keyParts[] = (string)$val;
+                }
+                $groupKey = implode("\0", $keyParts);
 
                 $groupedResult[$groupKey] ??= $groupHeader;
 

@@ -1,101 +1,106 @@
-# Assessment Crítico: LinqPHP
+# Assessment Crítico: LinqPHP (Fase 2)
 
-Auditoria técnica de arquitetura, código-fonte, performance, testes e infraestrutura de CI/CD.
-
----
-
-## 1. Fraquezas Críticas e Arquiteturais
-
-### 1.1. Quebra de PSR-4: `Fatal error` no autoload direto de `JoinType`
-- **Arquivo:** `src/LinqPHP.php:L10-L16`
-- **Problema:** O enum `JoinType` está declarado no mesmo arquivo de `LinqPHP.php`.
-- **Impacto:** O Composer mapeia `"HeliomarPM\\LinqPHP\\": "src/"`. Se um consumidor fizer `use HeliomarPM\LinqPHP\JoinType;` e instanciar `JoinType::INNER` antes de chamar `LinqPHP`, o PHP dispara:
-  ```text
-  Fatal error: Uncaught Error: Class "HeliomarPM\LinqPHP\JoinType" not found
-  ```
-- **Solução:** Extrair o enum para seu próprio arquivo `src/JoinType.php` em conformidade com PSR-1 e PSR-4.
-
-### 1.2. Dessincronização do `composer.lock` e Falha no CI
-- **Arquivos:** `composer.json`, `composer.lock`, `.github/workflows/ci.yml:L32`
-- **Problema:** `composer.json` foi editado para aceitar múltiplas versões do PHPUnit (`^11.0 || ^12.0 || ^13.4`), porém o `composer.lock` não foi regerado.
-- **Impacto:** O comando `composer validate --strict` falha imediatamente com código 1, travando a pipeline do GitHub Actions.
-- **Solução:** Sincronizar o lockfile executando `composer update --lock`.
-
-### 1.3. Divergência na Matriz do CI vs. Requisito PHP 8.1
-- **Arquivos:** `composer.json`, `.github/workflows/ci.yml:L18`
-- **Problema:** O projeto tem como diretriz base `require: php >= 8.1`. No entanto, a matriz do CI removeu `8.1` (`php: ['8.2', '8.3', '8.4']`).
-- **Impacto:** Regressões incompatíveis com a sintaxe ou funções do PHP 8.1 podem passar despercebidas.
-- **Solução:** Restaurar `8.1` no CI combinando testes com dependências mínimas (`--prefer-lowest`).
-
-### 1.4. Inconsistência de Case-Insensitivity e Corrupção Multibyte em `where()`
-- **Arquivo:** `src/LinqPHP.php:L373-L375`, `L1196`, `L1222-L1224`
-- **Problema:** `where()` força `strtolower()` incondicionalmente em todas as strings.
-- **Impacto:**
-  1. Impossibilita buscas exatas (case-sensitive) para hashes, UUIDs, senhas, SKUs ou códigos.
-  2. `strtolower()` nativo do PHP corrompe strings UTF-8 acentuadas (`"João"`, `"Água"`, `"Maçã"`).
-- **Solução:** Suportar flag opcional `caseSensitive: true` e utilizar `mb_strtolower` com fallback nativo.
-
-### 1.5. Risco de Colisão de Chaves Compostas no `groupBy()` com Delimitador `_`
-- **Arquivo:** `src/LinqPHP.php:L458`
-- **Problema:** Grupos múltiplos usam `implode('_', ...)`, enquanto `join()` usa `implode("\0", ...)`.
-- **Impacto:** Valores contendo underscores (ex: `['a_b', 'c']` e `['a', 'b_c']`) colidem na mesma chave `'a_b_c'`, fundindo registros indevidamente.
-- **Solução:** Unificar o uso do delimitador nulo `"\0"` em `groupBy()`.
-
-### 1.6. Script `reset` Incompatível com Windows Nativo
-- **Arquivo:** `composer.json:L65`
-- **Problema:** O script define `"reset": ["rm -rf vendor composer.lock", "composer install"]`.
-- **Impacto:** `rm -rf` não existe no PowerShell ou CMD do Windows, gerando erro de execução.
-- **Solução:** Substituir por script PHP multiplataforma via `@php`.
+Auditoria técnica pós-roadmap: análise aprofundada de arquitetura, segurança, integridade relacional, gargalos de performance, duplicidades e oportunidades de evolução LINQ.
 
 ---
 
-## 2. Duplicidades Identificadas para Mesclar
+## 1. Fraquezas Críticas e Confiabilidade (Bugs Latentes e Riscos)
 
-### 2.1. Blocos Idênticos de Reflection e Ordenação em `orderByKey()`
-- **Arquivo:** `src/LinqPHP.php:L684-L699` e `L708-L723`
-- **Problema:** Repetição linha por linha da verificação de parâmetros via `ReflectionFunction` e aplicação de `usort` ou `array_multisort`.
-- **Solução:** Extrair para método auxiliar privado `sortWithCallable(callable $key, bool $isDesc): void`.
+### 1.1. Risco de Colisão e Desordenação de Chaves no `groupBy()` Multi-Chave
+- **Arquivo:** `src/LinqPHP.php:548-553`
+- **Problema:** No agrupamento composto por mais de uma chave, o código utiliza `array_intersect_key` e `implode('_', $groupHeader)`.
+- **Impactos:**
+  1. **Colisão de Valores:** Strings contendo `_` colidem fatalmente. Exemplo: `['uf' => 'SP_CENTRO', 'regiao' => 'SUL']` e `['uf' => 'SP', 'regiao' => 'CENTRO_SUL']` produzem ambas a chave `'SP_CENTRO_SUL'`, fundindo indevidamente dois grupos distintos.
+  2. **Inconsistência por Ordem de Atributos:** `array_intersect_key($item, ...)` preserva a ordem em que as propriedades aparecem em cada `$item`. Se o item A tiver chaves `['uf' => 'SP', 'tipo' => 'PJ']` e o item B tiver `['tipo' => 'PJ', 'uf' => 'SP']`, o `implode` gera chaves distintas (`'SP_PJ'` vs `'PJ_SP'`), separando registros que deveriam estar no mesmo grupo.
+- **Solução Recomendada:** Iterar ordenadamente sobre `$groupingFields` construindo a chave canônica com delimitador nulo `"\0"` (mesmo padrão seguro já empregado em `buildJoinKey()`).
 
-### 2.2. Validação Duplicada de Comparator em `orderBy()`
-- **Arquivo:** `src/LinqPHP.php:L840-L845` e `L851-L856`
-- **Problema:** Validação duplicada que checa se o callable possui 2 parâmetros em ordenação multi-critério.
-- **Solução:** Reutilizar método validador único.
+### 1.2. RCE Potencial e Falta de Sandbox no Playground Web da Demo
+- **Arquivo:** `demo/index.php:550`
+- **Problema:** O método `$avaliarLinq` executa `eval($prefix . $cleanCode)` diretamente sobre o valor recebido via `$_POST['codigo_customizado']`.
+- **Impacto:** Como o app está publicado publicamente (Vercel), qualquer usuário anônimo pode submeter requisições POST com chamadas perigosas (`exec`, `shell_exec`, `system`, `passthru`, `file_get_contents`, `getenv`, `phpinfo`, etc.), abrindo vetor de leitura de variáveis de ambiente, consumo de cota ou inspeção de arquivos do servidor.
+- **Solução Recomendada:** Implementar um validador léxico baseado em `token_get_all()` ou blacklist estrita rejeitando chamadas a funções de sistema, reflexão agressiva, E/S de arquivos e funções de rede antes de invocar `eval()`.
 
-### 2.3. Duplicação de Loop e Soma em `avg()` vs `sum()`
-- **Arquivo:** `src/LinqPHP.php:L1027-L1045` e `L997-L1014`
-- **Problema:** `avg()` duplica todo o loop de acumulação já implementado em `sum()`.
-- **Solução:** Delegar o cálculo: `$count = count($this->data); return $count === 0 ? null : (float)($this->sum($field) / $count);`.
+### 1.3. Matriz do CI Defasada e Ação Inexistente no GitHub Actions
+- **Arquivo:** `.github/workflows/ci.yml:18, 22`
+- **Problema:** 
+  1. A matriz do workflow testa apenas `php: ['8.2', '8.3', '8.4']`, omitindo o **PHP 8.1**, que é a versão base mínima declarada no `composer.json` e na regra de compatibilidade do `AGENTS.md`.
+  2. A linha 22 declara `uses: actions/checkout@v7` (versão inexistente do runner; a versão corrente é `@v4`).
+- **Impacto:** Incompatibilidades com PHP 8.1 podem ser introduzidas sem detecção pelo CI.
+- **Solução Recomendada:** Restaurar `8.1` na matriz e corrigir o checkout para `actions/checkout@v4`.
 
-### 2.4. Código Duplicado nos Cenários da Demo
+### 1.4. Operadores Incompletos e `in_array` Frouxo em `where()`
+- **Arquivo:** `src/LinqPHP.php:1324-1335`
+- **Problema:**
+  1. O método suporta apenas `>`, `>=`, `<`, `<=`, `=`, `in`, `startswith`, `endswith` e `contains`. Faltam operadores universais como `!=`, `<>`, `not in`, `between`, `not between`.
+  2. O operador `in` utiliza `in_array($itemValue, $value)` sem o terceiro parâmetro booleano de tipagem estrita (`strict: true`).
+- **Impacto:** Falsos positivos clássicos do PHP em comparações não estritas envolvendo `0`, strings vazias ou booleanos.
+- **Solução Recomendada:** Adicionar `strict: true` em `in_array` e implementar os operadores relacionais faltantes.
+
+---
+
+## 2. Gargalos de Performance e Consumo de Memória
+
+### 2.1. `distinct()` com `serialize()` Incondicional e Sobrecarga de RAM
+- **Arquivo:** `src/LinqPHP.php:724-743`
+- **Gargalo:** Cada elemento da coleção é convertido em string via `serialize($item)` para ser armazenado como índice no array `$seenItems`.
+- **Impacto:** Em coleções com 50.000 ou 100.000 registros compostos por dezenas de colunas, a serialização gera centenas de megabytes em strings temporárias, causando picos de GC e desvio padrão alto no tempo de execução.
+- **Otimização:**
+  1. Suportar `distinct(string|callable|null $keySelector = null)` (análogo ao `DistinctBy` do LINQ).
+  2. Quando fornecida uma coluna simples (ex: `distinct('cpf')`), usar lookup direto `$seenItems[(string)$item[$keySelector]] = true`, reduzindo a memória em até 80% e eliminando o custo do `serialize()`.
+
+### 2.2. Complexidade O(N * M) no Operador `in` de Filtros
+- **Arquivo:** `src/LinqPHP.php:1330`
+- **Gargalo:** Em filtros como `->where(['categoria_id', 'in', $listaComMilItens])`, o `in_array()` efetua busca linear O(M) para cada uma das N linhas da coleção, resultando em complexidade O(N * M).
+- **Otimização:** Na normalização das condições (`normalizeWhereConditions`), converter o array `$value` do operador `in` em um hashmap via `array_flip($value)` e verificar pertinência com `isset($valueLookup[$itemValue])`, reduzindo o custo de filtragem de O(N * M) para **O(N)**.
+
+### 2.3. Micro-Overhead Cumulativo de Telemetria Incondicional
+- **Arquivo:** `src/LinqPHP.php:19-21, 1463`
+- **Gargalo:** A cada chamada encadeada (`join`, `where`, `groupBy`, `select`, etc.), o método executa `$this->endTime = microtime(true)`.
+- **Impacto:** Em fluxos com dezenas de transformações consecutivas que culminam em `toArray()` (o uso comum em 99% das aplicações de produção), as chamadas de sistema repetidas de relógio (`microtime`) são inúteis, pois a telemetria só é utilizada quando o consumidor chama `toObject()`.
+- **Otimização:** Atualizar `$this->endTime` de forma preguiçosa (lazy) apenas quando `toObject()` ou `statisticUsage()` for requisitado.
+
+---
+
+## 3. Duplicidades Identificadas para Mesclar
+
+### 3.1. Duplicação de Snippet e Execução nos 15 Cenários da Demo
 - **Arquivo:** `demo/index.php`
-- **Problema:** Cada um dos 14 cenários define o mesmo pipeline LINQ duas vezes: como string de exibição (`'codigo'`) e como Closure executável (`'run'`).
-- **Solução:** Centralizar o runner ou gerar o snippet dinamicamente para evitar descompassos.
+- **Problema:** Cada um dos 15 cenários de demonstração replica a mesma lógica duas vezes: uma como string de código formatada para exibição (`'codigo'`) e outra como Closure PHP executável (`'run'`).
+- **Impacto:** Manutenção propensa a erros: quando um cenário é aprimorado, o desenvolvedor precisa lembrar de atualizar tanto a string visual quanto a Closure executável.
+- **Solução Recomendada:** Centralizar a execução executando o snippet do cenário por meio do runner avaliador ou extraindo funções helper compartilhadas.
+
+### 3.2. Deduplicação da Construção de Chaves Compostas (Tuplas)
+- **Arquivo:** `src/LinqPHP.php:550` vs `1227`
+- **Problema:** `buildJoinKey()` e `groupBy()` constroem chaves de agregação/junção com implementações separadas e com comportamentos divergentes (um usa `\0` e outro usa `_`).
+- **Solução Recomendada:** Reutilizar um método privado `buildCompositeKey(array $item, array $fields): string` para ambos.
 
 ---
 
-## 3. Oportunidades de Performance e Memória
+## 4. Quick Wins de Funcionalidades LINQ (Alto Valor e Baixo Esforço)
 
-### 3.1. Eliminar Sobrecarga O(N) de `nullFillRightOnly()` em Joins
-- **Arquivo:** `src/LinqPHP.php:L201`, `L213`, `L1167-L1177`
-- **Gargalo:** Em linhas não pareadas de `LEFT`, `RIGHT` ou `FULL JOIN`, o código executa repetidamente `array_keys`, `array_diff` e `array_fill_keys`.
-- **Otimização:** Pré-computar os templates de preenchimento nulo uma única vez antes dos loops.
+### 4.1. Método `skip(int $count): self`
+- Permite fatiamento com deslocamento para paginação eficiente combinada com `take()`.
+- Uso: `LinqPHP::from($vendas)->skip(20)->take(10)->toArray();`.
 
-### 3.2. Fast-Path de Chave Simples no `groupBy()`
-- **Arquivo:** `src/LinqPHP.php:L458-L461`
-- **Gargalo:** Agrupamentos por uma única coluna executam `array_intersect_key` duas vezes por registro, além de `implode('_', ...)`. Em 100.000 itens são 200.000 chamadas desnecessárias.
-- **Otimização:** Fast-path para `count($groupingFields) === 1`, obtendo a chave diretamente via `$item[$field]`.
+### 4.2. Método `first(?callable $predicate = null): mixed`
+- O `firstOrDefault()` retorna `null` se a coleção for vazia. No LINQ canônico, `First()` lança exceção (`UnderflowException` ou `RuntimeException`) quando não encontra registros. Essencial para garantir integridade em buscas por ID que exigem existência obrigatória.
 
-### 3.3. Acumulação O(1) de Memória no `avg` dentro de `groupBy()`
-- **Arquivo:** `src/LinqPHP.php:L1311`
-- **Gargalo:** Coleta todos os números em arrays auxiliares (`$groupedResult[$groupKey][$fieldName][]`), alocando O(N) memória para processar a média no final.
-- **Otimização:** Acumular soma e quantidade diretamente em acumuladores escalares O(1).
+### 4.3. Métodos `last(?callable $predicate = null)` e `lastOrDefault()`
+- Recuperação direta do último elemento da coleção ou do último elemento que satisfaça um predicado.
 
-### 3.4. Eliminação de Alocações Desnecessárias de Arrays no `select()`
-- **Arquivo:** `src/LinqPHP.php:L537`
-- **Gargalo:** Uso de `array_replace($nullTemplate, array_intersect_key(...))` aloca dois arrays intermediários para cada linha da coleção.
-- **Otimização:** Construção direta com `foreach` simples por coluna selecionada.
+### 4.4. Métodos de Short-Circuit O(1): `any()` e `all()`
+- `any(?callable $predicate = null): bool`: retorna `true` assim que o primeiro elemento coincidir (interrompe o loop no primeiro acerto).
+- `all(callable $predicate): bool`: retorna `false` assim que qualquer elemento falhar (interrompe o loop no primeiro erro).
 
-### 3.5. Fast-Path no `unionAll()` para Esquemas Idênticos
-- **Arquivo:** `src/LinqPHP.php:L105-L125`
-- **Gargalo:** Varre todas as chaves de todas as linhas de ambas as coleções antes de normalizar, mesmo quando as colunas já são idênticas.
-- **Otimização:** Detecção rápida do esquema da primeira linha para executar `array_merge` direto.
+### 4.5. Método `pluck(string $column, ?string $key = null): array`
+- Extrai diretamente um array unidimensional plano contendo apenas os valores da coluna especificada, opcionalmente indexado por outra coluna.
+- Uso: `LinqPHP::from($usuarios)->pluck('email');` // `['user1@mail.com', 'user2@mail.com']`.
+
+---
+
+## 5. Qualidade de Código e Análise Estática
+
+### 5.1. Elevação do PHPStan do Nível 5 para o Nível 8 / Max
+- **Situação Atual:** O `phpstan.neon` está fixado no `level: 5`.
+- **Diagnóstico:** Ao rodar no `level: 8`, foram identificados exatamente 24 avisos de `missingType.iterableValue` em métodos auxiliares privados (ex: falta de `@param array<string, mixed>` ou `@return array<string, mixed>`). Não há nenhum erro estrutural de tipo no código.
+- **Oportunidade:** Tipar esses 24 parâmetros e retornos de docblock permite elevar a biblioteca para o **nível 8 do PHPStan**, garantindo robustez de tipagem de nível sênior.

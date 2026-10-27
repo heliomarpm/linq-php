@@ -152,4 +152,57 @@ class GroupByTest extends TestCase
         $this->assertEquals(20.0, $result[0]['v1_(avg)']);
     }
 
+    public function testGroupByMultiKeyWithoutCollisionOnUnderscore()
+    {
+        $data = [
+            ['uf' => 'SP_CENTRO', 'regiao' => 'SUL', 'valor' => 100],
+            ['uf' => 'SP', 'regiao' => 'CENTRO_SUL', 'valor' => 200],
+            ['uf' => 'SP_CENTRO', 'regiao' => 'SUL', 'valor' => 50],
+        ];
+
+        $result = LinqPHP::from($data)
+            ->groupBy(['uf', 'regiao'], ['sum' => ['valor']])
+            ->toArray();
+
+        $this->assertCount(2, $result);
+        $this->assertEquals('SP_CENTRO', $result[0]['uf']);
+        $this->assertEquals('SUL', $result[0]['regiao']);
+        $this->assertEquals(150, $result[0]['valor']);
+
+        $this->assertEquals('SP', $result[1]['uf']);
+        $this->assertEquals('CENTRO_SUL', $result[1]['regiao']);
+        $this->assertEquals(200, $result[1]['valor']);
+    }
+
+    public function testGroupByMultiKeyWithDifferentKeyOrdersInItems()
+    {
+        $data = [
+            ['uf' => 'SP', 'tipo' => 'PJ', 'valor' => 100],
+            ['tipo' => 'PJ', 'uf' => 'SP', 'valor' => 200],
+        ];
+
+        $result = LinqPHP::from($data)
+            ->groupBy(['uf', 'tipo'], ['sum' => ['valor']])
+            ->toArray();
+
+        $this->assertCount(1, $result);
+        $this->assertEquals('SP', $result[0]['uf']);
+        $this->assertEquals('PJ', $result[0]['tipo']);
+        $this->assertEquals(300, $result[0]['valor']);
+    }
+
+    public function testGroupByMultiKeyWithMissingFieldsInSomeItems()
+    {
+        $data = [
+            ['uf' => 'SP', 'tipo' => 'PJ', 'valor' => 100],
+            ['uf' => 'SP', 'valor' => 50], // tipo is null/missing
+            ['tipo' => 'PJ', 'valor' => 25], // uf is null/missing
+        ];
+
+        $result = LinqPHP::from($data)
+            ->groupBy(['uf', 'tipo'], ['sum' => ['valor']])
+            ->toArray();
+
+        $this->assertCount(3, $result);
+    }
 }

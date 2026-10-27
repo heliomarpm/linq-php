@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
-> **Meta:** Executar quick wins de correção de autoloading PSR-4, sincronização de CI e otimizações de performance\
-> **Status:** concluído | **Progresso:** 32/32 (100%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
+> **Meta:** Executar plano de melhorias, segurança, performance e novos métodos LINQ do Assessment Fase 2\
+> **Status:** em progresso | **Progresso:** 33/46 (71%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
 
 ## Em progresso
 
@@ -15,19 +15,146 @@
 
 ### Alta Prioridade
 
-(nenhuma)
+- [ ] **T-034 · P1 · Blindar sandbox do playground web contra RCE e chamadas perigosas**
+  - Origem: `-assessment` (item 1.2)
+  - Arquivos: [demo/index.php](../demo/index.php)
+  - Dependências: Nenhuma
+  - Critérios de aceite:
+    1. Implementar validador léxico pré-execução com `token_get_all()` no `$avaliarLinq`;
+    2. Bloquear chamadas de sistema (`exec`, `passthru`, `system`, `shell_exec`, `proc_open`, `popen`);
+    3. Bloquear E/S e manipulação de arquivos/ambiente (`file_get_contents`, `file_put_contents`, `unlink`, `rmdir`, `getenv`, `putenv`, `phpinfo`);
+    4. Exibir mensagem de erro amigável de segurança no editor da demo quando um token ou chamada bloqueada for detectada, sem executar `eval()`;
+    5. Todos os 15 cenários padrão continuam executando normalmente.
+
+- [ ] **T-035 · P1 · Implementar operadores relacionais faltantes e `strict: true` em `where()`**
+  - Origem: `-assessment` (item 1.4)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/WhereTest.php](../tests/Unit/WhereTest.php)
+  - Dependências: Nenhuma
+  - Critérios de aceite:
+    1. Suportar operadores `!=`, `<>`, `not in`, `between`, `not between` no `where()`;
+    2. Aplicar comparação estrita (`strict: true`) no `in_array` do operador `in`;
+    3. Garantir que valores `0`, strings e `null` não gerem falsos positivos em comparações frouxas;
+    4. Testes unitários cobrindo cada novo operador e a estrita diferenciação de tipos;
+    5. Suíte de testes 100% verde.
 
 ### Média Prioridade
 
-(nenhuma)
+- [ ] **T-036 · P2 · Otimizar operador `in` em `where()` com hashmap lookup O(1)**
+  - Origem: `-assessment` (item 2.2)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/WhereTest.php](../tests/Unit/WhereTest.php)
+  - Dependências: T-035
+  - Critérios de aceite:
+    1. Converter o array `$value` do operador `in` em hashmap indexado via `array_flip` durante a normalização;
+    2. Executar checagem de pertinência O(1) com `isset()` em vez de varredura linear O(M) de `in_array()`;
+    3. Manter paridade estrita de comportamento;
+    4. Testes unitários com listas grandes passando 100% verde.
+
+- [ ] **T-037 · P2 · Otimizar `distinct()` com suporte a `keySelector` e eliminar `serialize()` para chaves simples**
+  - Origem: `-assessment` (item 2.1)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/DistinctTest.php](../tests/Unit/DistinctTest.php)
+  - Dependências: Nenhuma
+  - Critérios de aceite:
+    1. Atualizar assinatura para `distinct(string|callable|null $keySelector = null): self`;
+    2. Quando `$keySelector` for string de coluna única, usar lookup direto `$seenItems[(string)$item[$keySelector]]` sem chamar `serialize()`;
+    3. Quando `$keySelector` for callable, avaliar predicado projetor de chave;
+    4. Quando `$keySelector === null`, manter fallback de deduplicação integral do registro;
+    5. Testes unitários validando desduplicação por coluna, por closure e comportamento legado;
+    6. Suíte de testes 100% verde.
+
+- [ ] **T-038 · P2 · Tornar telemetria de execução preguiçosa (lazy) para `toObject()`**
+  - Origem: `-assessment` (item 2.3)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/LinqPHPTest.php](../tests/Unit/LinqPHPTest.php)
+  - Dependências: Nenhuma
+  - Critérios de aceite:
+    1. Eliminar chamadas incondicionais repetitivas a `microtime(true)` em cada método encadeado fluente;
+    2. Registrar tempo de término somente na chamada terminal de `toObject()` ou `statisticUsage()`;
+    3. Garantir que `toArray()` execute sem qualquer overhead de syscall de relógio;
+    4. Suíte de testes e benchmarks 100% preservados.
+
+- [ ] **T-039 · P2 · Deduplicar construção de chaves compostas entre `join()` e `groupBy()`**
+  - Origem: `-assessment` (item 3.2)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
+  - Dependências: T-033
+  - Critérios de aceite:
+    1. Extrair helper privado `buildCompositeKey(array $item, array $fields): string`;
+    2. Reutilizar método em `join()` e `groupBy()`, eliminando duplicação de lógica de tuplas com separador nulo;
+    3. 100% dos testes existentes de join e group passando.
+
+- [ ] **T-040 · P2 · Deduplicar definição e execução nos 15 cenários da demo web**
+  - Origem: `-assessment` (item 3.1)
+  - Arquivos: [demo/index.php](../demo/index.php)
+  - Dependências: T-034
+  - Critérios de aceite:
+    1. Unificar o runner dos cenários para que a execução utilize o próprio pipeline ou funções declaradas de forma centralizada;
+    2. Evitar divergência entre o código exibido e o código processado;
+    3. Todos os 15 cenários continuam renderizando com 100% de paridade.
 
 ### Baixa Prioridade
 
-(nenhuma)
+- [ ] **T-041 · P3 · Implementar método de paginação fluente `skip(int $count)`**
+  - Origem: `-assessment` (item 4.1)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/PaginationTest.php](../tests/Unit/PaginationTest.php)
+  - Dependências: Nenhuma
+  - Critérios de aceite:
+    1. Método `skip(int $count): self` implementado com validação para `$count >= 0`;
+    2. Fatiamento em `array_slice` reindexando a lista mantendo a interface fluente;
+    3. Composição perfeita com `take()` para paginação idiomática: `from($dados)->skip(10)->take(5)`;
+    4. Novos testes unitários cobrindo offset válido, zero, maior que o total e negativo (lançando `InvalidArgumentException`).
+
+- [ ] **T-042 · P3 · Implementar método `first(?callable $predicate = null)` com exceção de vazio**
+  - Origem: `-assessment` (item 4.2)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/FirstTest.php](../tests/Unit/FirstTest.php)
+  - Dependências: Nenhuma
+  - Critérios de aceite:
+    1. Método `first(?callable $predicate = null): mixed` implementado;
+    2. Lançar `UnderflowException` se a coleção estiver vazia ou se nenhum elemento satisfizer o predicado;
+    3. Retornar o primeiro item correspondente sem alterar a coleção;
+    4. Novos testes unitários validando acerto, predicado e exceção em caso de vazio.
+
+- [ ] **T-043 · P3 · Implementar métodos terminais `last()` e `lastOrDefault()`**
+  - Origem: `-assessment` (item 4.3)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/LastTest.php](../tests/Unit/LastTest.php)
+  - Dependências: Nenhuma
+  - Critérios de aceite:
+    1. Métodos `last(?callable $predicate = null): mixed` e `lastOrDefault(?callable $predicate = null, mixed $default = null): mixed` implementados;
+    2. `last()` lança `UnderflowException` se vazio ou nenhum item coincidir;
+    3. `lastOrDefault()` retorna `$default` (padrão `null`) se vazio ou não encontrado;
+    4. Novos testes unitários com e sem predicado.
+
+- [ ] **T-044 · P3 · Implementar métodos booleanos de short-circuit `any()` e `all()`**
+  - Origem: `-assessment` (item 4.4)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/AnyAllTest.php](../tests/Unit/AnyAllTest.php)
+  - Dependências: Nenhuma
+  - Critérios de aceite:
+    1. `any(?callable $predicate = null): bool`: se sem predicado, retorna se `$this->data !== []`; com predicado, retorna `true` assim que o primeiro elemento coincidir (O(1));
+    2. `all(callable $predicate): bool`: retorna `false` assim que qualquer elemento falhar (O(1)); em coleção vazia retorna `true`;
+    3. Novos testes unitários comprovando o short-circuit e casos de borda.
+
+- [ ] **T-045 · P3 · Implementar método de projeção plana `pluck(string $column, ?string $key = null)`**
+  - Origem: `-assessment` (item 4.5)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/PluckTest.php](../tests/Unit/PluckTest.php)
+  - Dependências: Nenhuma
+  - Critérios de aceite:
+    1. Método terminal `pluck(string $column, ?string $key = null): array` implementado;
+    2. Extrair vetor unidimensional de valores ou dicionário indexado por `$key`;
+    3. Novos testes unitários cobrindo extração simples e indexada.
+
+- [ ] **T-046 · P3 · Elevar análise estática do PHPStan para Nível 8 com tipagem completa de iteráveis**
+  - Origem: `-assessment` (item 5.1)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [phpstan.neon](../phpstan.neon)
+  - Dependências: T-033, T-035, T-037, T-039, T-041, T-042, T-043, T-044, T-045
+  - Critérios de aceite:
+    1. Adicionar anotações PHPDoc de iteráveis (`@param array<...>`, `@return array<...>`) nos 24 pontos identificados nos métodos privados;
+    2. Configurar `phpstan.neon` para `level: 8`;
+    3. Executar `composer lint` com zero erros reportados.
 
 
 
 ## Concluídas recentemente
+
+- [x] **T-033 · P1 · Corrigir risco de colisão e desordenação em `groupBy()` multi-chave** (2026-10-27)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/GroupByTest.php](../tests/Unit/GroupByTest.php)
+  - Evidência: Eliminação completa de `array_intersect_key` e `implode('_')` no agrupamento multi-chave; tupla de chave composta construída com delimitador nulo `"\0"` ordenado estritamente pela sequência declarada em `$groupingFields`; prevenção de colisão de strings contendo underlines (ex: `'SP_CENTRO'` + `'SUL'` vs `'SP'` + `'CENTRO_SUL'`); unificação de registros com chaves associativas em ordens arbitrárias; 3 novos testes unitários adicionados (`testGroupByMultiKeyWithoutCollisionOnUnderscore`, `testGroupByMultiKeyWithDifferentKeyOrdersInItems`, `testGroupByMultiKeyWithMissingFieldsInSomeItems`); suíte com 125 testes unitários passando 100% verde (700 asserções); PHPStan nível 5 e Pint aprovados sem erros.
 
 - [x] **T-031 · P3 · Implementar estilização de tabela zebrada na grid de resultados da demo web** (2026-10-27)
   - Arquivos: [demo/index.php](../demo/index.php)
