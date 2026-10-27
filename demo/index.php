@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/db_fallback.php';
+require_once __DIR__ . '/sandbox_validator.php';
 
 // Servir Favicon estático imediatamente para /favicon.ico ou /favicon.svg
 if (in_array(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), ['/favicon.ico', '/favicon.svg'], true)) {
@@ -12,6 +13,7 @@ if (in_array(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), ['/favicon.
 }
 
 use HeliomarPM\DbPHP\DB;
+use HeliomarPM\LinqPHP\Demo\CodeSandboxValidator;
 use HeliomarPM\LinqPHP\JoinType;
 use HeliomarPM\LinqPHP\LinqPHP;
 
@@ -537,6 +539,9 @@ $resultado = [];
 
 // Função avaliadora do sandbox interativo
 $avaliarLinq = function (string $rawCode) use ($clientes, $produtos, $produtosOutlet, $vendas): stdClass {
+    // Sanitização e validação léxica contra RCE, I/O e chamadas perigosas
+    CodeSandboxValidator::assertSafe($rawCode);
+
     $cleanCode = trim($rawCode);
     $prefix = "use HeliomarPM\\LinqPHP\\LinqPHP;\nuse HeliomarPM\\LinqPHP\\JoinType;\nuse HeliomarPM\\DbPHP\\DB;\n";
     if (preg_match('/^(LinqPHP::|\(?new\s+LinqPHP|DB::|\(?new\s+DB)/i', $cleanCode)) {
@@ -2192,6 +2197,9 @@ if (!function_exists('renderGrid')) {
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="text-white fw-bold small text-uppercase" style="letter-spacing: 0.05em;">💻 Pipeline LINQ Editável</span>
                                     <span class="small d-none d-sm-inline" style="color: #8b949e;">(PHP 8.1+)</span>
+                                    <span class="badge bg-success-subtle text-success border border-success border-opacity-25 font-monospace" style="font-size: 0.7rem;">
+                                        <i class="bi bi-shield-check me-1"></i> Sandbox Blindada
+                                    </span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <button

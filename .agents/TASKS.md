@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar plano de melhorias, segurança, performance e novos métodos LINQ do Assessment Fase 2\
-> **Status:** em progresso | **Progresso:** 34/47 (72%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
+> **Status:** em progresso | **Progresso:** 35/47 (74%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
 
 ## Em progresso
 
@@ -14,17 +14,6 @@
 ## Backlog
 
 ### Alta Prioridade
-
-- [ ] **T-034 · P1 · Blindar sandbox do playground web contra RCE e chamadas perigosas**
-  - Origem: `-assessment` (item 1.2)
-  - Arquivos: [demo/index.php](../demo/index.php)
-  - Dependências: Nenhuma
-  - Critérios de aceite:
-    1. Implementar validador léxico pré-execução com `token_get_all()` no `$avaliarLinq`;
-    2. Bloquear chamadas de sistema (`exec`, `passthru`, `system`, `shell_exec`, `proc_open`, `popen`);
-    3. Bloquear E/S e manipulação de arquivos/ambiente (`file_get_contents`, `file_put_contents`, `unlink`, `rmdir`, `getenv`, `putenv`, `phpinfo`);
-    4. Exibir mensagem de erro amigável de segurança no editor da demo quando um token ou chamada bloqueada for detectada, sem executar `eval()`;
-    5. Todos os 15 cenários padrão continuam executando normalmente.
 
 - [ ] **T-035 · P1 · Implementar operadores relacionais faltantes e `strict: true` em `where()`**
   - Origem: `-assessment` (item 1.4)
@@ -151,6 +140,10 @@
 
 
 ## Concluídas recentemente
+
+- [x] **T-034 · P1 · Blindar sandbox do playground web contra RCE e chamadas perigosas** (2026-10-27)
+  - Arquivos: [demo/sandbox_validator.php](../demo/sandbox_validator.php), [demo/index.php](../demo/index.php), [tests/Unit/DemoSandboxValidatorTest.php](../tests/Unit/DemoSandboxValidatorTest.php)
+  - Evidência: Implementada classe `CodeSandboxValidator` com análise léxica rigorosa via `token_get_all()` antes de qualquer avaliação de código na demo; bloqueio estrito de execução de comandos (`exec`, `shell_exec`, `system`, `passthru`, `proc_open`, `popen`), operador backtick (`` ` ``), operações no sistema de arquivos (`file_get_contents`, `file_put_contents`, `unlink`, `rmdir`, `fopen`, `readfile`), inspeção de variáveis de ambiente (`getenv`, `putenv`, `phpinfo`, `ini_set`), superglobais (`$_SERVER`, `$_ENV`, `$_SESSION`, `$_COOKIE`, `$_FILES`), inclusão/avaliação dinâmica (`eval`, `assert`, `include`, `require`), reflexão interna (`ReflectionClass`, `ReflectionFunction`) e injeção de HTML/fechamento `?>`; badge visual "Sandbox Blindada" adicionada no cabeçalho do editor; 9 novos testes unitários adicionados em `DemoSandboxValidatorTest` cobrindo 100% dos vetores de ataque; suíte completa com 134 testes e 739 asserções 100% verdes; Pint e PHPStan nível 5 aprovados sem erros.
 
 - [x] **T-047 · P2 · Evitar quebra e repetição de linhas em `printRow` em telas menores** (2026-10-27)
   - Arquivos: [benchmarks/BenchmarkRunner.php](../benchmarks/BenchmarkRunner.php)
