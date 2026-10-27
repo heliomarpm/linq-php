@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar quick wins de correção de autoloading PSR-4, sincronização de CI e otimizações de performance\
-> **Status:** em progresso | **Progresso:** 30/32 (93%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
+> **Status:** em progresso | **Progresso:** 31/32 (96%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
 
 ## Em progresso
 
@@ -23,11 +23,6 @@
 
 ### Baixa Prioridade
 
-- [ ] **T-030 · P3 · Implementar coloração zebrada (linhas alternadas) na grid de benchmarks CLI**
-  - Origem: manual
-  - Arquivos: [benchmarks/BenchmarkRunner.php](../benchmarks/BenchmarkRunner.php)
-  - DoD: Linhas pares com fundo/tonalidade sutil alternada via ANSI 256/TrueColor; alinhamento visual preservado; reset de cor garantido por linha.
-
 - [ ] **T-031 · P3 · Implementar estilização de tabela zebrada na grid de resultados da demo web**
   - Origem: manual
   - Arquivos: [demo/index.php](../demo/index.php)
@@ -36,6 +31,10 @@
 
 
 ## Concluídas recentemente
+
+- [x] **T-030 · P3 · Implementar coloração zebrada (linhas alternadas) na grid de benchmarks CLI** (2026-10-27)
+  - Arquivos: [benchmarks/BenchmarkRunner.php](../benchmarks/BenchmarkRunner.php)
+  - Evidência: Fundo zebrado sutil implementado com ANSI 256 (`\e[48;5;236m`) para linhas pares de suítes de benchmark; passagem de flag `$isEven` a partir do índice de iteração no `run()` e `runBenchmark()`; reposicionamento e limpeza de cursor atômica (`\r\e[2K`) no início de `printRow()`, eliminando artefatos de linha duplicada e flickers; garantia de reset de cor (`\e[0m`) por célula e ao final da linha preservando largura idêntica de colunas (177 caracteres); deduplicação de alertas do GitHub Actions via mapa associativo `$name-$size`; 122 testes unitários passando 100% verde (688 asserções); PHPStan nível 5 e Pint aprovados sem erros.
 
 - [x] **T-029 · P3 · Suportar `caseSensitive: true` e `mb_strtolower` em `where()`** (2026-10-27)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/WhereTest.php](../tests/Unit/WhereTest.php)

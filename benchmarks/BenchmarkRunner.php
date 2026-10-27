@@ -16,6 +16,7 @@ class BenchmarkRunner
     private const COLOR_YELLOW = "\e[33m";
     private const COLOR_RED = "\e[31m";
     private const COLOR_DARK_GRAY = "\e[90m";
+    private const BG_ZEBRA = "\e[48;5;236m";
 
     private array $githubAnnotations = [];
 
@@ -38,19 +39,19 @@ class BenchmarkRunner
 
         $this->printHeader($dataSizes);
 
-        foreach ($suites as $suite) {
-            $this->runBenchmark($suite, $dataSizes);
+        foreach ($suites as $index => $suite) {
+            $this->runBenchmark($suite, $dataSizes, $index % 2 === 1);
         }
 
         echo PHP_EOL;
     }
 
-    private function runBenchmark(BenchmarkSuite $suite, array $dataSizes): void
+    private function runBenchmark(BenchmarkSuite $suite, array $dataSizes, bool $isEven = false): void
     {
         $results = [];
 
-        // imprime linha inicial vazia
-        $this->printRow($suite->name(), $results, $dataSizes);
+        // imprime linha inicial com status pendente em todas as colunas
+        $this->printRow($suite->name(), $results, $dataSizes, $isEven);
 
         foreach ($dataSizes as $dataSize) {
             $data = Data\DataFactory::generate($dataSize);
@@ -66,7 +67,7 @@ class BenchmarkRunner
             ];
 
             // reimprime a MESMA linha, agora com mais uma coluna preenchida
-            $this->printRow($suite->name(), $results, $dataSizes);
+            $this->printRow($suite->name(), $results, $dataSizes, $isEven);
         }
 
         $this->printGithubAnnotations();
@@ -107,22 +108,22 @@ class BenchmarkRunner
         echo self::COLOR_DARK_GRAY . str_repeat('=', $separatorLength) . self::COLOR_RESET . PHP_EOL;
     }
 
-    private function printRow(string $name, array $results, array $dataSizes): void
+    private function printRow(string $name, array $results, array $dataSizes, bool $isEven = false): void
     {
-        //volta o cursor para a coluna 0
-        echo "\r";
+        $bg = $isEven ? self::BG_ZEBRA : '';
+
+        // Limpa a linha inteira e volta o cursor para a coluna 0
+        echo "\r\e[2K";
 
         // Nome do teste em negrito
         $nameText = sprintf("%-" . self::NAME_WIDTH . "s", $name);
-        echo self::COLOR_BOLD . $nameText . self::COLOR_RESET;
+        echo $bg . self::COLOR_BOLD . $nameText . self::COLOR_RESET;
 
         foreach ($dataSizes as $size) {
             if (!isset($results[$size])) {
                 $emptyText = sprintf("%-" . self::COL_WIDTH . "s", '...');
 
-                // \e[2K apaga a linha inteira no terminal; \r volta o cursor para a coluna 0
-                echo "\e[2K\r";
-                echo self::COLOR_DARK_GRAY . "| " . $emptyText . self::COLOR_RESET;
+                echo $bg . self::COLOR_DARK_GRAY . "| " . self::COLOR_RESET . $bg . self::COLOR_DARK_GRAY . $emptyText . self::COLOR_RESET;
                 continue;
             }
 
@@ -138,15 +139,16 @@ class BenchmarkRunner
 
             $color = $this->getColorForTime($time);
 
-            // Imprime a barra em cinza e o texto no formato "Semáforo"
-            echo self::COLOR_DARK_GRAY . "| " . self::COLOR_RESET . $color . $resultStr . self::COLOR_RESET;
+            // Imprime a barra em cinza e o texto no formato "Semáforo", mantendo o fundo zebrado se ativo
+            echo $bg . self::COLOR_DARK_GRAY . "| " . self::COLOR_RESET . $bg . $color . $resultStr . self::COLOR_RESET;
 
             if ($time > 1.5) {
-                // Monta a string no formato exato que o GitHub exige
-                $this->githubAnnotations[] = "::warning title=Gargalo de Performance (🚨 {$name})::O método '{$name}' processando {$size} registros demorou {$time} segundos, o que está acima do limite aceitável de 1.5s.";
+                // Monta a string no formato exato que o GitHub exige sem duplicidades
+                $this->githubAnnotations["{$name}-{$size}"] = "::warning title=Gargalo de Performance (🚨 {$name})::O método '{$name}' processando {$size} registros demorou {$time} segundos, o que está acima do limite aceitável de 1.5s.";
             }
         }
 
+        echo self::COLOR_RESET;
         flush(); // Empurra a saída para o terminal
     }
 
