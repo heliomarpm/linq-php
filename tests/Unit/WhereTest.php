@@ -199,4 +199,115 @@ class WhereTest extends TestCase
         $this->assertCount(1, $result);
         $this->assertSame(1, $result[0]['id']);
     }
+
+    public function testWhereWithNotEqualsOperators(): void
+    {
+        $data = [
+            ['id' => 1, 'status' => 'ativo', 'role' => 'admin'],
+            ['id' => 2, 'status' => 'bloqueado', 'role' => 'user'],
+            ['id' => 3, 'status' => 'ativo', 'role' => 'guest'],
+        ];
+
+        // Operador !=
+        $notBlocked = LinqPHP::from($data)->where(['status', '!=', 'bloqueado'])->toArray();
+        $this->assertCount(2, $notBlocked);
+        $this->assertSame([1, 3], array_column($notBlocked, 'id'));
+
+        // Operador <> (sinônimo SQL)
+        $notAdmin = LinqPHP::from($data)->where(['role', '<>', 'admin'])->toArray();
+        $this->assertCount(2, $notAdmin);
+        $this->assertSame([2, 3], array_column($notAdmin, 'id'));
+
+        // Operador !== (estrito)
+        $numbers = [
+            ['id' => 1, 'valor' => 0],
+            ['id' => 2, 'valor' => '0'],
+            ['id' => 3, 'valor' => 10],
+        ];
+        $strictNot = LinqPHP::from($numbers)->where(['valor', '!==', 0])->toArray();
+        $this->assertCount(2, $strictNot);
+        $this->assertSame([2, 3], array_column($strictNot, 'id'));
+    }
+
+    public function testWhereWithStrictEqualsOperator(): void
+    {
+        $data = [
+            ['id' => 1, 'codigo' => 0],
+            ['id' => 2, 'codigo' => '0'],
+            ['id' => 3, 'codigo' => false],
+            ['id' => 4, 'codigo' => null],
+        ];
+
+        // === Estrito diferencia 0 inteiro de '0' string e false booleano
+        $resultInt = LinqPHP::from($data)->where(['codigo', '===', 0])->toArray();
+        $this->assertCount(1, $resultInt);
+        $this->assertSame(1, $resultInt[0]['id']);
+
+        $resultString = LinqPHP::from($data)->where(['codigo', '===', '0'])->toArray();
+        $this->assertCount(1, $resultString);
+        $this->assertSame(2, $resultString[0]['id']);
+    }
+
+    public function testWhereWithStrictInOperator(): void
+    {
+        $data = [
+            ['id' => 1, 'valor' => 0],
+            ['id' => 2, 'valor' => '0'],
+            ['id' => 3, 'valor' => 'ativo'],
+            ['id' => 4, 'valor' => false],
+        ];
+
+        // in com strict: true não deve coincidir 0 com 'ativo' nem com false
+        $result = LinqPHP::from($data)->where(['valor', 'in', [0, 100]])->toArray();
+        $this->assertCount(1, $result);
+        $this->assertSame(1, $result[0]['id']);
+    }
+
+    public function testWhereWithNotInOperator(): void
+    {
+        $data = [
+            ['id' => 1, 'status' => 'aberto'],
+            ['id' => 2, 'status' => 'concluido'],
+            ['id' => 3, 'status' => 'cancelado'],
+            ['id' => 4, 'status' => 'pendente'],
+        ];
+
+        $result = LinqPHP::from($data)
+            ->where(['status', 'not in', ['cancelado', 'pendente']])
+            ->toArray();
+
+        $this->assertCount(2, $result);
+        $this->assertSame([1, 2], array_column($result, 'id'));
+    }
+
+    public function testWhereWithBetweenAndNotBetween(): void
+    {
+        $data = [
+            ['id' => 1, 'preco' => 10.0],
+            ['id' => 2, 'preco' => 25.5],
+            ['id' => 3, 'preco' => 50.0],
+            ['id' => 4, 'preco' => 80.0],
+            ['id' => 5, 'preco' => 100.0],
+        ];
+
+        // between 25.5 e 80.0 (inclusivo)
+        $between = LinqPHP::from($data)->where(['preco', 'between', [25.5, 80.0]])->toArray();
+        $this->assertCount(3, $between);
+        $this->assertSame([2, 3, 4], array_column($between, 'id'));
+
+        // not between 25.5 e 80.0
+        $notBetween = LinqPHP::from($data)->where(['preco', 'not between', [25.5, 80.0]])->toArray();
+        $this->assertCount(2, $notBetween);
+        $this->assertSame([1, 5], array_column($notBetween, 'id'));
+    }
+
+    public function testWhereWithUnsupportedOperatorThrowsException(): void
+    {
+        $data = [['id' => 1, 'nome' => 'Teste']];
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported operator: regex');
+
+        LinqPHP::from($data)->where(['nome', 'regex', '/^[a-z]+$/'])->toArray();
+    }
 }

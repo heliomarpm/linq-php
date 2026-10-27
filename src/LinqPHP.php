@@ -1331,8 +1331,18 @@ class LinqPHP
             '>=' => $itemValue >= $value,
             '<' => $itemValue < $value,
             '<=' => $itemValue <= $value,
-            '=' => $itemValue == $value,
-            'in' => is_array($value) && in_array($itemValue, $value),
+            '=', '==' => $itemValue == $value,
+            '===' => $itemValue === $value,
+            '!=', '<>' => $itemValue != $value,
+            '!==' => $itemValue !== $value,
+            'in' => is_array($value) && in_array($itemValue, $value, true),
+            'not in' => is_array($value) && !in_array($itemValue, $value, true),
+            'between' => is_array($value) && count($value) === 2
+                && $itemValue !== null
+                && $itemValue >= $value[0]
+                && $itemValue <= $value[1],
+            'not between' => is_array($value) && count($value) === 2
+                && ($itemValue === null || $itemValue < $value[0] || $itemValue > $value[1]),
             'startswith' => is_string($itemValue) && is_string($value) && str_starts_with($itemValue, $value),
             'endswith' => is_string($itemValue) && is_string($value) && str_ends_with($itemValue, $value),
             'contains' => is_string($itemValue) && is_string($value) && str_contains($itemValue, $value),

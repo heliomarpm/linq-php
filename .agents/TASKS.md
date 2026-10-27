@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar plano de melhorias, segurança, performance e novos métodos LINQ do Assessment Fase 2\
-> **Status:** em progresso | **Progresso:** 35/47 (74%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
+> **Status:** em progresso | **Progresso:** 36/47 (76%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
 
 ## Em progresso
 
@@ -15,16 +15,7 @@
 
 ### Alta Prioridade
 
-- [ ] **T-035 · P1 · Implementar operadores relacionais faltantes e `strict: true` em `where()`**
-  - Origem: `-assessment` (item 1.4)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/WhereTest.php](../tests/Unit/WhereTest.php)
-  - Dependências: Nenhuma
-  - Critérios de aceite:
-    1. Suportar operadores `!=`, `<>`, `not in`, `between`, `not between` no `where()`;
-    2. Aplicar comparação estrita (`strict: true`) no `in_array` do operador `in`;
-    3. Garantir que valores `0`, strings e `null` não gerem falsos positivos em comparações frouxas;
-    4. Testes unitários cobrindo cada novo operador e a estrita diferenciação de tipos;
-    5. Suíte de testes 100% verde.
+(nenhuma)
 
 ### Média Prioridade
 
@@ -140,6 +131,10 @@
 
 
 ## Concluídas recentemente
+
+- [x] **T-035 · P1 · Implementar operadores relacionais faltantes e `strict: true` em `where()`** (2026-10-27)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/WhereTest.php](../tests/Unit/WhereTest.php)
+  - Evidência: Implementado suporte a operadores relacionais `!=`, `<>`, `!==`, `===`, `not in`, `between` e `not between` no método privado `evaluateOperatorMatch`; aplicação de comparação estrita (`strict: true`) no `in_array` prevenindo falsos positivos entre `0`, `false`, `null` e strings; suporte transparente tanto no Fast-Path 2 quanto no avaliador multi-condição; 6 novos testes unitários adicionados em `WhereTest` cobrindo igualdade e desigualdade estritas, inclusão/exclusão em listas e intervalos inclusivos; suíte com 140 testes unitários passando 100% verde (759 asserções); Pint e PHPStan nível 5 aprovados sem erros.
 
 - [x] **T-034 · P1 · Blindar sandbox do playground web contra RCE e chamadas perigosas** (2026-10-27)
   - Arquivos: [demo/sandbox_validator.php](../demo/sandbox_validator.php), [demo/index.php](../demo/index.php), [tests/Unit/DemoSandboxValidatorTest.php](../tests/Unit/DemoSandboxValidatorTest.php)
