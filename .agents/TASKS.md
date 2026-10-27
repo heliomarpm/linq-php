@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar quick wins de correção de autoloading PSR-4, sincronização de CI e otimizações de performance\
-> **Status:** em progresso | **Progresso:** 26/31 (83%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-26
+> **Status:** em progresso | **Progresso:** 27/31 (87%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
 
 ## Em progresso
 
@@ -22,11 +22,6 @@
 (nenhuma)
 
 ### Baixa Prioridade
-
-- [ ] **T-024 · P3 · Portabilizar script `reset` no `composer.json` para PHP multiplataforma**
-  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 1.6)
-  - Arquivos: [composer.json](../composer.json)
-  - DoD: `composer reset` funcionando nativamente em Windows, Linux e macOS sem depender do utilitário `rm`.
 
 - [ ] **T-025 · P3 · Delegar cálculo em `avg()` diretamente para `sum()`**
   - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 2.3)
@@ -51,6 +46,10 @@
 
 
 ## Concluídas recentemente
+
+- [x] **T-024 · P3 · Portabilizar script `reset` no `composer.json` para PHP multiplataforma** (2026-10-27)
+  - Arquivos: [composer.json](../composer.json), [bin/reset.php](../bin/reset.php)
+  - Evidência: Script `bin/reset.php` criado para remoção recursiva em PHP puro nativo de `vendor/` e `composer.lock`, sem depender do comando Unix `rm -rf`; `composer.json` atualizado para invocar `@php bin/reset.php` e `@composer install`; validação estrita com `composer validate --strict` aprovada com código 0; 118 testes unitários passando 100% verde; PHPStan nível 5 e Pint aprovados sem erros.
 
 - [x] **T-028 · P2 · Implementar fast-path de esquema idêntico em `unionAll()`** (2026-10-26)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/UnionAllTest.php](../tests/Unit/UnionAllTest.php)

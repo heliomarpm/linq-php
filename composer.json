@@ -62,8 +62,8 @@
       "@perform"
     ],
     "reset": [
-      "rm -rf vendor composer.lock",
-      "composer install"
+      "@php bin/reset.php",
+      "@composer install"
     ]
   },
   "suggest": {
