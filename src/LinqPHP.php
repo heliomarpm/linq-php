@@ -437,8 +437,10 @@ class LinqPHP
 
         $groupedResult = [];
         $hasAggregations = $aggregations !== [];
-        $duplicatedFields = [];
         $isGlobal = ($groupingFields === []);
+        $compiledAggregations = [];
+        $hasAvg = false;
+        $avgAccumulators = [];
 
         if ($hasAggregations) {
             $allAggFields = [];
@@ -451,6 +453,25 @@ class LinqPHP
             }
             $valueCounts = array_count_values($allAggFields);
             $duplicatedFields = array_keys(array_filter($valueCounts, fn(int $count): bool => $count > 1));
+
+            foreach ($aggregations as $operation => $fields) {
+                $op = strtolower($operation);
+                if ($op === 'avg') {
+                    $hasAvg = true;
+                }
+                if (is_array($fields)) {
+                    foreach ($fields as $field) {
+                        $fieldName = in_array($field, $duplicatedFields, true)
+                            ? $field . "_({$op})"
+                            : $field;
+                        $compiledAggregations[] = [
+                            'op'        => $op,
+                            'field'     => $field,
+                            'fieldName' => $fieldName,
+                        ];
+                    }
+                }
+            }
         }
 
         if ($isGlobal) {
@@ -461,7 +482,7 @@ class LinqPHP
                 if (!$hasAggregations) {
                     $this->groupByDefaultAggregations($groupedResult, $groupKey, $groupingFields, $item);
                 } else {
-                    $this->groupByCustomAggregations($groupedResult, $groupKey, $aggregations, $duplicatedFields, $item);
+                    $this->groupByCustomAggregations($groupedResult, $groupKey, $compiledAggregations, $item, $avgAccumulators);
                 }
             }
         } elseif (count($groupingFields) === 1) {
@@ -476,7 +497,7 @@ class LinqPHP
                 if (!$hasAggregations) {
                     $this->groupByDefaultAggregations($groupedResult, $groupKey, $groupingFields, $item);
                 } else {
-                    $this->groupByCustomAggregations($groupedResult, $groupKey, $aggregations, $duplicatedFields, $item);
+                    $this->groupByCustomAggregations($groupedResult, $groupKey, $compiledAggregations, $item, $avgAccumulators);
                 }
             }
         } else {
@@ -491,14 +512,14 @@ class LinqPHP
                 if (!$hasAggregations) {
                     $this->groupByDefaultAggregations($groupedResult, $groupKey, $groupingFields, $item);
                 } else {
-                    $this->groupByCustomAggregations($groupedResult, $groupKey, $aggregations, $duplicatedFields, $item);
+                    $this->groupByCustomAggregations($groupedResult, $groupKey, $compiledAggregations, $item, $avgAccumulators);
                 }
             }
         }
 
-        // Calcular médias
-        if ($hasAggregations) {
-            $this->resolveGroupAverages($groupedResult, $aggregations);
+        // Calcular médias em O(1) de memória
+        if ($hasAvg) {
+            $this->resolveGroupAverages($groupedResult, $avgAccumulators);
         }
 
         $this->data = array_values($groupedResult);
@@ -1288,68 +1309,66 @@ class LinqPHP
         }
     }
 
+    /**
+     * @param array<string, array<string, mixed>> $groupedResult
+     * @param array<int, array{op: string, field: string, fieldName: string}> $compiledAggregations
+     * @param array<string, mixed> $item
+     * @param array<string, array<string, array{0: float, 1: int}>> $avgAccumulators
+     */
     private function groupByCustomAggregations(
         array &$groupedResult,
         string $groupKey,
-        array $aggregations,
-        array $duplicatedFields,
-        array $item
+        array $compiledAggregations,
+        array $item,
+        array &$avgAccumulators
     ): void {
-        foreach ($aggregations as $operation => $fields) {
-            $operation = strtolower($operation);
+        foreach ($compiledAggregations as $agg) {
+            $field = $agg['field'];
+            $fieldName = $agg['fieldName'];
+            $val = $item[$field] ?? null;
 
-            foreach ($fields as $field) {
-                $fieldName = in_array($field, $duplicatedFields, true)
-                  ? $field . "_({$operation})"
-                  : $field;
-
-                switch ($operation) {
-                    case 'sum':
-                        $groupedResult[$groupKey][$fieldName] = isset($groupedResult[$groupKey][$fieldName])
-                          ? $groupedResult[$groupKey][$fieldName] + (float)$item[$field]
-                          : (float)$item[$field];
-                        break;
-                    case 'max':
-                        $groupedResult[$groupKey][$fieldName] = isset($groupedResult[$groupKey][$fieldName])
-                          ? max($groupedResult[$groupKey][$fieldName], $item[$field])
-                          : $item[$field];
-                        break;
-                    case 'min':
-                        $groupedResult[$groupKey][$fieldName] = isset($groupedResult[$groupKey][$fieldName])
-                          ? min($groupedResult[$groupKey][$fieldName], $item[$field] ?? $groupedResult[$groupKey][$fieldName])
-                          : $item[$field];
-                        break;
-                    case 'count':
-                        $groupedResult[$groupKey][$fieldName] = isset($groupedResult[$groupKey][$fieldName])
-                          ? $groupedResult[$groupKey][$fieldName] + 1
-                          : 1;
-                        break;
-                    case 'avg':
-                        $groupedResult[$groupKey][$fieldName][] = (float)$item[$field];
-                        break;
-                }
+            switch ($agg['op']) {
+                case 'sum':
+                    $groupedResult[$groupKey][$fieldName] = isset($groupedResult[$groupKey][$fieldName])
+                      ? $groupedResult[$groupKey][$fieldName] + (float)$val
+                      : (float)$val;
+                    break;
+                case 'max':
+                    $groupedResult[$groupKey][$fieldName] = isset($groupedResult[$groupKey][$fieldName])
+                      ? max($groupedResult[$groupKey][$fieldName], $val)
+                      : $val;
+                    break;
+                case 'min':
+                    $groupedResult[$groupKey][$fieldName] = isset($groupedResult[$groupKey][$fieldName])
+                      ? min($groupedResult[$groupKey][$fieldName], $val ?? $groupedResult[$groupKey][$fieldName])
+                      : $val;
+                    break;
+                case 'count':
+                    $groupedResult[$groupKey][$fieldName] = isset($groupedResult[$groupKey][$fieldName])
+                      ? $groupedResult[$groupKey][$fieldName] + 1
+                      : 1;
+                    break;
+                case 'avg':
+                    if (!isset($avgAccumulators[$groupKey][$fieldName])) {
+                        $avgAccumulators[$groupKey][$fieldName] = [(float)$val, 1];
+                    } else {
+                        $avgAccumulators[$groupKey][$fieldName][0] += (float)$val;
+                        $avgAccumulators[$groupKey][$fieldName][1]++;
+                    }
+                    break;
             }
         }
     }
 
-    private function resolveGroupAverages(array &$groupedResult, array $aggregations): void
+    /**
+     * @param array<string, array<string, mixed>> $groupedResult
+     * @param array<string, array<string, array{0: float, 1: int}>> $avgAccumulators
+     */
+    private function resolveGroupAverages(array &$groupedResult, array $avgAccumulators): void
     {
-        foreach ($aggregations as $operation => $fields) {
-            if (strtolower($operation) === 'avg') {
-                foreach ($groupedResult as &$group) {
-                    foreach ($fields as $field) {
-                        $avgField = $field;
-                        if (array_key_exists($field . "_(avg)", $group)) {
-                            $avgField .= "_(avg)";
-                        }
-                        if (isset($group[$avgField]) && is_array($group[$avgField])) {
-                            $sum = array_sum($group[$avgField]);
-                            $count = count($group[$avgField]);
-                            $group[$avgField] = $count > 0 ? $sum / $count : null;
-                        }
-                    }
-                }
-                unset($group);
+        foreach ($avgAccumulators as $groupKey => $fields) {
+            foreach ($fields as $fieldName => [$sum, $count]) {
+                $groupedResult[$groupKey][$fieldName] = $count > 0 ? $sum / $count : null;
             }
         }
     }

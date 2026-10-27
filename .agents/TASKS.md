@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar quick wins de correção de autoloading PSR-4, sincronização de CI e otimizações de performance\
-> **Status:** em progresso | **Progresso:** 24/31 (77%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-26
+> **Status:** em progresso | **Progresso:** 25/31 (80%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-26
 
 ## Em progresso
 
@@ -18,11 +18,6 @@
 (nenhuma)
 
 ### Média Prioridade
-
-- [ ] **T-027 · P2 · Otimizar memória em `groupBy()` com acumulação O(1) de médias**
-  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 3.3)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
-  - DoD: Acumular soma e contagem em vez de alocar listas com todos os floats na memória.
 
 - [ ] **T-028 · P2 · Implementar fast-path de esquema idêntico em `unionAll()`**
   - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 3.5)
@@ -59,6 +54,10 @@
 
 
 ## Concluídas recentemente
+
+- [x] **T-027 · P2 · Otimizar memória em `groupBy()` com acumulação O(1) de médias** (2026-10-26)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
+  - Evidência: Eliminação completa da coleta de todos os números em arrays auxiliares para cálculo de média; acumulação direta de soma e contagem escalares em O(1) de memória; pré-compilação do mapa de operações de agregação antes dos loops de registros; 117 testes unitários passando 100% verde (667 asserções); PHPStan nível 5 e Pint aprovados sem erros.
 
 - [x] **T-026 · P2 · Otimizar alocação de memória no `select()` com atribuição direta** (2026-10-26)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
