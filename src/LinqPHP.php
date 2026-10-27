@@ -548,21 +548,49 @@ class LinqPHP
 
         // Caminho ultra-rápido quando não há aliases (chaves indexadas numericamente)
         if (array_is_list($selectors)) {
-            $selectorKeys = array_flip($selectors);
-            $nullTemplate = array_fill_keys($selectors, null);
             $resultItems = [];
 
-            foreach ($this->data as $item) {
+            // Fast-path para projeção de coluna única
+            if (count($selectors) === 1) {
+                $col = $selectors[0];
                 if ($strict) {
+                    foreach ($this->data as $item) {
+                        if (!array_key_exists($col, $item)) {
+                            throw new InvalidArgumentException(
+                                'Select strict mode error. Missing keys: ' . $col
+                            );
+                        }
+                        $resultItems[] = [$col => $item[$col]];
+                    }
+                } else {
+                    foreach ($this->data as $item) {
+                        $resultItems[] = [$col => $item[$col] ?? null];
+                    }
+                }
+            } elseif ($strict) {
+                $selectorKeys = array_flip($selectors);
+                foreach ($this->data as $item) {
                     $missingKeys = array_diff_key($selectorKeys, $item);
                     if ($missingKeys !== []) {
                         throw new InvalidArgumentException(
                             'Select strict mode error. Missing keys: ' . implode(', ', array_keys($missingKeys))
                         );
                     }
-                }
 
-                $resultItems[] = array_replace($nullTemplate, array_intersect_key($item, $selectorKeys));
+                    $row = [];
+                    foreach ($selectors as $col) {
+                        $row[$col] = $item[$col];
+                    }
+                    $resultItems[] = $row;
+                }
+            } else {
+                foreach ($this->data as $item) {
+                    $row = [];
+                    foreach ($selectors as $col) {
+                        $row[$col] = $item[$col] ?? null;
+                    }
+                    $resultItems[] = $row;
+                }
             }
 
             $this->data = $resultItems;
@@ -580,24 +608,32 @@ class LinqPHP
             }
         }
 
-        $origKeysFlip = array_flip(array_keys($mapping));
         $resultItems = [];
 
-        foreach ($this->data as $item) {
-            if ($strict) {
+        if ($strict) {
+            $origKeysFlip = array_flip(array_keys($mapping));
+            foreach ($this->data as $item) {
                 $missingKeys = array_diff_key($origKeysFlip, $item);
                 if ($missingKeys !== []) {
                     throw new InvalidArgumentException(
                         'Select strict mode error. Missing keys: ' . implode(', ', array_keys($missingKeys))
                     );
                 }
-            }
 
-            $selectedItem = [];
-            foreach ($mapping as $origField => $aliasField) {
-                $selectedItem[$aliasField] = $item[$origField] ?? null;
+                $selectedItem = [];
+                foreach ($mapping as $origField => $aliasField) {
+                    $selectedItem[$aliasField] = $item[$origField];
+                }
+                $resultItems[] = $selectedItem;
             }
-            $resultItems[] = $selectedItem;
+        } else {
+            foreach ($this->data as $item) {
+                $selectedItem = [];
+                foreach ($mapping as $origField => $aliasField) {
+                    $selectedItem[$aliasField] = $item[$origField] ?? null;
+                }
+                $resultItems[] = $selectedItem;
+            }
         }
 
         $this->data = $resultItems;

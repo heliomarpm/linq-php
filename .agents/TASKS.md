@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar quick wins de correção de autoloading PSR-4, sincronização de CI e otimizações de performance\
-> **Status:** em progresso | **Progresso:** 23/30 (76%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-26
+> **Status:** em progresso | **Progresso:** 24/31 (77%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-26
 
 ## Em progresso
 
@@ -18,11 +18,6 @@
 (nenhuma)
 
 ### Média Prioridade
-
-- [ ] **T-026 · P2 · Otimizar alocação de memória no `select()` com atribuição direta**
-  - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 3.4)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
-  - DoD: Eliminar chamadas de `array_replace` e `array_intersect_key` linha a linha em `select()`.
 
 - [ ] **T-027 · P2 · Otimizar memória em `groupBy()` com acumulação O(1) de médias**
   - Origem: [docs/ASSESSMENT.md](../docs/ASSESSMENT.md) (Seção 3.3)
@@ -56,9 +51,18 @@
   - Arquivos: [benchmarks/BenchmarkRunner.php](../benchmarks/BenchmarkRunner.php)
   - DoD: Linhas pares com fundo/tonalidade sutil alternada via ANSI 256/TrueColor; alinhamento visual preservado; reset de cor garantido por linha.
 
+- [ ] **T-031 · P3 · Implementar estilização de tabela zebrada na grid de resultados da demo web**
+  - Origem: manual
+  - Arquivos: [demo/index.php](../demo/index.php)
+  - DoD: Linhas pares da tabela com fundo sutil alternado; remoção de cor de fundo fixa inline nos `<td>`; alinhamento visual com o dark theme do projeto.
+
 
 
 ## Concluídas recentemente
+
+- [x] **T-026 · P2 · Otimizar alocação de memória no `select()` com atribuição direta** (2026-10-26)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
+  - Evidência: Eliminação completa de chamadas de `array_replace` e `array_intersect_key` linha a linha em `select()`, substituídas por atribuição direta O(1) de chaves com coalescência nula; fast-path dedicado para projeção de coluna única (`count($selectors) === 1`); extração da validação de `$strict` para fora do loop principal; 117 testes unitários passando 100% verde (667 asserções); PHPStan nível 5 e Pint aprovados sem erros.
 
 - [x] **T-023 · P2 · Implementar fast-path de chave simples em `groupBy()`** (2026-10-26)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
