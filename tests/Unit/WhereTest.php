@@ -301,6 +301,77 @@ class WhereTest extends TestCase
         $this->assertSame([1, 5], array_column($notBetween, 'id'));
     }
 
+    public function testWhereWithLargeInArrayOptimization(): void
+    {
+        $largeList = range(100, 5000);
+        $dataset = [
+            ['id' => 1, 'codigo' => 50],
+            ['id' => 2, 'codigo' => 100],
+            ['id' => 3, 'codigo' => 2500],
+            ['id' => 4, 'codigo' => 5000],
+            ['id' => 5, 'codigo' => 9999],
+        ];
+
+        $result = LinqPHP::from($dataset)
+            ->where(['codigo', 'in', $largeList])
+            ->toArray();
+
+        $this->assertCount(3, $result);
+        $this->assertSame([2, 3, 4], array_column($result, 'id'));
+
+        $notInResult = LinqPHP::from($dataset)
+            ->where(['codigo', 'not in', $largeList])
+            ->toArray();
+
+        $this->assertCount(2, $notInResult);
+        $this->assertSame([1, 5], array_column($notInResult, 'id'));
+    }
+
+    public function testWhereWithInCollisionKeysAndStrictTypes(): void
+    {
+        $dataset = [
+            ['id' => 1, 'val' => 0],
+            ['id' => 2, 'val' => '0'],
+            ['id' => 3, 'val' => false],
+            ['id' => 4, 'val' => null],
+            ['id' => 5, 'val' => '10'],
+        ];
+
+        // Lista contendo tanto o inteiro 0 quanto a string '0'
+        $result = LinqPHP::from($dataset)
+            ->where(['val', 'in', [0, '0']])
+            ->toArray();
+
+        $this->assertCount(2, $result);
+        $this->assertSame([1, 2], array_column($result, 'id'));
+
+        // not in exclui apenas os estritos 0 e '0'
+        $notIn = LinqPHP::from($dataset)
+            ->where(['val', 'not in', [0, '0']])
+            ->toArray();
+
+        $this->assertCount(3, $notIn);
+        $this->assertSame([3, 4, 5], array_column($notIn, 'id'));
+    }
+
+    public function testWhereWithInNonFlippableArrayGracefulFallback(): void
+    {
+        $dataset = [
+            ['id' => 1, 'flag' => true],
+            ['id' => 2, 'flag' => false],
+            ['id' => 3, 'flag' => null],
+            ['id' => 4, 'flag' => 1],
+        ];
+
+        // Lista com booleano não é convertida via array_flip mas deve funcionar perfeitamente via fallback
+        $result = LinqPHP::from($dataset)
+            ->where(['flag', 'in', [true, false]])
+            ->toArray();
+
+        $this->assertCount(2, $result);
+        $this->assertSame([1, 2], array_column($result, 'id'));
+    }
+
     public function testWhereWithUnsupportedOperatorThrowsException(): void
     {
         $data = [['id' => 1, 'nome' => 'Teste']];

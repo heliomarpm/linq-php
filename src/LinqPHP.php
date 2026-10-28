@@ -356,56 +356,69 @@ class LinqPHP
     }
 
     /**
-     * Aceita arrays de condições simples ou funções (closures) para filtros complexos.
+     * Filtra a coleção de dados aceitando arrays de condições estruturadas, operadores relacionais ou closures customizadas.
      *
-     * @param mixed $conditions As condições para filtrar o array de dados. Pode ser um array simples, uma função, ou um array de arrays/funções.
-     * @param bool $caseSensitive Define se a comparação de strings deve ser sensível a maiúsculas/minúsculas (padrão: false).
-     * @return LinqPHP O array de dados filtrado.
+     * Operadores suportados nas tuplas de condição `['campo', 'operador', $valor]`:
+     * - Igualdade e Desigualdade:
+     *   - `=`, `==`: Igualdade ampla (`$item == $valor`).
+     *   - `===`: Igualdade estrita por tipo e valor (`$item === $valor`).
+     *   - `!=`, `<>`: Desigualdade ampla (`$item != $valor`).
+     *   - `!==`: Desigualdade estrita (`$item !== $valor`).
+     * - Comparações Relacionais e Numéricas:
+     *   - `>`, `>=`: Maior que, maior ou igual a.
+     *   - `<`, `<=`: Menor que, menor ou igual a.
+     * - Conjuntos e Listas (Otimizados em O(1) com hashmap):
+     *   - `in`: Pertence ao array fornecido (indexado via hashmap O(1) com checagem estrita de tipo).
+     *   - `not in`: Não pertence ao array fornecido (negação estrita O(1)).
+     * - Intervalos:
+     *   - `between`: Valor contido no intervalo fechado `[$min, $max]` (inclusivo: `$min <= $item && $item <= $max`).
+     *   - `not between`: Valor fora do intervalo `[$min, $max]` (exclusivo: `$item < $min || $item > $max`).
+     * - Busca em Strings:
+     *   - `startswith`: String inicia com o prefixo especificado.
+     *   - `endswith`: String termina com o sufixo especificado.
+     *   - `contains`: String contém a substring especificada.
      *
-     * * Exemplo de uso:
+     * @param array|callable $conditions Condição única `['campo', 'op', $valor]`, closure `fn($item) => bool`, ou array contendo múltiplas condições/closures.
+     * @param bool $caseSensitive Define se comparações textuais diferenciam maiúsculas/minúsculas (padrão: false, com normalização UTF-8).
+     * @return self A própria instância fluente com os dados filtrados.
+     *
+     * Exemplo de uso:
      * ```php
      * $data = [
-     *     ['id' => 1, 'name' => 'John', 'age' => 25, 'status' => 'active', 'city' => 'London'],
-     *     ['id' => 2, 'name' => 'Jane', 'age' => 30, 'status' => 'pending', 'city' => 'New York'],
-     *     ['id' => 3, 'name' => 'John', 'age' => 35, 'status' => 'inactive', 'city' => 'Paris'],
+     *     ['id' => 1, 'name' => 'John', 'age' => 25, 'status' => 'active', 'city' => 'London', 'price' => 50.0],
+     *     ['id' => 2, 'name' => 'Jane', 'age' => 30, 'status' => 'pending', 'city' => 'New York', 'price' => 120.0],
+     *     ['id' => 3, 'name' => 'John', 'age' => 35, 'status' => 'inactive', 'city' => 'Paris', 'price' => 200.0],
      * ];
      *
-     * // Usando múltiplas condições incluindo funções
-     * $conditions = [
-     *     ['age', '>', 18],
-     *     ['city', '=', 'New York'],
-     *     fn($p) => $p['id'] % 2 == 0,
-     *     function ($item) {
-     *         return $item['status'] === 'active' || $item['status'] === 'pending'; \
-     *     },
-     * ];
-     *
-     * $result = LinqPHP::from($data)->where($conditions)->toArray();
-     *
-     * // Múltiplos filtros e operadores (startswith, endswith, contains, in)
+     * // Intervalos com between e exclusões com not in
      * $result = LinqPHP::from($data)
      *     ->where([
-     * 	      ['age', '>=', 25],
-     *        ['status', 'in', ['active', 'pending']],
-     *        ['name', 'startswith', 'J']
+     *         ['price', 'between', [40.0, 150.0]],
+     *         ['status', 'not in', ['inactive', 'banned']],
+     *         ['name', 'startswith', 'J'],
      *     ])
      *     ->toArray();
      *
-     * // Usando Closures (funções anônimas)
+     * // Desigualdade e comparações estritas
+     * $result = LinqPHP::from($data)
+     *     ->where([
+     *         ['status', '!=', 'inactive'],
+     *         ['age', '>=', 25],
+     *     ])
+     *     ->toArray();
+     *
+     * // Usando Closures customizadas
      * $result = LinqPHP::from($data)
      *     ->where(fn($item) => $item['id'] % 2 !== 0)
      *     ->toArray();
      *
-     * // Usando um array simples
-     * $condition = ['age', '>', 30];
-     * $result = LinqPHP::from($data)->where($conditions)->toArray();
-     *
-     * // Usando uma função
-     * $condition = fn($item) => $item['id'] % 2 == 0;
-     * $result = LinqPHP::from($data)->where($conditions)->toArray();
+     * // Condição simples direta em array
+     * $result = LinqPHP::from($data)
+     *     ->where(['age', '>', 30])
+     *     ->toArray();
      * ```
      */
-    public function where(mixed $conditions, bool $caseSensitive = false): self
+    public function where(array|callable $conditions, bool $caseSensitive = false): self
     {
         // Fast-path 1: Se for uma closure/função única, executa direto sem wrapper
         if (is_callable($conditions) && !is_array($conditions)) {
@@ -829,7 +842,7 @@ class LinqPHP
                 return $this;
             }
 
-            throw new InvalidArgumentException("This field does not exist for sorting.");
+            throw new InvalidArgumentException('This field does not exist for sorting.');
         }
 
         if (!$isDesc) {
@@ -888,7 +901,7 @@ class LinqPHP
             if (is_callable($fields)) {
                 return $this->orderByKey($fields);
             }
-            throw new InvalidArgumentException("orderBy expects an array of fields or a callable.");
+            throw new InvalidArgumentException('orderBy expects an array of fields or a callable.');
         }
 
         if (count($fields) === 1) {
@@ -1269,6 +1282,8 @@ class LinqPHP
         foreach ($conditions as $cond) {
             if (is_array($cond) && count($cond) === 3) {
                 $val = $cond[2];
+                $operator = strtolower((string)$cond[1]);
+
                 if (!$caseSensitive) {
                     if (is_string($val)) {
                         $val = $this->toLower($val);
@@ -1277,9 +1292,26 @@ class LinqPHP
                     }
                 }
 
+                if (($operator === 'in' || $operator === 'not in') && is_array($val)) {
+                    $canFlip = true;
+                    foreach ($val as $v) {
+                        if (!is_string($v) && !is_int($v)) {
+                            $canFlip = false;
+                            break;
+                        }
+                    }
+
+                    if ($canFlip) {
+                        $val = [
+                            'raw' => $val,
+                            'map' => array_flip($val),
+                        ];
+                    }
+                }
+
                 $normalizedConditions[] = [
                     $cond[0],
-                    strtolower((string)$cond[1]),
+                    $operator,
                     $val,
                 ];
             } else {
@@ -1335,8 +1367,8 @@ class LinqPHP
             '===' => $itemValue === $value,
             '!=', '<>' => $itemValue != $value,
             '!==' => $itemValue !== $value,
-            'in' => is_array($value) && in_array($itemValue, $value, true),
-            'not in' => is_array($value) && !in_array($itemValue, $value, true),
+            'in' => $this->evaluateIn($itemValue, $value),
+            'not in' => !$this->evaluateIn($itemValue, $value),
             'between' => is_array($value) && count($value) === 2
                 && $itemValue !== null
                 && $itemValue >= $value[0]
@@ -1348,6 +1380,27 @@ class LinqPHP
             'contains' => is_string($itemValue) && is_string($value) && str_contains($itemValue, $value),
             default => throw new InvalidArgumentException("Unsupported operator: {$operator}"),
         };
+    }
+
+    private function evaluateIn(mixed $itemValue, mixed $value): bool
+    {
+        if (is_array($value) && isset($value['map'], $value['raw'])) {
+            if (!is_int($itemValue) && !is_string($itemValue)) {
+                return false;
+            }
+
+            if (isset($value['map'][$itemValue])) {
+                if ($value['raw'][$value['map'][$itemValue]] === $itemValue) {
+                    return true;
+                }
+
+                return in_array($itemValue, $value['raw'], true);
+            }
+
+            return false;
+        }
+
+        return is_array($value) && in_array($itemValue, $value, true);
     }
 
     private function groupByDefaultAggregations(
@@ -1466,20 +1519,20 @@ class LinqPHP
         if (is_callable($fieldOrCallable)) {
             if ($this->getCallableParamCount($fieldOrCallable) === 2) {
                 throw new InvalidArgumentException(
-                    "Comparator callables with two parameters cannot be combined with multiple fields in orderBy."
+                    'Comparator callables with two parameters cannot be combined with multiple fields in orderBy.'
                 );
             }
             return array_map($fieldOrCallable, $this->data);
         }
 
-        throw new InvalidArgumentException("This field does not exist for sorting.");
+        throw new InvalidArgumentException('This field does not exist for sorting.');
     }
 
     private function statisticUsage(): array
     {
         return [
             'elapsedTime' => number_format($this->endTime - $this->startTime, 6),
-            'memoryUsed' => sprintf("%5.2f MB", (memory_get_peak_usage(true) - $this->startMemory) / 1024 / 1024),
+            'memoryUsed' => sprintf('%5.2f MB', (memory_get_peak_usage(true) - $this->startMemory) / 1024 / 1024),
         ];
     }
 }

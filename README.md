@@ -87,26 +87,61 @@ $ativos = DB::query("SELECT id, nome, limite_credito, status FROM clientes WHERE
 
 ### `where()` - Filtragem de Dados
 
-Aceita arrays de condições simples ou funções (closures) para filtros complexos.
+Aceita condições estruturadas no formato `['campo', 'operador', $valor]`, arrays de múltiplas condições ou funções anônimas (closures) para filtros avançados.
+
+#### Operadores Suportados
+
+| Categoria | Operador | Exemplo | Descrição |
+|---|---|---|---|
+| **Igualdade** | `=`, `==` | `['status', '=', 'active']` | Igualdade ampla (`==`) |
+| | `===` | `['codigo', '===', 0]` | Igualdade estrita de tipo e valor (`===`) |
+| **Desigualdade** | `!=`, `<>` | `['status', '!=', 'inactive']` | Desigualdade ampla (`!=` ou `<>`) |
+| | `!==` | `['codigo', '!==', '0']` | Desigualdade estrita de tipo e valor (`!==`) |
+| **Relacionais** | `>`, `>=` | `['age', '>=', 18]` | Maior que, maior ou igual a |
+| | `<`, `<=` | `['price', '<=', 100.0]` | Menor que, menor ou igual a |
+| **Intervalos** | `between` | `['price', 'between', [50.0, 150.0]]` | Intervalo fechado inclusivo (`min <= x && x <= max`) |
+| | `not between` | `['price', 'not between', [10.0, 50.0]]` | Fora do intervalo especificado (`x < min || x > max`) |
+| **Listas / Sets** | `in` | `['role', 'in', ['admin', 'manager']]` | Pertence à lista (otimizado com **hashmap O(1)**) |
+| | `not in` | `['role', 'not in', ['banned', 'guest']]` | Não pertence à lista (**hashmap O(1)** negado) |
+| **Texto / Strings** | `startswith` | `['sku', 'startswith', 'PROD-']` | Inicia com o prefixo informado |
+| | `endswith` | `['email', 'endswith', '@empresa.com']` | Termina com o sufixo informado |
+| | `contains` | `['title', 'contains', 'relatório']` | Contém a substring informada |
+
+> [!TIP]
+> **Performance O(1) em `in` e `not in`**:
+> Listas passadas para `in` e `not in` são indexadas em hashmap via `array_flip` durante a normalização da query. Em vez de varreduras lineares $O(M)$ do `in_array`, a checagem é feita em tempo constante $O(1)$ via `isset()` com preservação estrita de tipo.
 
 ```php
-// Filtro simples
+// 1. Filtro simples por igualdade ou comparador numérico
 $result = LinqPHP::from($data)
     ->where(['age', '>', 25])
     ->toArray();
 
-// Múltiplos filtros e operadores (startswith, endswith, contains, in)
+// 2. Intervalo numérico (between / not between) e listas (in / not in)
 $result = LinqPHP::from($data)
     ->where([
-        ['age', '>=', 25],
-        ['status', 'in', ['active', 'pending']],
+        ['price', 'between', [50.0, 200.0]],
+        ['status', 'not in', ['cancelado', 'devolvido']],
+        ['role', 'in', ['admin', 'supervisor']]
+    ])
+    ->toArray();
+
+// 3. Desigualdade e busca textual
+$result = LinqPHP::from($data)
+    ->where([
+        ['status', '!=', 'inativo'],
         ['name', 'startswith', 'J']
     ])
     ->toArray();
 
-// Usando Closures (funções anônimas)
+// 4. Comparação sensível a maiúsculas/minúsculas (caseSensitive: true)
 $result = LinqPHP::from($data)
-    ->where(fn($item) => $item['id'] % 2 !== 0)
+    ->where(['sku', 'startswith', 'PROD-A'], caseSensitive: true)
+    ->toArray();
+
+// 5. Usando Closures customizadas para regras dinâmicas
+$result = LinqPHP::from($data)
+    ->where(fn($item) => $item['id'] % 2 !== 0 && !empty($item['email']))
     ->toArray();
 ```
 

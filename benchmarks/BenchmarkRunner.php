@@ -130,7 +130,7 @@ class BenchmarkRunner
         }
 
         $sizeFormatted = number_format($dataSize, 0, '', '.');
-        $msg = sprintf("  ⏳ Executando: %s (%s registros)...", $name, $sizeFormatted);
+        $msg = sprintf('  ⏳ Executando: %s (%s registros)...', $name, $sizeFormatted);
         $msg = mb_strimwidth($msg, 0, 75, '...');
 
         echo "\r\e[2K" . self::COLOR_CYAN . $msg . self::COLOR_RESET;
@@ -153,13 +153,13 @@ class BenchmarkRunner
     private function printHeader(array $dataSizes): void
     {
         // Formata o texto primeiro, depois aplica a cor
-        $title = sprintf("%-" . self::NAME_WIDTH . "s", 'Total de linhas do dataset ->');
+        $title = sprintf('%-' . self::NAME_WIDTH . 's', 'Total de linhas do dataset ->');
         echo self::COLOR_CYAN . self::COLOR_BOLD . $title . self::COLOR_RESET;
 
         foreach ($dataSizes as $size) {
-            $colText = sprintf("%-" . self::COL_WIDTH . "s", number_format($size, 0, '', '.'));
+            $colText = sprintf('%-' . self::COL_WIDTH . 's', number_format($size, 0, '', '.'));
             // Mantém a barra vertical em cinza e o texto em ciano
-            echo self::COLOR_DARK_GRAY . "| " . self::COLOR_RESET . self::COLOR_CYAN . $colText . self::COLOR_RESET;
+            echo self::COLOR_DARK_GRAY . '| ' . self::COLOR_RESET . self::COLOR_CYAN . $colText . self::COLOR_RESET;
         }
 
         echo PHP_EOL;
@@ -177,14 +177,14 @@ class BenchmarkRunner
         echo "\r\e[2K";
 
         // Nome do teste em negrito
-        $nameText = sprintf("%-" . self::NAME_WIDTH . "s", $name);
+        $nameText = sprintf('%-' . self::NAME_WIDTH . 's', $name);
         echo $bg . self::COLOR_BOLD . $nameText . self::COLOR_RESET;
 
         foreach ($dataSizes as $size) {
             if (!isset($results[$size])) {
-                $emptyText = sprintf("%-" . self::COL_WIDTH . "s", '...');
+                $emptyText = sprintf('%-' . self::COL_WIDTH . 's', '...');
 
-                echo $bg . self::COLOR_DARK_GRAY . "| " . self::COLOR_RESET . $bg . self::COLOR_DARK_GRAY . $emptyText . self::COLOR_RESET;
+                echo $bg . self::COLOR_DARK_GRAY . '| ' . self::COLOR_RESET . $bg . self::COLOR_DARK_GRAY . $emptyText . self::COLOR_RESET;
                 continue;
             }
 
@@ -193,15 +193,15 @@ class BenchmarkRunner
 
             // Formata os dados no tamanho exato
             // Subtraímos 1 do COL_WIDTH porque o formato nativo com "MB" já ocupa bastante espaço
-            $resultStr = sprintf("%6.4fs / %5.2f MB ", $time, $memory);
+            $resultStr = sprintf('%6.4fs / %5.2f MB ', $time, $memory);
 
             // Se a string final for menor que a largura da coluna, preenche com espaços extras para alinhar
-            $resultStr = str_pad($resultStr, self::COL_WIDTH, " ");
+            $resultStr = str_pad($resultStr, self::COL_WIDTH, ' ');
 
             $color = $this->getColorForTime($time);
 
             // Imprime a barra em cinza e o texto no formato "Semáforo", mantendo o fundo zebrado se ativo
-            echo $bg . self::COLOR_DARK_GRAY . "| " . self::COLOR_RESET . $bg . $color . $resultStr . self::COLOR_RESET;
+            echo $bg . self::COLOR_DARK_GRAY . '| ' . self::COLOR_RESET . $bg . $color . $resultStr . self::COLOR_RESET;
 
             if ($time > 1.5) {
                 // Monta a string no formato exato que o GitHub exige sem duplicidades

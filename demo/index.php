@@ -75,18 +75,18 @@ $vendas = [
 if (class_exists(DB::class)) {
     DB::sqlite();
 
-    DB::execute("CREATE TABLE IF NOT EXISTS vendas_sql (
+    DB::execute('CREATE TABLE IF NOT EXISTS vendas_sql (
         id_venda INTEGER PRIMARY KEY,
         produto_id INTEGER,
         cliente_id INTEGER,
         qtd INTEGER,
         canal TEXT,
         status TEXT
-    )");
+    )');
 
     foreach ($vendas as $v) {
         DB::execute(
-            "INSERT INTO vendas_sql (id_venda, produto_id, cliente_id, qtd, canal, status) VALUES (?, ?, ?, ?, ?, ?)",
+            'INSERT INTO vendas_sql (id_venda, produto_id, cliente_id, qtd, canal, status) VALUES (?, ?, ?, ?, ?, ?)',
             [$v['id_venda'], $v['produto_id'], $v['cliente_id'], $v['qtd'], $v['canal'], $v['status']]
         );
     }
@@ -434,11 +434,11 @@ $cenarios = [
             ->toObject();
         PHP_WRAP,
         'run' => function () use ($produtos, $clientes) {
-            return DB::query("
+            return DB::query('
                 SELECT id_venda, produto_id, cliente_id, qtd
                 FROM vendas_sql
                 WHERE status = :status
-            ", ['status' => 'concluido'])
+            ', ['status' => 'concluido'])
                 ->linq()
                 ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
                 ->join($clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
@@ -545,7 +545,7 @@ $avaliarLinq = function (string $rawCode) use ($clientes, $produtos, $produtosOu
     $cleanCode = trim($rawCode);
     $prefix = "use HeliomarPM\\LinqPHP\\LinqPHP;\nuse HeliomarPM\\LinqPHP\\JoinType;\nuse HeliomarPM\\DbPHP\\DB;\n";
     if (preg_match('/^(LinqPHP::|\(?new\s+LinqPHP|DB::|\(?new\s+DB)/i', $cleanCode)) {
-        $cleanCode = "return " . rtrim($cleanCode, ';') . ";";
+        $cleanCode = 'return ' . rtrim($cleanCode, ';') . ';';
     } else {
         // Garante que o retorno do script ou da variável $linq seja obtido mesmo se o código tiver closures internas
         $cleanCode .= "\nreturn \$item ?? \$linq ?? \$resultado ?? \$result ?? \$dbResult ?? \$dados ?? null;";
@@ -558,7 +558,7 @@ $avaliarLinq = function (string $rawCode) use ($clientes, $produtos, $produtosOu
     }
     $endTime = microtime(true);
     $elapsedTime = number_format($endTime - $startTime, 6);
-    $memoryUsed = sprintf("%5.2f MB", (memory_get_peak_usage(true) - $startMemory) / 1024 / 1024);
+    $memoryUsed = sprintf('%5.2f MB', (memory_get_peak_usage(true) - $startMemory) / 1024 / 1024);
     if ($evalResult instanceof HeliomarPM\DbPHP\Results\QueryResult) {
         $evalResult = $evalResult->linq()->toObject();
     } elseif ($evalResult instanceof LinqPHP) {
@@ -1339,11 +1339,11 @@ PHP,
                         $cliMap[$c['id_cliente']] = $c;
                     }
 
-                    $vendasSql = DB::query("
+                    $vendasSql = DB::query('
                         SELECT id_venda, produto_id, cliente_id, qtd
                         FROM vendas_sql
                         WHERE status = :status
-                    ", ['status' => 'concluido']);
+                    ', ['status' => 'concluido']);
 
                     $resultado = [];
                     foreach ($vendasSql as $v) {
@@ -1684,17 +1684,17 @@ if (!function_exists('renderGrid')) {
         $html .= "<div class='d-flex align-items-center gap-2'>";
         $html .= "<span style='width: 8px; height: 8px; border-radius: 50%; background-color: {$dotColor}; display: inline-block; box-shadow: 0 0 8px {$dotColor};'></span>";
         $html .= "<span class='fw-semibold text-white' style='font-size: 0.85rem;'>{$titulo}</span>";
-        $html .= "</div>";
+        $html .= '</div>';
         $html .= "<span class='badge rounded-pill fw-semibold' style='font-size: 0.72rem; {$badgeStyle}'>{$badgeCount} itens</span>";
-        $html .= "</div>";
+        $html .= '</div>';
         $html .= "<div class='card-body p-0'><div class='table-responsive'><table class='table table-sm table-dark table-hover table-zebra mb-0 align-middle' style='font-size: 0.82rem; background: #161b22; border-color: #30363d;'>";
         $html .= "<thead style='background: #1c2128; border-bottom: 1px solid #30363d;'><tr>";
 
         foreach ($colunas as $col) {
-            $html .= "<th class='text-secondary py-2 px-2' style='font-weight: 600; font-size: 0.74rem; letter-spacing: 0.04em; background: #1c2128; border-color: #30363d;'>" . strtoupper($col) . "</th>";
+            $html .= "<th class='text-secondary py-2 px-2' style='font-weight: 600; font-size: 0.74rem; letter-spacing: 0.04em; background: #1c2128; border-color: #30363d;'>" . strtoupper($col) . '</th>';
         }
 
-        $html .= "</tr></thead><tbody>";
+        $html .= '</tr></thead><tbody>';
 
         foreach ($dados as $linha) {
             $html .= "<tr style='border-color: #21262d;'>";
@@ -1729,10 +1729,10 @@ if (!function_exists('renderGrid')) {
 
                 $html .= "<td class='py-2 px-2' style='color: #c9d1d9; border-color: #21262d;'>{$celula}</td>";
             }
-            $html .= "</tr>";
+            $html .= '</tr>';
         }
 
-        $html .= "</tbody></table></div></div></div>";
+        $html .= '</tbody></table></div></div></div>';
         return $html;
     }
 }

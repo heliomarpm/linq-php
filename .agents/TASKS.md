@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar plano de melhorias, segurança, performance e novos métodos LINQ do Assessment Fase 2\
-> **Status:** em progresso | **Progresso:** 36/47 (76%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-27
+> **Status:** em progresso | **Progresso:** 37/47 (79%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-28
 
 ## Em progresso
 
@@ -18,16 +18,6 @@
 (nenhuma)
 
 ### Média Prioridade
-
-- [ ] **T-036 · P2 · Otimizar operador `in` em `where()` com hashmap lookup O(1)**
-  - Origem: `-assessment` (item 2.2)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/WhereTest.php](../tests/Unit/WhereTest.php)
-  - Dependências: T-035
-  - Critérios de aceite:
-    1. Converter o array `$value` do operador `in` em hashmap indexado via `array_flip` durante a normalização;
-    2. Executar checagem de pertinência O(1) com `isset()` em vez de varredura linear O(M) de `in_array()`;
-    3. Manter paridade estrita de comportamento;
-    4. Testes unitários com listas grandes passando 100% verde.
 
 - [ ] **T-037 · P2 · Otimizar `distinct()` com suporte a `keySelector` e eliminar `serialize()` para chaves simples**
   - Origem: `-assessment` (item 2.1)
@@ -131,6 +121,10 @@
 
 
 ## Concluídas recentemente
+
+- [x] **T-036 · P2 · Otimizar operador `in` em `where()` com hashmap lookup O(1)** (2026-10-28)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [README.md](../README.md), [tests/Unit/WhereTest.php](../tests/Unit/WhereTest.php)
+  - Evidência: Operadores `in` e `not in` otimizados com pré-indexação em hashmap via `array_flip` durante a normalização; checagem em tempo constante $O(1)$ com `isset()` e verificação estrita de tipo (`===`), prevenindo varreduras lineares $O(M)$ de `in_array`; fallback seguro e transparente para arrays com elementos não escalares; documentação completa de todos os operadores adicionada no PHPDoc de `where()` e no `README.md`; 3 novos testes unitários adicionados em `WhereTest` validando listas grandes (5.000 itens), colisões de chaves escalares (`0` vs `'0'`) e fallback para tipos não escalares; 143 testes unitários passando 100% verde (769 asserções); Pint e PHPStan nível 5 aprovados sem erros.
 
 - [x] **T-035 · P1 · Implementar operadores relacionais faltantes e `strict: true` em `where()`** (2026-10-27)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/WhereTest.php](../tests/Unit/WhereTest.php)
