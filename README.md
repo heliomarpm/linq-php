@@ -173,7 +173,17 @@ $result = LinqPHP::from($data)
     ])
     ->toArray();
 
-// 4. Retorna apenas os registros únicos
+// 4. Retorna registros únicos por coluna (O(1), sem serialize)
+$result = LinqPHP::from($data)
+    ->distinct('name')
+    ->toArray();
+
+// 5. Retorna registros únicos por closure projetora
+$result = LinqPHP::from($data)
+    ->distinct(fn($item) => $item['category'] . '|' . $item['status'])
+    ->toArray();
+
+// 6. Deduplicação integral do registro (legado — usa serialize())
 $result = LinqPHP::from($data)
     ->select(['name'])
     ->distinct()
@@ -185,6 +195,7 @@ $result = LinqPHP::from($data)
 > - **Zero Performance Penalty**: Em seleções tradicionais indexadas numericamente (`['name', 'status']`), o LinqPHP utiliza internamente `array_is_list()` nativo do PHP 8.1+ e executa o caminho direto em C com `array_intersect_key`, garantindo **zero degradação de performance**.
 > - **Preservação de Ordem**: As colunas no array de saída seguem rigorosamente a ordem em que foram declaradas no `select()`.
 > - **Modo Estrito**: Por padrão (`strict: false`), campos inexistentes na fonte são preenchidos com `null`. Ao usar `select(['campo1', 'campo2'], strict: true)`, uma `InvalidArgumentException` será lançada caso alguma chave não exista no registro.
+> - **`distinct(string)` é O(1)**: Ao passar uma coluna escalar, a chave é computada via `(string)$item[$column]`, eliminando `serialize()` e reduzindo uso de memória em até 80%.
 
 ### `join()` - União Relacional
 

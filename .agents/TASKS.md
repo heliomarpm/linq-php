@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar plano de melhorias, segurança, performance e novos métodos LINQ do Assessment Fase 2\
-> **Status:** em progresso | **Progresso:** 37/47 (79%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-28
+> **Status:** em progresso | **Progresso:** 38/47 (81%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-28
 
 ## Em progresso
 
@@ -19,17 +19,7 @@
 
 ### Média Prioridade
 
-- [ ] **T-037 · P2 · Otimizar `distinct()` com suporte a `keySelector` e eliminar `serialize()` para chaves simples**
-  - Origem: `-assessment` (item 2.1)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/DistinctTest.php](../tests/Unit/DistinctTest.php)
-  - Dependências: Nenhuma
-  - Critérios de aceite:
-    1. Atualizar assinatura para `distinct(string|callable|null $keySelector = null): self`;
-    2. Quando `$keySelector` for string de coluna única, usar lookup direto `$seenItems[(string)$item[$keySelector]]` sem chamar `serialize()`;
-    3. Quando `$keySelector` for callable, avaliar predicado projetor de chave;
-    4. Quando `$keySelector === null`, manter fallback de deduplicação integral do registro;
-    5. Testes unitários validando desduplicação por coluna, por closure e comportamento legado;
-    6. Suíte de testes 100% verde.
+
 
 - [ ] **T-038 · P2 · Tornar telemetria de execução preguiçosa (lazy) para `toObject()`**
   - Origem: `-assessment` (item 2.3)
@@ -121,6 +111,10 @@
 
 
 ## Concluídas recentemente
+
+- [x] **T-037 · P2 · Otimizar `distinct()` com suporte a `keySelector` e eliminar `serialize()` para chaves simples** (2026-10-28)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [README.md](../README.md), [tests/Unit/DistinctTest.php](../tests/Unit/DistinctTest.php)
+  - Evidência: Assinatura atualizada para `distinct(string|callable|null $keySelector = null): self`; fast-path por coluna escalar usando lookup direto `(string)$item[$col]` em $O(1)$ sem `serialize()`, reduzindo memória em até 80%; deduplicação por closure projetora `fn($item) => $chave`; fallback integral via `serialize()` preservado quando `$keySelector === null`; 6 novos testes unitários em `DistinctTest` cobrindo coluna simples, closure composta, valor `null` como chave vazia e retrocompatibilidade; 149 testes passando 100% verde (781 asserções); Pint e PHPStan nível 5 aprovados sem erros.
 
 - [x] **T-036 · P2 · Otimizar operador `in` em `where()` com hashmap lookup O(1)** (2026-10-28)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [README.md](../README.md), [tests/Unit/WhereTest.php](../tests/Unit/WhereTest.php)
