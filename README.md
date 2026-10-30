@@ -455,7 +455,7 @@ Na demo interativa você pode simular cenários avançados como Join Triplo, Uni
 
 ## 🛠️ Desenvolvimento e Testes
 
-O código-fonte principal encontra-se na pasta `src/`. O projeto utiliza ferramentas de qualidade estrita (PHPStan e Laravel Pint) e suíte completa de testes unitários com PHPUnit 13.
+O código-fonte principal encontra-se na pasta `src/`. O projeto utiliza PHPStan, Laravel Pint e PHPUnit para análise estática, formatação e testes unitários.
 
 Comandos disponíveis via Composer:
 
@@ -466,20 +466,36 @@ composer test
 # Executa testes com saída detalhada
 composer test:v
 
-# Executa benchmarks de performance (até 200.000 registros)
+# Executa benchmarks de performance do projeto (até 100.000 registros)
 composer bench
 
-# Executa análise estática de tipos (PHPStan nível 5)
+# Executa benchmarks formais com PHPBench e relatório agregado
+composer perform
+
+# Executa análise estática de tipos (PHPStan nível 8)
 composer lint
 
 # Valida conformidade com PSR-12 (Laravel Pint)
-composer format:test
+composer format
 
 # Corrige automaticamente estilo de código
 composer format:fix
 
-# Executa verificação completa de QA (Testes + Benchmarks + PHPStan)
+# Executa testes e benchmarks do projeto
 composer qa
+```
+
+O script `composer bench` desativa o Xdebug para reduzir a interferência na medição. `composer perform` não altera essa configuração; se o Xdebug estiver ativo, desative-o no ambiente antes de executar o PHPBench:
+
+```powershell
+$env:XDEBUG_MODE = 'off'
+composer perform
+```
+
+Em shells compatíveis com Bash, use:
+
+```bash
+XDEBUG_MODE=off composer perform
 ```
 
 ---
