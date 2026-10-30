@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/db_fallback.php';
 require_once __DIR__ . '/sandbox_validator.php';
+require_once __DIR__ . '/BenchmarkMetrics.php';
 
 // Servir Favicon estático imediatamente para /favicon.ico ou /favicon.svg
 if (in_array(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), ['/favicon.ico', '/favicon.svg'], true)) {
@@ -13,6 +14,7 @@ if (in_array(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), ['/favicon.
 }
 
 use HeliomarPM\DbPHP\DB;
+use HeliomarPM\LinqPHP\Demo\BenchmarkMetrics;
 use HeliomarPM\LinqPHP\Demo\CodeSandboxValidator;
 use HeliomarPM\LinqPHP\LinqPHP;
 
@@ -1557,29 +1559,25 @@ $executarBenchmark = function (callable $linqFn, callable $nativeFn, int $iterat
     $natMemPeak = memory_get_peak_usage();
     $natNs = $t3 - $t2;
 
-    $linqTotalMs = round($linqNs / 1_000_000, 3);
-    $natTotalMs  = round($natNs / 1_000_000, 3);
-    $linqUsPerOp = round(($linqNs / $iterations) / 1_000, 2);
-    $natUsPerOp  = round(($natNs / $iterations) / 1_000, 2);
-    $diffUs      = round(abs($linqUsPerOp - $natUsPerOp), 2);
-    $diffTotalMs = round(abs($linqTotalMs - $natTotalMs), 3);
-    $ratio       = $natNs > 0 ? round($linqNs / $natNs, 2) : 1.0;
+    $metrics = BenchmarkMetrics::calculate($linqNs, $natNs, $iterations);
 
     return [
         'iterations'  => $iterations,
         'linq'        => [
-            'totalMs' => $linqTotalMs,
-            'usPerOp' => $linqUsPerOp,
+            'totalMs' => $metrics['linqTotalMs'],
+            'usPerOp' => $metrics['linqUsPerOp'],
             'memory'  => sprintf('%.2f KB', ($linqMemPeak - $startMemLinq) / 1024),
         ],
         'native'      => [
-            'totalMs' => $natTotalMs,
-            'usPerOp' => $natUsPerOp,
+            'totalMs' => $metrics['nativeTotalMs'],
+            'usPerOp' => $metrics['nativeUsPerOp'],
             'memory'  => sprintf('%.2f KB', ($natMemPeak - $startMemNat) / 1024),
         ],
-        'diffUs'      => $diffUs,
-        'diffTotalMs' => $diffTotalMs,
-        'ratio'       => $ratio,
+        'deltaUsPerOp' => $metrics['deltaUsPerOp'],
+        'deltaTotalMs' => $metrics['deltaTotalMs'],
+        'diffUs'       => $metrics['deltaUsPerOp'],
+        'diffTotalMs'  => $metrics['deltaTotalMs'],
+        'ratio'       => $metrics['ratio'],
     ];
 };
 
@@ -2719,17 +2717,27 @@ if (!function_exists('renderGrid')) {
                                         </div>
                                         <div class="my-2">
                                             <div class="display-6 fw-bold" style="color: #fdba74; font-size: 1.75rem;">
-                                                +{{ benchData.diffUs }} <span class="fs-6 fw-normal text-secondary">µs / op</span>
+                                                {{ benchData.deltaUsPerOp > 0 ? '+' : '' }}{{ benchData.deltaUsPerOp }}
+                                                <span class="fs-6 fw-normal text-secondary">µs / op</span>
                                             </div>
                                             <div class="small text-secondary mt-1">
-                                                Razão: <strong class="text-white">{{ benchData.ratio }}x</strong> (~{{ benchData.diffTotalMs }} ms em {{ benchData.iterations }} ops)
+                                                <strong :class="benchmarkVerdict.class">{{ benchmarkVerdict.label }}</strong>
                                             </div>
                                             <div class="small text-secondary">
-                                                Impacto Web: <strong class="text-success">Desprezível (&lt; 0.05ms)</strong>
+                                                Razão LinqPHP / nativo:
+                                                <strong class="text-white">{{ benchData.ratio === null ? 'indisponível' : benchData.ratio + 'x' }}</strong>
+                                            </div>
+                                            <div class="small text-secondary">
+                                                Delta acumulado no benchmark:
+                                                <strong class="text-white">{{ benchData.deltaTotalMs > 0 ? '+' : '' }}{{ benchData.deltaTotalMs }} ms</strong>
+                                                em {{ benchData.iterations }} execuções.
+                                            </div>
+                                            <div class="small text-secondary mt-1">
+                                                Mede apenas o tempo de execução PHP; não representa a latência total HTTP, de rede ou do banco.
                                             </div>
                                         </div>
                                         <div class="mt-auto pt-2 border-top border-secondary border-opacity-25 small" style="color: #fed7aa; font-size: 0.75rem;">
-                                            <i class="bi bi-shield-check me-1"></i> Ganho incomparável em legibilidade e DX
+                                            <i class="bi bi-info-circle me-1"></i> O sinal do delta é LinqPHP menos PHP nativo.
                                         </div>
                                     </div>
                                 </div>
@@ -3024,6 +3032,20 @@ if (!function_exists('renderGrid')) {
                     return Math.min(100, Math.max(5, Math.round((a / b) * 100)));
                 };
 
+                const benchmarkVerdict = computed(() => {
+                    const delta = Number(benchData.value?.deltaUsPerOp);
+                    if (!Number.isFinite(delta)) {
+                        return { label: 'Veredito indisponível', class: 'text-secondary' };
+                    }
+                    if (delta > 0) {
+                        return { label: 'LinqPHP mais lento nesta medição', class: 'text-warning' };
+                    }
+                    if (delta < 0) {
+                        return { label: 'LinqPHP mais rápido nesta medição', class: 'text-success' };
+                    }
+                    return { label: 'Equivalente na precisão exibida', class: 'text-info' };
+                });
+
                 const executarBenchmark = async (it = null) => {
                     if (it) iteracoesBench.value = it;
                     carregandoBench.value = true;
@@ -3219,6 +3241,7 @@ if (!function_exists('renderGrid')) {
                     copiadoNativo,
                     copiadoPhp,
                     benchData,
+                    benchmarkVerdict,
                     codigoNativo,
                     iteracoesBench,
                     carregandoBench,

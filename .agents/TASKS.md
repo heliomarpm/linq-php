@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar plano de melhorias, segurança, performance e novos métodos LINQ do Assessment Fase 2\
-> **Status:** concluído | **Progresso:** 48/48 (100%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
+> **Status:** concluído | **Progresso:** 49/49 (100%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
 
 ## Em progresso
 
@@ -20,6 +20,10 @@
 ### Baixa Prioridade
 
 ## Concluídas recentemente
+
+- [x] **T-049 · P2 · Corrigir cálculo e apresentação do overhead e impacto web no benchmark da demo** (2026-10-30)
+  - Arquivos: [demo/index.php](../demo/index.php), [demo/BenchmarkMetrics.php](../demo/BenchmarkMetrics.php), [tests/Unit/DemoBenchmarkMetricsTest.php](../tests/Unit/DemoBenchmarkMetricsTest.php)
+  - Evidência: Delta assinado `LinqPHP - PHP nativo` agora alimenta o veredito e a interface; o impacto por operação e o delta acumulado são calculados dos tempos medidos, sem atribuí-los à latência HTTP. Testes cobrem LinqPHP mais lento/mais rápido, delta superior a 0,05 ms/op, razão indisponível e entrada inválida. `composer test` (187 testes, 837 asserções), `composer lint`, `composer format`, `php -l` nos três arquivos alterados, smoke test da API do benchmark e `git diff --check` aprovados.
 
 - [x] **T-048 · P3 · Destacar a integração DbPHP no final da fila de cenários da demo** (2026-10-30)
   - Arquivos: [demo/index.php](../demo/index.php)
