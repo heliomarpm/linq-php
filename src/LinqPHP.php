@@ -11,13 +11,11 @@ class LinqPHP
 {
     private array $data;
     private readonly float $startTime;
-    private float $endTime;
     private readonly int $startMemory;
 
     public function __construct(array $data)
     {
-        $this->startTime = microtime(true); // tempo em micros
-        $this->endTime = $this->startTime;
+        $this->startTime = microtime(true);
         $this->startMemory = memory_get_usage(true);
         $this->setData($data);
     }
@@ -82,12 +80,10 @@ class LinqPHP
     {
         if ($this->data === []) {
             $this->data = $this->normalizeCollection($unionData);
-            $this->endTime = microtime(true);
             return $this;
         }
 
         if ($unionData === []) {
-            $this->endTime = microtime(true);
             return $this;
         }
 
@@ -124,7 +120,6 @@ class LinqPHP
 
                 if ($isIdentical) {
                     $this->data = array_merge($this->data, $unionData);
-                    $this->endTime = microtime(true);
                     return $this;
                 }
             }
@@ -158,7 +153,6 @@ class LinqPHP
         }
 
         $this->data = $result;
-        $this->endTime = microtime(true);
         return $this;
     }
 
@@ -271,7 +265,6 @@ class LinqPHP
         }
 
         $this->data = $result;
-        $this->endTime = microtime(true);
         return $this;
     }
 
@@ -423,7 +416,6 @@ class LinqPHP
         // Fast-path 1: Se for uma closure/função única, executa direto sem wrapper
         if (is_callable($conditions) && !is_array($conditions)) {
             $this->data = array_values(array_filter($this->data, $conditions));
-            $this->endTime = microtime(true);
             return $this;
         }
 
@@ -448,7 +440,6 @@ class LinqPHP
             }
 
             $this->data = $filtered;
-            $this->endTime = microtime(true);
             return $this;
         }
 
@@ -458,7 +449,6 @@ class LinqPHP
         );
 
         $this->data = array_values($resultadosFiltrados);
-        $this->endTime = microtime(true);
         return $this;
     }
 
@@ -487,7 +477,6 @@ class LinqPHP
     public function groupBy(array $groupingFields, array $aggregations = []): self
     {
         if ($this->data === []) {
-            $this->endTime = microtime(true);
             return $this;
         }
 
@@ -584,7 +573,6 @@ class LinqPHP
         }
 
         $this->data = array_values($groupedResult);
-        $this->endTime = microtime(true);
         return $this;
     }
 
@@ -624,7 +612,6 @@ class LinqPHP
     public function select(array $selectors = [], bool $strict = false): self
     {
         if ($selectors === []) {
-            $this->endTime = microtime(true);
             return $this;
         }
 
@@ -676,7 +663,6 @@ class LinqPHP
             }
 
             $this->data = $resultItems;
-            $this->endTime = microtime(true);
             return $this;
         }
 
@@ -719,7 +705,6 @@ class LinqPHP
         }
 
         $this->data = $resultItems;
-        $this->endTime = microtime(true);
         return $this;
     }
 
@@ -787,7 +772,6 @@ class LinqPHP
         }
 
         $this->data = $resultItems;
-        $this->endTime = microtime(true);
         return $this;
     }
 
@@ -816,7 +800,6 @@ class LinqPHP
         }
 
         $this->data = array_splice($this->data, 0, $maxItens);
-        $this->endTime = microtime(true);
         return $this;
     }
 
@@ -851,7 +834,6 @@ class LinqPHP
     public function orderByKey(callable|string $key, bool|string $descending = false): self
     {
         if ($this->data === []) {
-            $this->endTime = microtime(true);
             return $this;
         }
 
@@ -859,7 +841,6 @@ class LinqPHP
 
         if ($key instanceof Closure || (is_callable($key) && !is_string($key))) {
             $this->sortWithCallable($key, $isDesc);
-            $this->endTime = microtime(true);
             return $this;
         }
 
@@ -869,7 +850,6 @@ class LinqPHP
         if ($data === []) {
             if (is_callable($key)) {
                 $this->sortWithCallable($key, $isDesc);
-                $this->endTime = microtime(true);
                 return $this;
             }
 
@@ -881,7 +861,6 @@ class LinqPHP
         } else {
             array_multisort($data, SORT_DESC, $this->data);
         }
-        $this->endTime = microtime(true);
         return $this;
     }
 
@@ -920,7 +899,6 @@ class LinqPHP
     public function orderBy(array|callable $fields): self
     {
         if ($this->data === []) {
-            $this->endTime = microtime(true);
             return $this;
         }
 
@@ -997,8 +975,6 @@ class LinqPHP
 
         $sortOrders[] = &$this->data;
         array_multisort(...$sortOrders);
-
-        $this->endTime = microtime(true);
         return $this;
     }
 
@@ -1062,8 +1038,6 @@ class LinqPHP
      */
     public function firstOrDefault(?callable $predicate = null, mixed $default = null): mixed
     {
-        $this->endTime = microtime(true);
-
         if ($this->data === []) {
             return $default;
         }
@@ -1096,8 +1070,6 @@ class LinqPHP
      */
     public function count(?callable $predicate = null): int
     {
-        $this->endTime = microtime(true);
-
         if ($predicate === null) {
             return count($this->data);
         }
@@ -1126,8 +1098,6 @@ class LinqPHP
      */
     public function sum(string|callable $field): int|float
     {
-        $this->endTime = microtime(true);
-
         if ($this->data === []) {
             return 0;
         }
@@ -1156,8 +1126,6 @@ class LinqPHP
      */
     public function avg(string|callable $field): ?float
     {
-        $this->endTime = microtime(true);
-
         $count = count($this->data);
         if ($count === 0) {
             return null;
@@ -1179,8 +1147,6 @@ class LinqPHP
      */
     public function min(string|callable $field): mixed
     {
-        $this->endTime = microtime(true);
-
         if ($this->data === []) {
             return null;
         }
@@ -1215,8 +1181,6 @@ class LinqPHP
      */
     public function max(string|callable $field): mixed
     {
-        $this->endTime = microtime(true);
-
         if ($this->data === []) {
             return null;
         }
@@ -1561,8 +1525,10 @@ class LinqPHP
 
     private function statisticUsage(): array
     {
+        $endTime = microtime(true);
+
         return [
-            'elapsedTime' => number_format($this->endTime - $this->startTime, 6),
+            'elapsedTime' => number_format($endTime - $this->startTime, 6),
             'memoryUsed' => sprintf('%5.2f MB', (memory_get_peak_usage(true) - $this->startMemory) / 1024 / 1024),
         ];
     }

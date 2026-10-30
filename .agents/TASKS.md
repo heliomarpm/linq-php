@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar plano de melhorias, segurança, performance e novos métodos LINQ do Assessment Fase 2\
-> **Status:** em progresso | **Progresso:** 38/47 (81%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-28
+> **Status:** em progresso | **Progresso:** 39/47 (81%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-29
 
 ## Em progresso
 
@@ -18,18 +18,6 @@
 (nenhuma)
 
 ### Média Prioridade
-
-
-
-- [ ] **T-038 · P2 · Tornar telemetria de execução preguiçosa (lazy) para `toObject()`**
-  - Origem: `-assessment` (item 2.3)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/LinqPHPTest.php](../tests/Unit/LinqPHPTest.php)
-  - Dependências: Nenhuma
-  - Critérios de aceite:
-    1. Eliminar chamadas incondicionais repetitivas a `microtime(true)` em cada método encadeado fluente;
-    2. Registrar tempo de término somente na chamada terminal de `toObject()` ou `statisticUsage()`;
-    3. Garantir que `toArray()` execute sem qualquer overhead de syscall de relógio;
-    4. Suíte de testes e benchmarks 100% preservados.
 
 - [ ] **T-039 · P2 · Deduplicar construção de chaves compostas entre `join()` e `groupBy()`**
   - Origem: `-assessment` (item 3.2)
@@ -108,9 +96,17 @@
     2. Configurar `phpstan.neon` para `level: 8`;
     3. Executar `composer lint` com zero erros reportados.
 
-
-
 ## Concluídas recentemente
+
+- [X] **T-038 · P2 · Tornar telemetria de execução preguiçosa (lazy) para `toObject()`**
+  - Origem: `-assessment` (item 2.3)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/LinqPHPTest.php](../tests/Unit/LinqPHPTest.php)
+  - Dependências: Nenhuma
+  - Critérios de aceite:
+    1. Eliminar chamadas incondicionais repetitivas a `microtime(true)` em cada método encadeado fluente;
+    2. Registrar tempo de término somente na chamada terminal de `toObject()` ou `statisticUsage()`;
+    3. Garantir que `toArray()` execute sem qualquer overhead de syscall de relógio;
+    4. Suíte de testes e benchmarks 100% preservados.
 
 - [x] **T-037 · P2 · Otimizar `distinct()` com suporte a `keySelector` e eliminar `serialize()` para chaves simples** (2026-10-28)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [README.md](../README.md), [tests/Unit/DistinctTest.php](../tests/Unit/DistinctTest.php)
@@ -235,7 +231,6 @@
 - [x] **T-009 · P2 · Suportar parâmetro `$descending` em `orderByKey` e booleanos por campo em `orderBy`** (2026-10-24)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/OrderByTest.php](../tests/Unit/OrderByTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)
   - Evidência: Parâmetro `$descending` (booleano/string) adicionado em `orderByKey`; `orderBy` refinado com assinatura limpa `orderBy(array $fields)` aceitando booleanos (true/false) e strings por campo; 80 testes passando (612 asserções); PHPStan nível 5 com 0 erros; benchmarks validados.
-
 
 - [x] **T-003 · P2 · Corrigir portabilidade e duplicação no script `reset` do Composer** (2026-10-13)
   - Arquivos: [composer.json](../composer.json)
