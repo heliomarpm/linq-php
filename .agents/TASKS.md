@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar plano de melhorias, segurança, performance e novos métodos LINQ do Assessment Fase 2\
-> **Status:** em progresso | **Progresso:** 43/48 (89%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
+> **Status:** em progresso | **Progresso:** 44/48 (91%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
 
 ## Em progresso
 
@@ -18,18 +18,6 @@
 ### Média Prioridade
 
 ### Baixa Prioridade
-
-- [ ] **T-043 · P3 · Implementar métodos terminais `last()` e `lastOrDefault()`**
-  - Origem: `-assessment` (item 4.3)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/LastTest.php](../tests/Unit/LastTest.php)
-  - Dependências: Nenhuma
-  - Critérios de aceite:
-    1. Métodos `last(?callable $predicate = null): mixed` e `lastOrDefault(?callable $predicate = null, mixed $default = null): mixed` implementados;
-    2. `last()` lança `UnderflowException` se vazio ou nenhum item coincidir;
-    3. `lastOrDefault()` retorna `$default` (padrão `null`) se vazio ou não encontrado;
-    4. Novos testes unitários com e sem predicado.
-    5. Novos cenários de demo web com última ocorrencia.
-    6. Atualizar documentação com exemplos de uso.
 
 - [ ] **T-044 · P3 · Implementar métodos booleanos de short-circuit `any()` e `all()`**
   - Origem: `-assessment` (item 4.4)
@@ -72,6 +60,10 @@
     3. A seleção continua executando o código DbPHP exibido e mantém sua saída e benchmark disponíveis.
 
 ## Concluídas recentemente
+
+- [x] **T-043 · P3 · Implementar métodos terminais `last()` e `lastOrDefault()`** (2026-10-30)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/LastTest.php](../tests/Unit/LastTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)
+  - Evidência: Implementados `last()` com `UnderflowException` e `lastOrDefault()` com retorno padrão, ambos aceitando predicado e sem alterar a coleção; 9 testes cobrem seleção do último item e correspondência, vazio, ausência de correspondência e defaults; adicionado cenário de demo com benchmark nativo e documentação; `composer test` (170 testes, 809 asserções), `composer lint`, `composer format`, verificações `php -l` e API da demo (último cliente VIP de MG) aprovados.
 
 - [x] **T-042 · P3 · Implementar método `first(?callable $predicate = null)` com exceção de vazio** (2026-10-30)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/FirstTest.php](../tests/Unit/FirstTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)

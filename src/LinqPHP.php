@@ -1097,6 +1097,58 @@ class LinqPHP
     }
 
     /**
+     * Retorna o último elemento da coleção ou que satisfaça o predicado.
+     *
+     * @param (callable(array<string, mixed>): bool)|null $predicate Função opcional para testar cada elemento.
+     * @return mixed O último item correspondente.
+     * @throws UnderflowException Quando a coleção está vazia ou nenhum item corresponde.
+     */
+    public function last(?callable $predicate = null): mixed
+    {
+        $found = false;
+        $lastItem = null;
+
+        foreach ($this->data as $item) {
+            if ($predicate === null || $predicate($item)) {
+                $lastItem = $item;
+                $found = true;
+            }
+        }
+
+        if (!$found) {
+            throw new UnderflowException(
+                $predicate === null
+                    ? 'A coleção está vazia.'
+                    : 'Nenhum elemento da coleção satisfaz o predicado.'
+            );
+        }
+
+        return $lastItem;
+    }
+
+    /**
+     * Retorna o último elemento da coleção, ou um valor padrão se nenhum item corresponder.
+     *
+     * @param (callable(array<string, mixed>): bool)|null $predicate Função opcional para testar cada elemento.
+     * @param mixed $default Valor retornado quando não houver correspondência. Padrão é null.
+     * @return mixed O último item correspondente ou o valor padrão.
+     */
+    public function lastOrDefault(?callable $predicate = null, mixed $default = null): mixed
+    {
+        $found = false;
+        $lastItem = null;
+
+        foreach ($this->data as $item) {
+            if ($predicate === null || $predicate($item)) {
+                $lastItem = $item;
+                $found = true;
+            }
+        }
+
+        return $found ? $lastItem : $default;
+    }
+
+    /**
      * Retorna o número de elementos na coleção, opcionalmente filtrados por um predicado.
      *
      * @param (callable(array<string, mixed>): bool)|null $predicate Função opcional para contar apenas itens correspondentes.

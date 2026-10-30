@@ -330,6 +330,17 @@ $cenarios = [
         PHP_WRAP,
     ],
 
+    'ultimo_registro' => [
+        'titulo' => 'Último Registro (last + lastOrDefault)',
+        'tag'    => 'LAST',
+        'cor'    => 'info',
+        'desc'   => 'Localiza o último cliente VIP de Minas Gerais com last(); lastOrDefault() pode retornar um valor alternativo se não houver correspondência.',
+        'codigo' => <<<PHP_WRAP
+        \$item = LinqPHP::from(\$clientes)
+            ->last(fn(\$c) => \$c['uf'] === 'MG' && \$c['vip'] === true);
+        PHP_WRAP,
+    ],
+
     'do_banco_ao_relatorio' => [
         'titulo' => 'Do Banco ao Relatório (DbPHP + LinqPHP)',
         'tag'    => 'DB-PHP + LINQ',
@@ -1215,6 +1226,36 @@ PHP,
                     }
 
                     throw new UnderflowException('Nenhum cliente correspondente foi encontrado.');
+                },
+            ];
+
+        case 'ultimo_registro':
+            return [
+                'codigo' => <<<'PHP'
+$ultimo = null;
+foreach ($clientes as $c) {
+    if ($c['uf'] === 'MG' && $c['vip'] === true) {
+        $ultimo = $c;
+    }
+}
+if ($ultimo === null) {
+    throw new UnderflowException('Nenhum cliente correspondente foi encontrado.');
+}
+$resultado = [$ultimo];
+PHP,
+                'run' => static function () use ($clientes): array {
+                    $ultimo = null;
+                    foreach ($clientes as $cliente) {
+                        if ($cliente['uf'] === 'MG' && $cliente['vip'] === true) {
+                            $ultimo = $cliente;
+                        }
+                    }
+
+                    if ($ultimo === null) {
+                        throw new UnderflowException('Nenhum cliente correspondente foi encontrado.');
+                    }
+
+                    return [$ultimo];
                 },
             ];
 
