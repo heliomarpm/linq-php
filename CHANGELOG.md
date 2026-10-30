@@ -5,6 +5,41 @@ Todas as alterações notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 
+# [2.3.0](https://github.com/heliomarpm/linq-php/compare/v2.2.0...v2.3.0) (2026-10-30)
+
+
+### Bug Fixes
+
+* **bench:** 🐛 evitar quebra e repetição de linha em telas menores ([c85797b](https://github.com/heliomarpm/linq-php/commit/c85797b9f2a96e330f2c087412ea85d5388cf809))
+* **core:** 🐛 corrigir colisão e desordenação em groupBy multi-chave ([d31b925](https://github.com/heliomarpm/linq-php/commit/d31b925c7a40b762188f54108646d3ecdfe57896))
+* **core:** 🐛 isolar enum JoinType em arquivo proprio para PSR-4 ([7185627](https://github.com/heliomarpm/linq-php/commit/7185627d4c655c6909f78657c0052881b778de4f))
+* **demo:** 🐛 adicionar fallback nativo do DbPHP para deploy serverless ([f7f50a6](https://github.com/heliomarpm/linq-php/commit/f7f50a6e4d972907968c19509569172c04323da0))
+* **demo:** 🐛 alinhar scripts nativos do benchmark garantindo paridade total ([cadfa9b](https://github.com/heliomarpm/linq-php/commit/cadfa9b87e6f710a7cdc911f0c681698909093de))
+* **demo:** 🔒 blindar sandbox web contra RCE e chamadas perigosas ([3a4ffe7](https://github.com/heliomarpm/linq-php/commit/3a4ffe749fa4a456c5432112c8036c5e76917af8))
+
+
+### Features
+
+* **collection:** ✨ adicionar métodos `last()` e `lastOrDefault()` ([d62ee69](https://github.com/heliomarpm/linq-php/commit/d62ee6970f2e9bc02cb890cd7c17ddadaeca0d8a))
+* **core:** ✨ adicionar métodos `any()` e `all()` com curto-circuito ([8de7a1e](https://github.com/heliomarpm/linq-php/commit/8de7a1ec6b93675c789661ff039642e93cd9ad5a))
+* **core:** ✨ suportar comparacao case-sensitive e utf-8 em where ([f1d0cb8](https://github.com/heliomarpm/linq-php/commit/f1d0cb82f6385cae535fb19b0329d00f8358d160))
+* **core:** ✨ suportar operadores relacionais e strict in em where ([daf1cc1](https://github.com/heliomarpm/linq-php/commit/daf1cc17914c3ef7fa893945841eb2788da8a671))
+* **demo:** ✨ adicionar favicon vetorial e rota estatica ([2140922](https://github.com/heliomarpm/linq-php/commit/2140922e344ff75e1921b560b7c5296f43452b40))
+* **distinct:** ✨ adicionar keySelector string e callable eliminando serialize ([e922ee6](https://github.com/heliomarpm/linq-php/commit/e922ee60eea70eae9ff5f50eb3b3dac3f54f8fa2))
+* **linq:** ✨ adicionar método first() com UnderflowException ([637fea2](https://github.com/heliomarpm/linq-php/commit/637fea2c400497210048c11a17702dde0ea30675))
+* **linq:** ✨ adicionar método pluck para projeção de coluna ([fa1d745](https://github.com/heliomarpm/linq-php/commit/fa1d74528943584f69a252d62b843497dffa5949))
+* **paginacao:** ✨ adicionar método skip para paginação fluente ([c0302ae](https://github.com/heliomarpm/linq-php/commit/c0302ae25c03b7d93d1e53333fcbd9e2a2a1575f))
+
+
+### Performance Improvements
+
+* **core:** ⚡ acumular médias escalares em groupBy com memória O(1) ([a69cfda](https://github.com/heliomarpm/linq-php/commit/a69cfda821cecce2efaa70486f19af1a2ef8cb8e))
+* **core:** ⚡ implementar fast-path de chave simples em groupBy ([d5883d7](https://github.com/heliomarpm/linq-php/commit/d5883d76220455fd67fd8b4f399e1c228126a7a0))
+* **core:** ⚡ implementar fast-path de esquema idêntico em unionAll ([229d3d9](https://github.com/heliomarpm/linq-php/commit/229d3d90faa13700301d0109c0540f64a92d62cd))
+* **core:** ⚡ otimizar alocação de memória no select ([86c75f3](https://github.com/heliomarpm/linq-php/commit/86c75f32e150fbc33cedf3605ea2828efc876a9f))
+* **core:** ⚡ precomputar moldes nulos em juncoes externas ([2ba7a72](https://github.com/heliomarpm/linq-php/commit/2ba7a724bd5ccc2d1fba6ea4c4ddde96c1ef0c71))
+* **where:** ⚡ otimizar operador in com lookup O(1) e documentar operadores ([8b2fe37](https://github.com/heliomarpm/linq-php/commit/8b2fe3705d42d33c73cc6ad844c0d5fddf42d9ff))
+
 # [2.2.0](https://github.com/heliomarpm/linq-php/compare/v2.1.0...v2.2.0) (2026-10-25)
 
 
