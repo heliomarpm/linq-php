@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar plano de melhorias, segurança, performance e novos métodos LINQ do Assessment Fase 2\
-> **Status:** em progresso | **Progresso:** 45/48 (93%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
+> **Status:** em progresso | **Progresso:** 46/48 (95%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
 
 ## Em progresso
 
@@ -18,17 +18,6 @@
 ### Média Prioridade
 
 ### Baixa Prioridade
-
-- [ ] **T-045 · P3 · Implementar método de projeção plana `pluck(string $column, ?string $key = null)`**
-  - Origem: `-assessment` (item 4.5)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/PluckTest.php](../tests/Unit/PluckTest.php)
-  - Dependências: Nenhuma
-  - Critérios de aceite:
-    1. Método terminal `pluck(string $column, ?string $key = null): array` implementado;
-    2. Extrair vetor unidimensional de valores ou dicionário indexado por `$key`;
-    3. Novos testes unitários cobrindo extração simples e indexada.
-    4. Novos cenários de demo web com pluck().
-    5. Atualizar documentação com exemplos de uso.
 
 - [ ] **T-046 · P3 · Elevar análise estática do PHPStan para Nível 8 com tipagem completa de iteráveis**
   - Origem: `-assessment` (item 5.1)
@@ -49,6 +38,10 @@
     3. A seleção continua executando o código DbPHP exibido e mantém sua saída e benchmark disponíveis.
 
 ## Concluídas recentemente
+
+- [x] **T-045 · P3 · Implementar método de projeção plana `pluck(string $column, ?string $key = null)`** (2026-10-30)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/PluckTest.php](../tests/Unit/PluckTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)
+  - Evidência: Implementado `pluck()` via `array_column()` para extração em lista ou indexada por outra coluna, sem mutar a coleção; 4 testes cobrem extração simples/indexada, coleção vazia e não mutação; novo cenário da demo com benchmark nativo e exemplos no README; `composer test` (182 testes, 824 asserções), `composer lint`, `composer format`, verificações `php -l` e API da demo (`pluck_produtos`, 10 produtos indexados por ID) aprovados.
 
 - [x] **T-044 · P3 · Implementar métodos booleanos de short-circuit `any()` e `all()`** (2026-10-30)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/AnyAllTest.php](../tests/Unit/AnyAllTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)

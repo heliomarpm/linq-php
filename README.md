@@ -418,6 +418,12 @@ $haUsuarioAtivo = LinqPHP::from($data)->any(fn($item) => $item['status'] === 'ac
 // all() interrompe ao encontrar o primeiro item que não corresponde; em coleção vazia, retorna true:
 $todosAtivos = LinqPHP::from($data)->all(fn($item) => $item['status'] === 'active');
 
+// pluck() retorna os valores de uma coluna em uma lista:
+$nomes = LinqPHP::from($data)->pluck('name');
+
+// Informe uma segunda coluna para indexar os valores:
+$nomesPorId = LinqPHP::from($data)->pluck('name', 'id');
+
 // 4. Agregações Escalares Rápidas (sum, avg, min, max, count)
 // Extração direta de métricas sem a necessidade de passar pela máquina de agrupamento:
 $totalVendas    = LinqPHP::from($vendas)->count();

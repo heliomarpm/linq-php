@@ -358,6 +358,18 @@ $cenarios = [
         PHP_WRAP,
     ],
 
+    'pluck_produtos' => [
+        'titulo' => 'Projeção de Coluna (pluck)',
+        'tag'    => 'PLUCK',
+        'cor'    => 'info',
+        'desc'   => 'Extrai os nomes dos produtos e usa seus IDs como chaves do resultado, sem alterar a coleção original.',
+        'codigo' => <<<PHP_WRAP
+        \$nomesPorId = LinqPHP::from(\$produtos)
+            ->pluck('nome_produto', 'id_produto');
+        \$resultado = [\$nomesPorId];
+        PHP_WRAP,
+    ],
+
     'do_banco_ao_relatorio' => [
         'titulo' => 'Do Banco ao Relatório (DbPHP + LinqPHP)',
         'tag'    => 'DB-PHP + LINQ',
@@ -1319,6 +1331,17 @@ PHP,
                         ['Verificação' => 'Existe venda concluída', 'Resultado' => $haVendasConcluidas],
                         ['Verificação' => 'Todas as vendas têm ID positivo', 'Resultado' => $todasTemIdPositivo],
                     ];
+                },
+            ];
+
+        case 'pluck_produtos':
+            return [
+                'codigo' => <<<'PHP'
+$nomesPorId = array_column($produtos, 'nome_produto', 'id_produto');
+$resultado = [$nomesPorId];
+PHP,
+                'run' => static function () use ($produtos): array {
+                    return [array_column($produtos, 'nome_produto', 'id_produto')];
                 },
             ];
 
@@ -2436,7 +2459,7 @@ if (!function_exists('renderGrid')) {
                                             <thead style="background: #1c2128; border-bottom: 1px solid #30363d;">
                                                 <tr>
                                                     <th v-for="col in colunas" :key="col" class="text-secondary py-2 px-2" style="font-weight: 600; font-size: 0.74rem; letter-spacing: 0.04em; background: #1c2128; border-color: #30363d;">
-                                                        {{ col.toUpperCase() }}
+                                                        {{ String(col).toUpperCase() }}
                                                     </th>
                                                 </tr>
                                             </thead>

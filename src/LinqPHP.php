@@ -1005,6 +1005,18 @@ class LinqPHP
     }
 
     /**
+     * Extrai uma coluna da coleção, opcionalmente indexando os valores por outra coluna.
+     *
+     * @param string $column Nome da coluna a extrair.
+     * @param string|null $key Nome da coluna usada como chave, quando informado.
+     * @return array<int|string, mixed> Valores extraídos em lista ou indexados por $key.
+     */
+    public function pluck(string $column, ?string $key = null): array
+    {
+        return array_column($this->data, $column, $key);
+    }
+
+    /**
      * Converte o objeto atual em um objeto stdClass.
      *
      * @return stdClass {elapsedTime: float, memoryUsed: string, count: int, data: array} O objeto convertido.
