@@ -140,10 +140,10 @@ class BenchmarkRunner
     // 2. Método auxiliar para decidir a cor baseado na velocidade
     private function getColorForTime(float $seconds): string
     {
-        if ($seconds < 1) {
+        if ($seconds < 0.6) {
             return self::COLOR_GREEN;
         }
-        if ($seconds < 1.5) {
+        if ($seconds < 1.1) {
             return self::COLOR_YELLOW;
         }
         return self::COLOR_RED;
