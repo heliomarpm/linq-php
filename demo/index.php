@@ -319,6 +319,17 @@ $cenarios = [
         PHP_WRAP,
     ],
 
+    'primeiro_registro_first' => [
+        'titulo' => 'Primeiro Registro (first)',
+        'tag'    => 'FIRST',
+        'cor'    => 'info',
+        'desc'   => 'Retorna o primeiro cliente VIP de Minas Gerais e lança UnderflowException se nenhum registro corresponder.',
+        'codigo' => <<<PHP_WRAP
+        \$item = LinqPHP::from(\$clientes)
+            ->first(fn(\$c) => \$c['uf'] === 'MG' && \$c['vip'] === true);
+        PHP_WRAP,
+    ],
+
     'do_banco_ao_relatorio' => [
         'titulo' => 'Do Banco ao Relatório (DbPHP + LinqPHP)',
         'tag'    => 'DB-PHP + LINQ',
@@ -1178,6 +1189,32 @@ PHP,
                         }
                     }
                     return $encontrado ? [$encontrado] : [];
+                },
+            ];
+
+        case 'primeiro_registro_first':
+            return [
+                'codigo' => <<<'PHP'
+$encontrado = null;
+foreach ($clientes as $c) {
+    if ($c['uf'] === 'MG' && $c['vip'] === true) {
+        $encontrado = $c;
+        break;
+    }
+}
+if ($encontrado === null) {
+    throw new UnderflowException('Nenhum cliente correspondente foi encontrado.');
+}
+$resultado = [$encontrado];
+PHP,
+                'run' => static function () use ($clientes): array {
+                    foreach ($clientes as $cliente) {
+                        if ($cliente['uf'] === 'MG' && $cliente['vip'] === true) {
+                            return [$cliente];
+                        }
+                    }
+
+                    throw new UnderflowException('Nenhum cliente correspondente foi encontrado.');
                 },
             ];
 

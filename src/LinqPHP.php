@@ -6,6 +6,7 @@ use Closure;
 use InvalidArgumentException;
 use ReflectionFunction;
 use stdClass;
+use UnderflowException;
 
 class LinqPHP
 {
@@ -1071,6 +1072,28 @@ class LinqPHP
         }
 
         return $default;
+    }
+
+    /**
+     * Retorna o primeiro elemento da coleção ou que satisfaça o predicado.
+     *
+     * @param (callable(array<string, mixed>): bool)|null $predicate Função opcional para testar cada elemento.
+     * @return mixed O primeiro item correspondente.
+     * @throws UnderflowException Quando a coleção está vazia ou nenhum item corresponde.
+     */
+    public function first(?callable $predicate = null): mixed
+    {
+        foreach ($this->data as $item) {
+            if ($predicate === null || $predicate($item)) {
+                return $item;
+            }
+        }
+
+        throw new UnderflowException(
+            $predicate === null
+                ? 'A coleção está vazia.'
+                : 'Nenhum elemento da coleção satisfaz o predicado.'
+        );
     }
 
     /**

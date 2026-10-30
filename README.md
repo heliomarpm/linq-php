@@ -371,7 +371,7 @@ $resultado = LinqPHP::from($vendas)
 
 `skip()` reindexa os itens restantes e pode ser usado sozinho; quando o offset ultrapassa o tamanho da coleção, retorna uma lista vazia.
 
-### Extração de Resultados (`toArray`, `toObject`, `firstOrDefault` e Agregações Escalares)
+### Extração de Resultados (`toArray`, `toObject`, `first`, `firstOrDefault` e Agregações Escalares)
 
 No final da cadeia fluente, invoque um método de saída terminal para extrair os dados processados ou calcular métricas pontuais com ultra-performance:
 
@@ -399,6 +399,9 @@ $usuario = LinqPHP::from($data)->firstOrDefault(
     fn($item) => $item['id'] === 999,
     default: ['id' => 0, 'name' => 'Visitante']
 );
+
+// first() retorna o primeiro item ou lança UnderflowException se não houver correspondência:
+$usuario = LinqPHP::from($data)->first(fn($item) => $item['id'] === 10);
 
 // 4. Agregações Escalares Rápidas (sum, avg, min, max, count)
 // Extração direta de métricas sem a necessidade de passar pela máquina de agrupamento:

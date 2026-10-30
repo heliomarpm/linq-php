@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar plano de melhorias, segurança, performance e novos métodos LINQ do Assessment Fase 2\
-> **Status:** em progresso | **Progresso:** 42/48 (87%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
+> **Status:** em progresso | **Progresso:** 43/48 (89%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
 
 ## Em progresso
 
@@ -18,18 +18,6 @@
 ### Média Prioridade
 
 ### Baixa Prioridade
-
-- [ ] **T-042 · P3 · Implementar método `first(?callable $predicate = null)` com exceção de vazio**
-  - Origem: `-assessment` (item 4.2)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/FirstTest.php](../tests/Unit/FirstTest.php)
-  - Dependências: Nenhuma
-  - Critérios de aceite:
-    1. Método `first(?callable $predicate = null): mixed` implementado;
-    2. Lançar `UnderflowException` se a coleção estiver vazia ou se nenhum elemento satisfizer o predicado;
-    3. Retornar o primeiro item correspondente sem alterar a coleção;
-    4. Novos testes unitários validando acerto, predicado e exceção em caso de vazio.
-    5. Novos cenários de demo web com primeira ocorrencia.
-    6. Atualizar documentação com exemplos de uso.
 
 - [ ] **T-043 · P3 · Implementar métodos terminais `last()` e `lastOrDefault()`**
   - Origem: `-assessment` (item 4.3)
@@ -84,6 +72,10 @@
     3. A seleção continua executando o código DbPHP exibido e mantém sua saída e benchmark disponíveis.
 
 ## Concluídas recentemente
+
+- [x] **T-042 · P3 · Implementar método `first(?callable $predicate = null)` com exceção de vazio** (2026-10-30)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/FirstTest.php](../tests/Unit/FirstTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)
+  - Evidência: Implementado `first()` com short-circuit e `UnderflowException` para coleção vazia ou ausência de correspondência; 5 testes cobrem primeiro item, predicado, não mutação, short-circuit e exceções; adicionado cenário de demo com benchmark nativo e documentação; `composer test` (161 testes, 799 asserções), `composer lint`, `composer format`, verificações `php -l` e API da demo (primeiro cliente VIP de MG) aprovados.
 
 - [x] **T-041 · P3 · Implementar método de paginação fluente `skip(int $count)`** (2026-10-30)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/PaginationTest.php](../tests/Unit/PaginationTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)
