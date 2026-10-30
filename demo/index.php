@@ -429,6 +429,10 @@ $cenarios = [
     ],
 ];
 
+$cenarioDbPhp = $cenarios['do_banco_ao_relatorio'];
+unset($cenarios['do_banco_ao_relatorio']);
+$cenarios['do_banco_ao_relatorio'] = $cenarioDbPhp;
+
 // Suporte a payload JSON no corpo da requisição (Fetch API / Vue 3)
 $rawInput = file_get_contents('php://input');
 if ($rawInput !== false && $rawInput !== '') {
@@ -1932,6 +1936,42 @@ if (!function_exists('renderGrid')) {
             box-shadow: 0 0 16px var(--brand-purple-glow);
         }
 
+        .scenario-pill:focus-visible {
+            outline: 3px solid #fbbf24;
+            outline-offset: 3px;
+        }
+
+        .scenario-pill .tag-pill {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .scenario-pill--dbphp {
+            max-width: 100%;
+            border-radius: 0.75rem;
+            color: #f5eefe;
+            background: linear-gradient(110deg, rgba(139, 92, 246, 0.18), rgba(255, 122, 0, 0.14));
+            border-color: rgba(196, 160, 255, 0.7);
+            white-space: normal;
+        }
+
+        .scenario-pill--dbphp:hover {
+            color: #ffffff;
+            background: linear-gradient(110deg, rgba(139, 92, 246, 0.3), rgba(255, 122, 0, 0.22));
+            border-color: #fbbf24;
+        }
+
+        .scenario-pill--dbphp.active {
+            color: #ffffff;
+            background: linear-gradient(110deg, #6d3bc1, #a94c12);
+            border-color: #fbbf24;
+            box-shadow: 0 0 16px rgba(251, 191, 36, 0.24);
+        }
+
+        .scenario-pill--dbphp .tag-pill {
+            color: #ffe08a;
+            background: rgba(0, 0, 0, 0.24);
+        }
+
         .data-sources {
             max-height: 84vh;
             overflow-y: auto;
@@ -2128,12 +2168,16 @@ if (!function_exists('renderGrid')) {
                     <div class="d-flex flex-wrap gap-2 pt-1">
                         <?php foreach ($cenarios as $key => $cenario): ?>
                             <a
-                                class="scenario-pill"
+                                class="scenario-pill <?= $key === 'do_banco_ao_relatorio' ? 'scenario-pill--dbphp' : '' ?>"
                                 :class="{ 'active': cenarioAtual === '<?= $key ?>' }"
+                                :aria-current="cenarioAtual === '<?= $key ?>' ? 'page' : null"
                                 href="?cenario=<?= $key ?>"
                                 @click.prevent="selecionarCenario('<?= $key ?>')"
                             >
-                                <span class="badge rounded-pill tag-pill" style="background: rgba(255, 255, 255, 0.15);"><?= $cenario['tag'] ?></span>
+                                <?php if ($key === 'do_banco_ao_relatorio'): ?>
+                                    <i class="bi bi-database" aria-hidden="true"></i>
+                                <?php endif; ?>
+                                <span class="badge rounded-pill tag-pill"><?= $cenario['tag'] ?></span>
                                 <span><?= $cenario['titulo'] ?></span>
                             </a>
                         <?php endforeach; ?>

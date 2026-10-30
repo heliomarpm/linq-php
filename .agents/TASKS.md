@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar plano de melhorias, segurança, performance e novos métodos LINQ do Assessment Fase 2\
-> **Status:** em progresso | **Progresso:** 47/48 (98%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
+> **Status:** concluído | **Progresso:** 48/48 (100%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
 
 ## Em progresso
 
@@ -19,16 +19,11 @@
 
 ### Baixa Prioridade
 
-- [ ] **T-048 · P3 · Destacar a integração DbPHP no final da fila de cenários da demo**
-  - Origem: `manual`
-  - Arquivos: [demo/index.php](../demo/index.php)
-  - Dependências: Nenhuma
-  - Critérios de aceite:
-    1. O cenário “Do Banco ao Relatório (DbPHP + LinqPHP)” aparece sempre por último na fila de seleção, mesmo se a definição dos cenários for reorganizada;
-    2. O cenário possui tratamento visual próprio que o distingue dos exemplos nativos do LinqPHP, sem prejudicar legibilidade ou seleção responsiva;
-    3. A seleção continua executando o código DbPHP exibido e mantém sua saída e benchmark disponíveis.
-
 ## Concluídas recentemente
+
+- [x] **T-048 · P3 · Destacar a integração DbPHP no final da fila de cenários da demo** (2026-10-30)
+  - Arquivos: [demo/index.php](../demo/index.php)
+  - Evidência: Reposicionado `do_banco_ao_relatorio` após a definição dos cenários, garantindo que permaneça por último; adicionado destaque com ícone, gradiente, badge e foco visível, mantendo a navegação responsiva. Renderização confirmou o DbPHP como último dos 20 cenários; execução pela API retornou 9 linhas e benchmark/equivalente nativo; endpoint de benchmark dedicado aprovado. `php -l demo\index.php`, `composer format`, `composer lint`, `composer test` (182 testes, 824 asserções) e `git diff --check` aprovados.
 
 - [x] **T-046 · P3 · Elevar análise estática do PHPStan para Nível 8 com tipagem completa de iteráveis** (2026-10-30)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [phpstan.neon](../phpstan.neon)
