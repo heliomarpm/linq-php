@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar plano de melhorias, segurança, performance e novos métodos LINQ do Assessment Fase 2\
-> **Status:** em progresso | **Progresso:** 46/48 (95%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
+> **Status:** em progresso | **Progresso:** 47/48 (98%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
 
 ## Em progresso
 
@@ -19,15 +19,6 @@
 
 ### Baixa Prioridade
 
-- [ ] **T-046 · P3 · Elevar análise estática do PHPStan para Nível 8 com tipagem completa de iteráveis**
-  - Origem: `-assessment` (item 5.1)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [phpstan.neon](../phpstan.neon)
-  - Dependências: T-033, T-035, T-037, T-039, T-041, T-042, T-043, T-044, T-045
-  - Critérios de aceite:
-    1. Adicionar anotações PHPDoc de iteráveis (`@param array<...>`, `@return array<...>`) nos 24 pontos identificados nos métodos privados;
-    2. Configurar `phpstan.neon` para `level: 8`;
-    3. Executar `composer lint` com zero erros reportados.
-
 - [ ] **T-048 · P3 · Destacar a integração DbPHP no final da fila de cenários da demo**
   - Origem: `manual`
   - Arquivos: [demo/index.php](../demo/index.php)
@@ -38,6 +29,10 @@
     3. A seleção continua executando o código DbPHP exibido e mantém sua saída e benchmark disponíveis.
 
 ## Concluídas recentemente
+
+- [x] **T-046 · P3 · Elevar análise estática do PHPStan para Nível 8 com tipagem completa de iteráveis** (2026-10-30)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [phpstan.neon](../phpstan.neon)
+  - Evidência: Configurado `level: 8` e completadas as anotações de tipos para coleções, condições, agregações, ordenação e helpers; corrigidos os tipos das chamadas de ordenação e normalização. `composer lint` sem erros, `composer test` (182 testes, 824 asserções), `composer format` e `php -l src\LinqPHP.php` aprovados.
 
 - [x] **T-045 · P3 · Implementar método de projeção plana `pluck(string $column, ?string $key = null)`** (2026-10-30)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/PluckTest.php](../tests/Unit/PluckTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)
@@ -67,7 +62,7 @@
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/JoinTest.php](../tests/Unit/JoinTest.php), [tests/Unit/GroupByTest.php](../tests/Unit/GroupByTest.php)
   - Evidência: Extraído `buildCompositeKey(array $item, array $fields): string` e reutilizado nos caminhos de chaves compostas de `join()` e `groupBy()`, mantendo os fast-paths de chave simples; 27 testes de JOIN e agrupamento aprovados (468 asserções), suíte completa com 151 testes e 787 asserções aprovada; PHPStan e Pint sem erros.
 
-- [X] **T-038 · P2 · Tornar telemetria de execução preguiçosa (lazy) para `toObject()`**
+- [x] **T-038 · P2 · Tornar telemetria de execução preguiçosa (lazy) para `toObject()`**
   - Origem: `-assessment` (item 2.3)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/LinqPHPTest.php](../tests/Unit/LinqPHPTest.php)
   - Dependências: Nenhuma

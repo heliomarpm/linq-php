@@ -10,10 +10,14 @@ use UnderflowException;
 
 class LinqPHP
 {
+    /** @var list<array<string, mixed>> */
     private array $data;
     private readonly float $startTime;
     private readonly int $startMemory;
 
+    /**
+     * @param list<array<string, mixed>> $data
+     */
     public function __construct(array $data)
     {
         $this->startTime = microtime(true);
@@ -24,7 +28,7 @@ class LinqPHP
     /**
      * Cria uma nova instância da classe usando os dados fornecidos.
      *
-     * @param array<int, array<string, mixed>> $data Os dados para inicializar o objeto.
+     * @param list<array<string, mixed>> $data Os dados para inicializar o objeto.
      * @return LinqPHP O objeto recém-criado.
      *
      * * Exemplo de uso:
@@ -52,7 +56,7 @@ class LinqPHP
     /**
      * Concatena dois arrays em um único array preservando todos os elementos e chaves.
      *
-     * @param array<int, array<string, mixed>>$unionData O array a ser concatenado com o array atual.
+     * @param list<array<string, mixed>>|non-empty-array<string, mixed> $unionData O array a ser concatenado com o array atual.
      * @return LinqPHP Retorna a instância atual da classe.
      *
      * * Exemplo de uso:
@@ -160,7 +164,7 @@ class LinqPHP
     /**
      * Junta o array atual com outro array com base em campos relacionados.
      *
-     * @param array<int, array<string, mixed>> $joinData O array a ser unido.
+     * @param list<array<string, mixed>> $joinData O array a ser unido.
      * @param JoinType $joinType O tipo de união a ser realizada. Os valores válidos são "INNER", "LEFT", "RIGHT" ou "FULL". O padrão é "INNER".
      * @param array<int|string, string> $relatedFields Os campos usados para determinar a relação entre os arrays. O padrão é um array vazio.
      * @return LinqPHP O objeto atual com o array unido.
@@ -273,7 +277,7 @@ class LinqPHP
      * Realiza uma união do tipo LEFT JOIN com outro array com base em campos relacionados.
      * Preserva todos os registros da coleção atual e preenche colunas ausentes do array unido com null.
      *
-     * @param array<int, array<string, mixed>> $joinData O array a ser unido.
+     * @param list<array<string, mixed>> $joinData O array a ser unido.
      * @param array<int|string, string> $relatedFields Os campos usados para determinar a relação entre os arrays.
      * @return LinqPHP O objeto atual com o array unido.
      *
@@ -293,7 +297,7 @@ class LinqPHP
      * Realiza uma união do tipo RIGHT JOIN com outro array com base em campos relacionados.
      * Preserva todos os registros do array da direita e preenche colunas ausentes da coleção atual com null.
      *
-     * @param array<int, array<string, mixed>> $joinData O array a ser unido.
+     * @param list<array<string, mixed>> $joinData O array a ser unido.
      * @param array<int|string, string> $relatedFields Os campos usados para determinar a relação entre os arrays.
      * @return LinqPHP O objeto atual com o array unido.
      *
@@ -313,7 +317,7 @@ class LinqPHP
      * Realiza uma união do tipo FULL JOIN com outro array com base em campos relacionados.
      * Retorna todos os registros de ambos os arrays, preenchendo correspondências ausentes com null.
      *
-     * @param array<int, array<string, mixed>> $joinData O array a ser unido.
+     * @param list<array<string, mixed>> $joinData O array a ser unido.
      * @param array<int|string, string> $relatedFields Os campos usados para determinar a relação entre os arrays.
      * @return LinqPHP O objeto atual com o array unido.
      *
@@ -333,7 +337,7 @@ class LinqPHP
      * Realiza uma união do tipo INNER JOIN com outro array com base em campos relacionados.
      * Retorna apenas os registros que possuem correspondência em ambas as coleções.
      *
-     * @param array<int, array<string, mixed>> $joinData O array a ser unido.
+     * @param list<array<string, mixed>> $joinData O array a ser unido.
      * @param array<int|string, string> $relatedFields Os campos usados para determinar a relação entre os arrays.
      * @return LinqPHP O objeto atual com o array unido.
      *
@@ -372,7 +376,7 @@ class LinqPHP
      *   - `endswith`: String termina com o sufixo especificado.
      *   - `contains`: String contém a substring especificada.
      *
-     * @param array|callable $conditions Condição única `['campo', 'op', $valor]`, closure `fn($item) => bool`, ou array contendo múltiplas condições/closures.
+     * @param array<array-key, mixed>|callable $conditions Condição única `['campo', 'op', $valor]`, closure `fn($item) => bool`, ou array contendo múltiplas condições/closures.
      * @param bool $caseSensitive Define se comparações textuais diferenciam maiúsculas/minúsculas (padrão: false, com normalização UTF-8).
      * @return self A própria instância fluente com os dados filtrados.
      *
@@ -456,8 +460,8 @@ class LinqPHP
     /**
      * Agrupa os dados com base nos campos especificados e realiza agregações (sum, count, max, min, avg).
      *
-     * @param array<int, string> $groupingFields Os campos para agrupar os dados.
-     * @param array<string, array<int, string>> $aggregations As agregações a serem realizadas nos dados.
+     * @param list<string> $groupingFields Os campos para agrupar os dados.
+     * @param array<string, list<string>> $aggregations As agregações a serem realizadas nos dados.
      *
      * @return LinqPHP A instância atual da classe.
      *
@@ -824,7 +828,7 @@ class LinqPHP
     /**
      * Ordena um array de dados por uma chave especificada em ordem ascendente ou descendente.
      *
-     * @param string $key A chave pela qual os dados devem ser ordenados.
+     * @param callable|string $key A chave pela qual os dados devem ser ordenados ou uma função de ordenação.
      * @param bool|string $descending Se verdadeiro ou 'desc', ordena em ordem descendente. Padrão é false ('asc').
      * @return LinqPHP O objeto atual com os dados ordenados.
      *
@@ -992,12 +996,19 @@ class LinqPHP
         }
 
         $sortOrders[] = &$this->data;
-        array_multisort(...$sortOrders);
+        $firstSortOrder = array_shift($sortOrders);
+        if (!is_array($firstSortOrder)) {
+            throw new InvalidArgumentException('At least one array is required to sort the collection.');
+        }
+        array_multisort($firstSortOrder, ...$sortOrders);
         return $this;
     }
 
     /**
      * Summary of toArray
+     */
+    /**
+     * @return list<array<string, mixed>>
      */
     public function toArray(): array
     {
@@ -1346,11 +1357,17 @@ class LinqPHP
 
 
 
+    /**
+     * @param list<array<string, mixed>> $data
+     */
     protected function setData(array $data, string $context = 'setData'): void
     {
         $this->data = $this->assertJsonCollection($data, $context);
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
     protected function assertJsonCollection(mixed $data, string $context = ''): array
     {
         if (!is_array($data)) {
@@ -1364,21 +1381,30 @@ class LinqPHP
         return $data;
     }
 
+    /**
+     * @param list<array<string, mixed>>|non-empty-array<string, mixed> $data
+     * @return list<array<string, mixed>>
+     */
     private function normalizeCollection(array $data): array
     {
         // Caso venha um único objeto, converte em lista
-        if ($this->isAssoc($data)) {
-            return [$data];
+        if (!array_is_list($data)) {
+            $row = [];
+            foreach ($data as $key => $value) {
+                if (!is_string($key)) {
+                    throw new InvalidArgumentException('A collection row must use string keys.');
+                }
+                $row[$key] = $value;
+            }
+            return [$row];
         }
         return $data;
     }
 
-    private function isAssoc(array $array): bool
-    {
-        // return array_keys($array) !== range(0, count($array) - 1);
-        return !array_is_list($array);
-    }
-
+    /**
+     * @param array<string, mixed> $item
+     * @param list<string> $fields
+     */
     private function buildCompositeKey(array $item, array $fields): string
     {
         if (count($fields) === 1) {
@@ -1392,6 +1418,11 @@ class LinqPHP
         return implode("\0", $keyParts);
     }
 
+    /**
+     * @param array<string, mixed> $leftItem
+     * @param list<array<string, mixed>> $rightSample
+     * @return array<string, null>
+     */
     private function nullFillRightOnly(array $leftItem, array $rightSample): array
     {
         if ($rightSample === []) {
@@ -1404,6 +1435,9 @@ class LinqPHP
         return array_fill_keys($keysToNull, null);
     }
 
+    /**
+     * @return list<mixed>
+     */
     private function normalizeWhereConditions(mixed $conditions, bool $caseSensitive = false): array
     {
         if (is_callable($conditions) || !is_array($conditions)) {
@@ -1459,6 +1493,10 @@ class LinqPHP
         return $normalizedConditions;
     }
 
+    /**
+     * @param array<string, mixed> $item
+     * @param list<mixed> $normalizedConditions
+     */
     private function matchesConditions(array $item, array $normalizedConditions, bool $caseSensitive = false): bool
     {
         foreach ($normalizedConditions as $condition) {
@@ -1540,6 +1578,11 @@ class LinqPHP
         return is_array($value) && in_array($itemValue, $value, true);
     }
 
+    /**
+     * @param array<array-key, array<string, mixed>> $groupedResult
+     * @param list<string> $groupingFields
+     * @param array<string, mixed> $item
+     */
     private function groupByDefaultAggregations(
         array &$groupedResult,
         string $groupKey,
@@ -1564,10 +1607,10 @@ class LinqPHP
     }
 
     /**
-     * @param array<string, array<string, mixed>> $groupedResult
+     * @param array<array-key, array<string, mixed>> $groupedResult
      * @param array<int, array{op: string, field: string, fieldName: string}> $compiledAggregations
      * @param array<string, mixed> $item
-     * @param array<string, array<string, array{0: float, 1: int}>> $avgAccumulators
+     * @param array<array-key, array<string, array{0: float, 1: int}>> $avgAccumulators
      */
     private function groupByCustomAggregations(
         array &$groupedResult,
@@ -1615,8 +1658,8 @@ class LinqPHP
     }
 
     /**
-     * @param array<string, array<string, mixed>> $groupedResult
-     * @param array<string, array<string, array{0: float, 1: int}>> $avgAccumulators
+     * @param array<array-key, array<string, mixed>> $groupedResult
+     * @param array<array-key, array<string, array{0: float, 1: int}>> $avgAccumulators
      */
     private function resolveGroupAverages(array &$groupedResult, array $avgAccumulators): void
     {
@@ -1651,6 +1694,9 @@ class LinqPHP
         }
     }
 
+    /**
+     * @return list<mixed>
+     */
     private function extractOrderByColumn(mixed $fieldOrCallable): array
     {
         if (is_callable($fieldOrCallable)) {
@@ -1665,6 +1711,9 @@ class LinqPHP
         throw new InvalidArgumentException('This field does not exist for sorting.');
     }
 
+    /**
+     * @return array{elapsedTime: string, memoryUsed: string}
+     */
     private function statisticUsage(): array
     {
         $endTime = microtime(true);
