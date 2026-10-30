@@ -341,6 +341,23 @@ $cenarios = [
         PHP_WRAP,
     ],
 
+    'any_all' => [
+        'titulo' => 'Predicados (any + all)',
+        'tag'    => 'ANY & ALL',
+        'cor'    => 'success',
+        'desc'   => 'Verifica em curto-circuito se existe uma venda concluída e se todas as vendas possuem identificador positivo.',
+        'codigo' => <<<PHP_WRAP
+        \$haVendasConcluidas = LinqPHP::from(\$vendas)
+            ->any(fn(\$v) => \$v['status'] === 'concluido');
+        \$todasTemIdPositivo = LinqPHP::from(\$vendas)
+            ->all(fn(\$v) => \$v['id_venda'] > 0);
+        \$resultado = [
+            ['Verificação' => 'Existe venda concluída', 'Resultado' => \$haVendasConcluidas],
+            ['Verificação' => 'Todas as vendas têm ID positivo', 'Resultado' => \$todasTemIdPositivo],
+        ];
+        PHP_WRAP,
+    ],
+
     'do_banco_ao_relatorio' => [
         'titulo' => 'Do Banco ao Relatório (DbPHP + LinqPHP)',
         'tag'    => 'DB-PHP + LINQ',
@@ -1256,6 +1273,52 @@ PHP,
                     }
 
                     return [$ultimo];
+                },
+            ];
+
+        case 'any_all':
+            return [
+                'codigo' => <<<'PHP'
+$haVendasConcluidas = false;
+foreach ($vendas as $venda) {
+    if ($venda['status'] === 'concluido') {
+        $haVendasConcluidas = true;
+        break;
+    }
+}
+$todasTemIdPositivo = true;
+foreach ($vendas as $venda) {
+    if ($venda['id_venda'] <= 0) {
+        $todasTemIdPositivo = false;
+        break;
+    }
+}
+$resultado = [
+    ['Verificação' => 'Existe venda concluída', 'Resultado' => $haVendasConcluidas],
+    ['Verificação' => 'Todas as vendas têm ID positivo', 'Resultado' => $todasTemIdPositivo],
+];
+PHP,
+                'run' => static function () use ($vendas): array {
+                    $haVendasConcluidas = false;
+                    foreach ($vendas as $venda) {
+                        if ($venda['status'] === 'concluido') {
+                            $haVendasConcluidas = true;
+                            break;
+                        }
+                    }
+
+                    $todasTemIdPositivo = true;
+                    foreach ($vendas as $venda) {
+                        if ($venda['id_venda'] <= 0) {
+                            $todasTemIdPositivo = false;
+                            break;
+                        }
+                    }
+
+                    return [
+                        ['Verificação' => 'Existe venda concluída', 'Resultado' => $haVendasConcluidas],
+                        ['Verificação' => 'Todas as vendas têm ID positivo', 'Resultado' => $todasTemIdPositivo],
+                    ];
                 },
             ];
 

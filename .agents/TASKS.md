@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar plano de melhorias, segurança, performance e novos métodos LINQ do Assessment Fase 2\
-> **Status:** em progresso | **Progresso:** 44/48 (91%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
+> **Status:** em progresso | **Progresso:** 45/48 (93%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
 
 ## Em progresso
 
@@ -18,17 +18,6 @@
 ### Média Prioridade
 
 ### Baixa Prioridade
-
-- [ ] **T-044 · P3 · Implementar métodos booleanos de short-circuit `any()` e `all()`**
-  - Origem: `-assessment` (item 4.4)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/AnyAllTest.php](../tests/Unit/AnyAllTest.php)
-  - Dependências: Nenhuma
-  - Critérios de aceite:
-    1. `any(?callable $predicate = null): bool`: se sem predicado, retorna se `$this->data !== []`; com predicado, retorna `true` assim que o primeiro elemento coincidir (O(1));
-    2. `all(callable $predicate): bool`: retorna `false` assim que qualquer elemento falhar (O(1)); em coleção vazia retorna `true`;
-    3. Novos testes unitários comprovando o short-circuit e casos de borda.
-    4. Novos cenários de demo web com any() e all().
-    5. Atualizar documentação com exemplos de uso.
 
 - [ ] **T-045 · P3 · Implementar método de projeção plana `pluck(string $column, ?string $key = null)`**
   - Origem: `-assessment` (item 4.5)
@@ -60,6 +49,10 @@
     3. A seleção continua executando o código DbPHP exibido e mantém sua saída e benchmark disponíveis.
 
 ## Concluídas recentemente
+
+- [x] **T-044 · P3 · Implementar métodos booleanos de short-circuit `any()` e `all()`** (2026-10-30)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/AnyAllTest.php](../tests/Unit/AnyAllTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)
+  - Evidência: Implementados `any()` com predicado opcional e `all()` com predicado obrigatório, ambos em curto-circuito; coleção vazia retorna false em `any()` sem predicado e true em `all()`; 8 testes cobrem resultados, coleção vazia e parada antecipada; cenário da demo e exemplos no README; `composer test` (178 testes, 820 asserções), `composer lint`, `composer format`, verificações `php -l` e API da demo (`any_all`, ambas verificações true) aprovados.
 
 - [x] **T-043 · P3 · Implementar métodos terminais `last()` e `lastOrDefault()`** (2026-10-30)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/LastTest.php](../tests/Unit/LastTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)

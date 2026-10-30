@@ -1149,6 +1149,44 @@ class LinqPHP
     }
 
     /**
+     * Verifica se a coleção possui algum elemento correspondente.
+     *
+     * @param (callable(array<string, mixed>): bool)|null $predicate Função opcional para testar cada elemento.
+     * @return bool True quando algum elemento corresponder; sem predicado, indica se a coleção não está vazia.
+     */
+    public function any(?callable $predicate = null): bool
+    {
+        if ($predicate === null) {
+            return $this->data !== [];
+        }
+
+        foreach ($this->data as $item) {
+            if ($predicate($item)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Verifica se todos os elementos da coleção satisfazem o predicado.
+     *
+     * @param callable(array<string, mixed>): bool $predicate Função para testar cada elemento.
+     * @return bool False ao encontrar o primeiro elemento que não corresponder; true para coleção vazia.
+     */
+    public function all(callable $predicate): bool
+    {
+        foreach ($this->data as $item) {
+            if (!$predicate($item)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Retorna o número de elementos na coleção, opcionalmente filtrados por um predicado.
      *
      * @param (callable(array<string, mixed>): bool)|null $predicate Função opcional para contar apenas itens correspondentes.
