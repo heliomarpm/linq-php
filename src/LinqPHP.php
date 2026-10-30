@@ -206,7 +206,7 @@ class LinqPHP
         $singleRight = count($rightFields) === 1 ? $rightFields[0] : null;
         $rightIndex = [];
         foreach ($joinData as $r) {
-            $key = $singleRight !== null ? (string)($r[$singleRight] ?? '') : $this->buildJoinKey($r, $rightFields);
+            $key = $singleRight !== null ? (string)($r[$singleRight] ?? '') : $this->buildCompositeKey($r, $rightFields);
             $rightIndex[$key][] = $r;
         }
 
@@ -233,7 +233,7 @@ class LinqPHP
         // INNER / LEFT / FULL
         // ============================
         foreach ($this->data as $l) {
-            $key = $singleLeft !== null ? (string)($l[$singleLeft] ?? '') : $this->buildJoinKey($l, $leftFields);
+            $key = $singleLeft !== null ? (string)($l[$singleLeft] ?? '') : $this->buildCompositeKey($l, $leftFields);
 
             if (isset($rightIndex[$key])) {
                 foreach ($rightIndex[$key] as $r) {
@@ -253,7 +253,7 @@ class LinqPHP
         // ============================
         if ($isRightOrFull) {
             foreach ($joinData as $r) {
-                $key = $singleRight !== null ? (string)($r[$singleRight] ?? '') : $this->buildJoinKey($r, $rightFields);
+                $key = $singleRight !== null ? (string)($r[$singleRight] ?? '') : $this->buildCompositeKey($r, $rightFields);
 
                 if (!isset($matchedRightKeys[$key])) {
                     $nullFill = count($r) === $rightKeysCount
@@ -549,13 +549,11 @@ class LinqPHP
             // Agrupamento composto (Multi-Key)
             foreach ($this->data as $item) {
                 $groupHeader = [];
-                $keyParts = [];
                 foreach ($groupingFields as $field) {
                     $val = $item[$field] ?? null;
                     $groupHeader[$field] = $val;
-                    $keyParts[] = (string)$val;
                 }
-                $groupKey = implode("\0", $keyParts);
+                $groupKey = $this->buildCompositeKey($item, $groupingFields);
 
                 $groupedResult[$groupKey] ??= $groupHeader;
 
@@ -1237,17 +1235,17 @@ class LinqPHP
         return !array_is_list($array);
     }
 
-    private function buildJoinKey(array $item, array $fields): string
+    private function buildCompositeKey(array $item, array $fields): string
     {
         if (count($fields) === 1) {
             return (string)($item[$fields[0]] ?? '');
         }
 
-        $values = [];
+        $keyParts = [];
         foreach ($fields as $field) {
-            $values[] = $item[$field] ?? null;
+            $keyParts[] = (string)($item[$field] ?? null);
         }
-        return implode("\0", $values);
+        return implode("\0", $keyParts);
     }
 
     private function nullFillRightOnly(array $leftItem, array $rightSample): array

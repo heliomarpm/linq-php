@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar plano de melhorias, segurança, performance e novos métodos LINQ do Assessment Fase 2\
-> **Status:** em progresso | **Progresso:** 39/47 (81%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-29
+> **Status:** em progresso | **Progresso:** 40/47 (85%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
 
 ## Em progresso
 
@@ -18,15 +18,6 @@
 (nenhuma)
 
 ### Média Prioridade
-
-- [ ] **T-039 · P2 · Deduplicar construção de chaves compostas entre `join()` e `groupBy()`**
-  - Origem: `-assessment` (item 3.2)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php)
-  - Dependências: T-033
-  - Critérios de aceite:
-    1. Extrair helper privado `buildCompositeKey(array $item, array $fields): string`;
-    2. Reutilizar método em `join()` e `groupBy()`, eliminando duplicação de lógica de tuplas com separador nulo;
-    3. 100% dos testes existentes de join e group passando.
 
 - [ ] **T-040 · P2 · Deduplicar definição e execução nos 15 cenários da demo web**
   - Origem: `-assessment` (item 3.1)
@@ -97,6 +88,10 @@
     3. Executar `composer lint` com zero erros reportados.
 
 ## Concluídas recentemente
+
+- [x] **T-039 · P2 · Deduplicar construção de chaves compostas entre `join()` e `groupBy()`** (2026-10-30)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/JoinTest.php](../tests/Unit/JoinTest.php), [tests/Unit/GroupByTest.php](../tests/Unit/GroupByTest.php)
+  - Evidência: Extraído `buildCompositeKey(array $item, array $fields): string` e reutilizado nos caminhos de chaves compostas de `join()` e `groupBy()`, mantendo os fast-paths de chave simples; 27 testes de JOIN e agrupamento aprovados (468 asserções), suíte completa com 151 testes e 787 asserções aprovada; PHPStan e Pint sem erros.
 
 - [X] **T-038 · P2 · Tornar telemetria de execução preguiçosa (lazy) para `toObject()`**
   - Origem: `-assessment` (item 2.3)
