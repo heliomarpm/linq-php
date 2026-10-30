@@ -14,7 +14,6 @@ if (in_array(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), ['/favicon.
 
 use HeliomarPM\DbPHP\DB;
 use HeliomarPM\LinqPHP\Demo\CodeSandboxValidator;
-use HeliomarPM\LinqPHP\JoinType;
 use HeliomarPM\LinqPHP\LinqPHP;
 
 // ==========================================
@@ -167,6 +166,20 @@ $cenarios = [
             ->orderByKey('qtd', descending: true)
             ->select(['id_venda', 'nome_produto', 'categoria', 'qtd', 'preco'])
             ->take(4)
+            ->toObject();
+        PHP_WRAP,
+    ],
+
+    'paginacao' => [
+        'titulo' => 'Paginação (Skip + Take)',
+        'tag'    => 'PAGINATION',
+        'cor'    => 'primary',
+        'desc'   => 'Ordena as vendas pelo identificador e retorna a segunda página, ignorando os cinco primeiros registros e limitando o resultado a cinco itens.',
+        'codigo' => <<<PHP_WRAP
+        \$linq = LinqPHP::from(\$vendas)
+            ->orderByKey('id_venda')
+            ->skip(5)
+            ->take(5)
             ->toObject();
         PHP_WRAP,
     ],
@@ -1321,6 +1334,21 @@ PHP,
                 },
             ];
 
+        case 'paginacao':
+            return [
+                'codigo' => <<<'PHP'
+$ordenadas = $vendas;
+usort($ordenadas, static fn(array $a, array $b): int => $a['id_venda'] <=> $b['id_venda']);
+$resultado = array_slice($ordenadas, 5, 5);
+PHP,
+                'run' => static function () use ($vendas): array {
+                    $ordenadas = $vendas;
+                    usort($ordenadas, static fn(array $a, array $b): int => $a['id_venda'] <=> $b['id_venda']);
+
+                    return array_slice($ordenadas, 5, 5);
+                },
+            ];
+
         default:
             return [
                 'codigo' => <<<'PHP'
@@ -1408,7 +1436,7 @@ $linqFn = $cenarioRunner instanceof Closure
     ? fn() => $avaliarLinq($cenarioRunner)
     : static fn() => throw new RuntimeException('O pipeline do cenário não foi compilado.');
 
-// Ação de benchmark ao vivo sob demanda (?api=1&action=bench)
+// Ação de benchmark real time sob demanda (?api=1&action=bench)
 if (($_GET['action'] ?? '') === 'bench' || ($jsonInput['action'] ?? '') === 'bench') {
     if (!headers_sent()) {
         header('Content-Type: application/json; charset=utf-8');
@@ -2403,7 +2431,7 @@ if (!function_exists('renderGrid')) {
                                         >
                                             <span v-if="carregandoBench" class="spinner-border spinner-border-sm" role="status"></span>
                                             <i v-else class="bi bi-play-circle-fill"></i>
-                                            <span>{{ carregandoBench ? 'Medindo...' : 'Executar Teste ao Vivo' }}</span>
+                                            <span>{{ carregandoBench ? 'Medindo...' : 'Executar Teste' }}</span>
                                         </button>
                                     </div>
                                 </div>

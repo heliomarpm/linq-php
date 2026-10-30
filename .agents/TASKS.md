@@ -1,11 +1,9 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar plano de melhorias, segurança, performance e novos métodos LINQ do Assessment Fase 2\
-> **Status:** em progresso | **Progresso:** 41/47 (87%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
+> **Status:** em progresso | **Progresso:** 42/48 (87%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
 
 ## Em progresso
-
-(nenhuma)
 
 ## Bloqueadas
 
@@ -20,18 +18,6 @@
 ### Média Prioridade
 
 ### Baixa Prioridade
-
-- [ ] **T-041 · P3 · Implementar método de paginação fluente `skip(int $count)`**
-  - Origem: `-assessment` (item 4.1)
-  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/PaginationTest.php](../tests/Unit/PaginationTest.php)
-  - Dependências: Nenhuma
-  - Critérios de aceite:
-    1. Método `skip(int $count): self` implementado com validação para `$count >= 0`;
-    2. Fatiamento em `array_slice` reindexando a lista mantendo a interface fluente;
-    3. Composição perfeita com `take()` para paginação idiomática: `from($dados)->skip(10)->take(5)`;
-    4. Novos testes unitários cobrindo offset válido, zero, maior que o total e negativo (lançando `InvalidArgumentException`).
-    5. Novos cenários de demo web com paginação.
-    6. Atualizar documentação com exemplos de uso.
 
 - [ ] **T-042 · P3 · Implementar método `first(?callable $predicate = null)` com exceção de vazio**
   - Origem: `-assessment` (item 4.2)
@@ -88,7 +74,20 @@
     2. Configurar `phpstan.neon` para `level: 8`;
     3. Executar `composer lint` com zero erros reportados.
 
+- [ ] **T-048 · P3 · Destacar a integração DbPHP no final da fila de cenários da demo**
+  - Origem: `manual`
+  - Arquivos: [demo/index.php](../demo/index.php)
+  - Dependências: Nenhuma
+  - Critérios de aceite:
+    1. O cenário “Do Banco ao Relatório (DbPHP + LinqPHP)” aparece sempre por último na fila de seleção, mesmo se a definição dos cenários for reorganizada;
+    2. O cenário possui tratamento visual próprio que o distingue dos exemplos nativos do LinqPHP, sem prejudicar legibilidade ou seleção responsiva;
+    3. A seleção continua executando o código DbPHP exibido e mantém sua saída e benchmark disponíveis.
+
 ## Concluídas recentemente
+
+- [x] **T-041 · P3 · Implementar método de paginação fluente `skip(int $count)`** (2026-10-30)
+  - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/PaginationTest.php](../tests/Unit/PaginationTest.php), [demo/index.php](../demo/index.php), [README.md](../README.md)
+  - Evidência: Implementado `skip()` com validação de offsets negativos e fatiamento reindexado via `array_slice`, composto com `take()`; 5 testes cobrem offset positivo, zero, além do tamanho da coleção, exceção e composição; adicionada demonstração de paginação com benchmark nativo equivalente e exemplo na documentação; `composer test` (156 testes, 792 asserções), `composer lint`, `composer format`, verificações `php -l` e API da demo (`paginacao`, 5 resultados com IDs 6 a 10) aprovados.
 
 - [x] **T-040 · P2 · Deduplicar definição e execução nos 15 cenários da demo web** (2026-10-30)
   - Arquivos: [demo/index.php](../demo/index.php)

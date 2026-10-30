@@ -802,6 +802,25 @@ class LinqPHP
     }
 
     /**
+     * Ignora os primeiros itens da coleção, mantendo a interface fluente.
+     *
+     * @param int $count Quantidade de itens a ignorar.
+     * @return self A própria instância com os itens restantes.
+     * @throws InvalidArgumentException Quando $count for negativo.
+     *
+     * @example LinqPHP::from($data)->skip(10)->take(5)->toArray();
+     */
+    public function skip(int $count): self
+    {
+        if ($count < 0) {
+            throw new InvalidArgumentException('O número de itens a ignorar não pode ser negativo.');
+        }
+
+        $this->data = array_slice($this->data, $count);
+        return $this;
+    }
+
+    /**
      * Ordena um array de dados por uma chave especificada em ordem ascendente ou descendente.
      *
      * @param string $key A chave pela qual os dados devem ser ordenados.

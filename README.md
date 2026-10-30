@@ -353,6 +353,24 @@ $result = LinqPHP::from($vendas)
 >
 > Caso tente ordenar por uma chave inexistente (como tentar usar `'id_venda'` após ele ter sido transformado em `'Código Venda'`), o LinqPHP disparará uma `InvalidArgumentException("This field does not exist for sorting.")`.
 
+### `skip()` e `take()` - Paginação
+
+Combine `skip()` com `take()` para ignorar os itens anteriores e limitar a página atual. O offset negativo é inválido e lança `InvalidArgumentException`.
+
+```php
+$pagina = 2;
+$itensPorPagina = 10;
+
+$resultado = LinqPHP::from($vendas)
+    ->where(['status', '=', 'concluido'])
+    ->orderByKey('id_venda')
+    ->skip(($pagina - 1) * $itensPorPagina)
+    ->take($itensPorPagina)
+    ->toArray();
+```
+
+`skip()` reindexa os itens restantes e pode ser usado sozinho; quando o offset ultrapassa o tamanho da coleção, retorna uma lista vazia.
+
 ### Extração de Resultados (`toArray`, `toObject`, `firstOrDefault` e Agregações Escalares)
 
 No final da cadeia fluente, invoque um método de saída terminal para extrair os dados processados ou calcular métricas pontuais com ultra-performance:
