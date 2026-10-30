@@ -118,21 +118,6 @@ $cenarios = [
             ])
             ->toObject();
         PHP_WRAP,
-        'run' => fn() => LinqPHP::from($vendas)
-            ->where(['status', '=', 'concluido'])
-            ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
-            ->join($clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
-            ->where(['vip', '=', true])
-            ->orderByKey('id_venda', 'asc')
-            ->select([
-                'id_venda'     => 'Código Venda',
-                'nome_cliente' => 'Cliente VIP',
-                'uf',
-                'nome_produto' => 'Produto',
-                'qtd'          => 'Quantidade',
-                'preco'        => 'Valor Unitário',
-            ])
-            ->toObject(),
     ],
 
     'todas_agregacoes' => [
@@ -152,16 +137,6 @@ $cenarios = [
             ])
             ->toObject();
         PHP_WRAP,
-        'run' => fn() => LinqPHP::from($vendas)
-            ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
-            ->groupBy(['categoria'], [
-                'sum'   => ['qtd'],
-                'count' => ['id_venda'],
-                'max'   => ['preco'],
-                'min'   => ['preco'],
-                'avg'   => ['preco'],
-            ])
-            ->toObject(),
     ],
 
     'totalizador_global' => [
@@ -178,13 +153,6 @@ $cenarios = [
             ])
             ->toObject();
         PHP_WRAP,
-        'run' => fn() => LinqPHP::from($vendas)
-            ->where(['status', '=', 'concluido'])
-            ->groupBy([], [
-                'sum'   => ['qtd'],
-                'count' => ['id_venda' => 'total_vendas'],
-            ])
-            ->toObject(),
     ],
 
     'top_vendas' => [
@@ -201,13 +169,6 @@ $cenarios = [
             ->take(4)
             ->toObject();
         PHP_WRAP,
-        'run' => fn() => LinqPHP::from($vendas)
-            ->innerJoin($produtos, ['produto_id' => 'id_produto'])
-            ->where(['status', '=', 'concluido'])
-            ->orderByKey('qtd', descending: true)
-            ->select(['id_venda', 'nome_produto', 'categoria', 'qtd', 'preco'])
-            ->take(4)
-            ->toObject(),
     ],
 
     'ordenacao_multipla' => [
@@ -221,10 +182,6 @@ $cenarios = [
             ->select(['id_produto', 'nome_produto', 'categoria', 'preco', 'estoque'])
             ->toObject();
         PHP_WRAP,
-        'run' => fn() => LinqPHP::from($produtos)
-            ->orderBy(['categoria' => false, 'preco' => true])
-            ->select(['id_produto', 'nome_produto', 'categoria', 'preco', 'estoque'])
-            ->toObject(),
     ],
 
     'ordenacao_closure' => [
@@ -238,10 +195,6 @@ $cenarios = [
             ->select(['id_produto', 'nome_produto', 'categoria', 'preco', 'estoque'])
             ->toObject();
         PHP_WRAP,
-        'run' => fn() => LinqPHP::from($produtos)
-            ->orderByKey(fn($p) => $p['preco'] * $p['estoque'], descending: true)
-            ->select(['id_produto', 'nome_produto', 'categoria', 'preco', 'estoque'])
-            ->toObject(),
     ],
 
 
@@ -257,10 +210,6 @@ $cenarios = [
             ->select(['id_venda', 'produto_id', 'nome_produto', 'categoria', 'qtd', 'preco'])
             ->toObject();
         PHP_WRAP,
-        'run' => fn() => LinqPHP::from($vendas)
-            ->join($produtos, JoinType::FULL, ['produto_id' => 'id_produto'])
-            ->select(['id_venda', 'produto_id', 'nome_produto', 'categoria', 'qtd', 'preco'])
-            ->toObject(),
     ],
 
     'right_join' => [
@@ -274,10 +223,6 @@ $cenarios = [
             ->select(['id_cliente', 'nome_cliente', 'cidade', 'uf', 'id_venda', 'status'])
             ->toObject();
         PHP_WRAP,
-        'run' => fn() => LinqPHP::from($vendas)
-            ->join($clientes, JoinType::RIGHT, ['cliente_id' => 'id_cliente'])
-            ->select(['id_cliente', 'nome_cliente', 'cidade', 'uf', 'id_venda', 'status'])
-            ->toObject(),
     ],
 
     'multi_where' => [
@@ -297,16 +242,6 @@ $cenarios = [
             ->orderByKey('preco', 'asc')
             ->toObject();
         PHP_WRAP,
-        'run' => fn() => LinqPHP::from($produtos)
-            ->where([
-                ['preco', '>=', 80.0],
-                ['preco', '<=', 150.0],
-                ['categoria', '=', 'Insumo'],
-                ['estoque', '>', 10],
-            ])
-            ->select(['nome_produto', 'categoria', 'preco', 'estoque'])
-            ->orderByKey('preco', 'asc')
-            ->toObject(),
     ],
 
     'union_outlet' => [
@@ -321,11 +256,6 @@ $cenarios = [
             ->orderByKey('preco', 'asc')
             ->toObject();
         PHP_WRAP,
-        'run' => fn() => LinqPHP::from($produtos)
-            ->select(['id_produto', 'nome_produto', 'categoria', 'preco'])
-            ->unionAll($produtosOutlet)
-            ->orderByKey('preco', 'asc')
-            ->toObject(),
     ],
 
     'distinct_uf' => [
@@ -342,13 +272,6 @@ $cenarios = [
             ->distinct()
             ->toObject();
         PHP_WRAP,
-        'run' => fn() => LinqPHP::from($vendas)
-            ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
-            ->join($clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
-            ->where(['categoria', '=', 'Peça'])
-            ->select(['uf'])
-            ->distinct()
-            ->toObject(),
     ],
 
     'complex_closure' => [
@@ -370,18 +293,6 @@ $cenarios = [
             ->select(['id_venda', 'nome_produto', 'qtd', 'preco'])
             ->toObject();
         PHP_WRAP,
-        'run' => fn() => LinqPHP::from($vendas)
-            ->where(['status', '=', 'concluido'])
-            ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
-            ->where(function ($row) {
-                if ($row['categoria'] !== 'Insumo') {
-                    return false;
-                }
-                $faturamento = $row['qtd'] * $row['preco'];
-                return $faturamento > 200.00;
-            })
-            ->select(['id_venda', 'nome_produto', 'qtd', 'preco'])
-            ->toObject(),
     ],
 
     'primeiro_registro' => [
@@ -393,16 +304,6 @@ $cenarios = [
         \$item = LinqPHP::from(\$clientes)
             ->firstOrDefault(fn(\$c) => \$c['uf'] === 'MG' && \$c['vip'] === true);
         PHP_WRAP,
-        'run' => function () use ($clientes) {
-            $item = LinqPHP::from($clientes)
-                ->firstOrDefault(fn($c) => $c['uf'] === 'MG' && $c['vip'] === true);
-            $obj = new stdClass();
-            $obj->data = $item ? [$item] : [];
-            $obj->count = $item ? 1 : 0;
-            $obj->elapsedTime = '0.000004';
-            $obj->memoryUsed = '0.00 MB';
-            return $obj;
-        },
     ],
 
     'do_banco_ao_relatorio' => [
@@ -433,28 +334,6 @@ $cenarios = [
             ])
             ->toObject();
         PHP_WRAP,
-        'run' => function () use ($produtos, $clientes) {
-            return DB::query('
-                SELECT id_venda, produto_id, cliente_id, qtd
-                FROM vendas_sql
-                WHERE status = :status
-            ', ['status' => 'concluido'])
-                ->linq()
-                ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
-                ->join($clientes, JoinType::INNER, ['cliente_id' => 'id_cliente'])
-                ->where(['vip', '=', true])
-                ->orderByKey('id_venda', 'asc')
-                ->select([
-                    'id_venda'     => 'Código Venda',
-                    'nome_cliente' => 'Cliente VIP',
-                    'cidade'       => 'Cidade',
-                    'uf'           => 'UF',
-                    'nome_produto' => 'Produto Comprado',
-                    'qtd'          => 'Quantidade',
-                    'preco'        => 'Valor Unitário',
-                ])
-                ->toObject();
-        },
     ],
 
     'agregacoes_escalares' => [
@@ -463,10 +342,10 @@ $cenarios = [
         'cor'    => 'success',
         'desc'   => 'Extração direta e ultrarrápida de métricas numéricas sem overhead de agrupamento: Total faturado, Ticket Médio, Menor e Maior valor.',
         'codigo' => <<<PHP_WRAP
-        \$linq = LinqPHP::from(\$vendas)->where(['status', '=', 'concluido']);
+        \$concluidas = LinqPHP::from(\$vendas)->where(['status', '=', 'concluido']);
 
-        \$totalItens   = \$linq->sum('qtd');
-        \$totalVendas  = \$linq->count();
+        \$totalItens   = \$concluidas->sum('qtd');
+        \$totalVendas  = \$concluidas->count();
         \$faturamento  = LinqPHP::from(\$vendas)
             ->where(['status', '=', 'concluido'])
             ->join(\$produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
@@ -474,35 +353,15 @@ $cenarios = [
         \$ticketMedio  = round(\$faturamento / (\$totalVendas ?: 1), 2);
         \$maiorEstoque = LinqPHP::from(\$produtos)->max('estoque');
         \$menorPreco   = LinqPHP::from(\$produtos)->min('preco');
+        \$resultado = [
+            ['Métrica' => 'Total de Vendas Concluídas', 'Valor' => \$totalVendas, 'Método' => 'count()'],
+            ['Métrica' => 'Quantidade Total de Itens Vendidos', 'Valor' => \$totalItens, 'Método' => 'sum("qtd")'],
+            ['Métrica' => 'Faturamento Bruto', 'Valor' => 'R$ ' . number_format(\$faturamento, 2, ',', '.'), 'Método' => 'sum(closure)'],
+            ['Métrica' => 'Ticket Médio por Venda', 'Valor' => 'R$ ' . number_format(\$ticketMedio, 2, ',', '.'), 'Método' => 'avg()'],
+            ['Métrica' => 'Menor Preço de Produto', 'Valor' => 'R$ ' . number_format((float)\$menorPreco, 2, ',', '.'), 'Método' => 'min("preco")'],
+            ['Métrica' => 'Maior Estoque Individual', 'Valor' => \$maiorEstoque . ' un', 'Método' => 'max("estoque")'],
+        ];
         PHP_WRAP,
-        'run' => function () use ($vendas, $produtos) {
-            $t0 = microtime(true);
-            $concluidas = LinqPHP::from($vendas)->where(['status', '=', 'concluido']);
-            $totalItens = $concluidas->sum('qtd');
-            $totalVendas = $concluidas->count();
-            $faturamento = LinqPHP::from($vendas)
-                ->where(['status', '=', 'concluido'])
-                ->join($produtos, JoinType::INNER, ['produto_id' => 'id_produto'])
-                ->sum(fn($v) => $v['qtd'] * $v['preco']);
-            $ticketMedio = $totalVendas > 0 ? round($faturamento / $totalVendas, 2) : 0;
-            $maiorEstoque = LinqPHP::from($produtos)->max('estoque');
-            $menorPreco = LinqPHP::from($produtos)->min('preco');
-            $elapsed = microtime(true) - $t0;
-
-            $obj = new stdClass();
-            $obj->data = [
-                ['Métrica' => 'Total de Vendas Concluídas', 'Valor' => $totalVendas, 'Método' => 'count()'],
-                ['Métrica' => 'Quantidade Total de Itens Vendidos', 'Valor' => $totalItens, 'Método' => 'sum("qtd")'],
-                ['Métrica' => 'Faturamento Bruto', 'Valor' => 'R$ ' . number_format($faturamento, 2, ',', '.'), 'Método' => 'sum(closure)'],
-                ['Métrica' => 'Ticket Médio por Venda', 'Valor' => 'R$ ' . number_format($ticketMedio, 2, ',', '.'), 'Método' => 'avg()'],
-                ['Métrica' => 'Menor Preço de Produto', 'Valor' => 'R$ ' . number_format((float)$menorPreco, 2, ',', '.'), 'Método' => 'min("preco")'],
-                ['Métrica' => 'Maior Estoque Individual', 'Valor' => $maiorEstoque . ' un', 'Método' => 'max("estoque")'],
-            ];
-            $obj->count = count($obj->data);
-            $obj->elapsedTime = number_format($elapsed, 6);
-            $obj->memoryUsed = '0.00 MB';
-            return $obj;
-        },
     ],
 ];
 
@@ -537,9 +396,8 @@ $erroExecucao = null;
 $linq = null;
 $resultado = [];
 
-// Função avaliadora do sandbox interativo
-$avaliarLinq = function (string $rawCode) use ($clientes, $produtos, $produtosOutlet, $vendas): stdClass {
-    // Sanitização e validação léxica contra RCE, I/O e chamadas perigosas
+// Compila o código apresentado no editor em um pipeline reutilizável.
+$compilarLinq = function (string $rawCode) use ($clientes, $produtos, $produtosOutlet, $vendas): Closure {
     CodeSandboxValidator::assertSafe($rawCode);
 
     $cleanCode = trim($rawCode);
@@ -547,15 +405,28 @@ $avaliarLinq = function (string $rawCode) use ($clientes, $produtos, $produtosOu
     if (preg_match('/^(LinqPHP::|\(?new\s+LinqPHP|DB::|\(?new\s+DB)/i', $cleanCode)) {
         $cleanCode = 'return ' . rtrim($cleanCode, ';') . ';';
     } else {
-        // Garante que o retorno do script ou da variável $linq seja obtido mesmo se o código tiver closures internas
         $cleanCode .= "\nreturn \$item ?? \$linq ?? \$resultado ?? \$result ?? \$dbResult ?? \$dados ?? null;";
     }
+
+    $runner = eval(
+        $prefix
+        . "return static function () use (\$clientes, \$produtos, \$produtosOutlet, \$vendas) {\n"
+        . $cleanCode
+        . "\n};"
+    );
+
+    if (!$runner instanceof Closure) {
+        throw new RuntimeException('Não foi possível compilar o pipeline do cenário.');
+    }
+
+    return $runner;
+};
+
+// Executa um pipeline compilado e normaliza sua saída para a API da demo.
+$avaliarLinq = function (Closure $runner): stdClass {
     $startTime = microtime(true);
     $startMemory = memory_get_usage(true);
-    $evalResult = eval($prefix . $cleanCode);
-    if ($evalResult === null && isset($linq)) {
-        $evalResult = $linq;
-    }
+    $evalResult = $runner();
     $endTime = microtime(true);
     $elapsedTime = number_format($endTime - $startTime, 6);
     $memoryUsed = sprintf('%5.2f MB', (memory_get_peak_usage(true) - $startMemory) / 1024 / 1024);
@@ -1516,12 +1387,10 @@ $executarBenchmark = function (callable $linqFn, callable $nativeFn, int $iterat
     ];
 };
 
+$cenarioRunner = null;
 try {
-    if ($isCustomCode) {
-        $linq = $avaliarLinq($codigoAtivo);
-    } else {
-        $linq = $dadosCenario['run']();
-    }
+    $cenarioRunner = $compilarLinq($codigoAtivo);
+    $linq = $avaliarLinq($cenarioRunner);
     $resultado = $linq->data ?? [];
 } catch (Throwable $e) {
     $erroExecucao = $e->getMessage();
@@ -1535,7 +1404,9 @@ try {
 
 // Preparação dos dados nativos e benchmark inicial
 $natData = $obterNativoCenario($cenarioAtual, $vendas, $produtos, $produtosOutlet, $clientes);
-$linqFn = $isCustomCode ? (fn() => $avaliarLinq($codigoAtivo)) : $dadosCenario['run'];
+$linqFn = $cenarioRunner instanceof Closure
+    ? fn() => $avaliarLinq($cenarioRunner)
+    : static fn() => throw new RuntimeException('O pipeline do cenário não foi compilado.');
 
 // Ação de benchmark ao vivo sob demanda (?api=1&action=bench)
 if (($_GET['action'] ?? '') === 'bench' || ($jsonInput['action'] ?? '') === 'bench') {

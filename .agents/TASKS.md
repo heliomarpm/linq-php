@@ -1,7 +1,7 @@
 # Tarefas do Projeto: LinqPHP
 
 > **Meta:** Executar plano de melhorias, segurança, performance e novos métodos LINQ do Assessment Fase 2\
-> **Status:** em progresso | **Progresso:** 40/47 (85%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
+> **Status:** em progresso | **Progresso:** 41/47 (87%) | **WIP:** 0/2 | **Atualizado em:** 2026-10-30
 
 ## Em progresso
 
@@ -19,15 +19,6 @@
 
 ### Média Prioridade
 
-- [ ] **T-040 · P2 · Deduplicar definição e execução nos 15 cenários da demo web**
-  - Origem: `-assessment` (item 3.1)
-  - Arquivos: [demo/index.php](../demo/index.php)
-  - Dependências: T-034
-  - Critérios de aceite:
-    1. Unificar o runner dos cenários para que a execução utilize o próprio pipeline ou funções declaradas de forma centralizada;
-    2. Evitar divergência entre o código exibido e o código processado;
-    3. Todos os 15 cenários continuam renderizando com 100% de paridade.
-
 ### Baixa Prioridade
 
 - [ ] **T-041 · P3 · Implementar método de paginação fluente `skip(int $count)`**
@@ -39,6 +30,8 @@
     2. Fatiamento em `array_slice` reindexando a lista mantendo a interface fluente;
     3. Composição perfeita com `take()` para paginação idiomática: `from($dados)->skip(10)->take(5)`;
     4. Novos testes unitários cobrindo offset válido, zero, maior que o total e negativo (lançando `InvalidArgumentException`).
+    5. Novos cenários de demo web com paginação.
+    6. Atualizar documentação com exemplos de uso.
 
 - [ ] **T-042 · P3 · Implementar método `first(?callable $predicate = null)` com exceção de vazio**
   - Origem: `-assessment` (item 4.2)
@@ -49,6 +42,8 @@
     2. Lançar `UnderflowException` se a coleção estiver vazia ou se nenhum elemento satisfizer o predicado;
     3. Retornar o primeiro item correspondente sem alterar a coleção;
     4. Novos testes unitários validando acerto, predicado e exceção em caso de vazio.
+    5. Novos cenários de demo web com primeira ocorrencia.
+    6. Atualizar documentação com exemplos de uso.
 
 - [ ] **T-043 · P3 · Implementar métodos terminais `last()` e `lastOrDefault()`**
   - Origem: `-assessment` (item 4.3)
@@ -59,6 +54,8 @@
     2. `last()` lança `UnderflowException` se vazio ou nenhum item coincidir;
     3. `lastOrDefault()` retorna `$default` (padrão `null`) se vazio ou não encontrado;
     4. Novos testes unitários com e sem predicado.
+    5. Novos cenários de demo web com última ocorrencia.
+    6. Atualizar documentação com exemplos de uso.
 
 - [ ] **T-044 · P3 · Implementar métodos booleanos de short-circuit `any()` e `all()`**
   - Origem: `-assessment` (item 4.4)
@@ -68,6 +65,8 @@
     1. `any(?callable $predicate = null): bool`: se sem predicado, retorna se `$this->data !== []`; com predicado, retorna `true` assim que o primeiro elemento coincidir (O(1));
     2. `all(callable $predicate): bool`: retorna `false` assim que qualquer elemento falhar (O(1)); em coleção vazia retorna `true`;
     3. Novos testes unitários comprovando o short-circuit e casos de borda.
+    4. Novos cenários de demo web com any() e all().
+    5. Atualizar documentação com exemplos de uso.
 
 - [ ] **T-045 · P3 · Implementar método de projeção plana `pluck(string $column, ?string $key = null)`**
   - Origem: `-assessment` (item 4.5)
@@ -77,6 +76,8 @@
     1. Método terminal `pluck(string $column, ?string $key = null): array` implementado;
     2. Extrair vetor unidimensional de valores ou dicionário indexado por `$key`;
     3. Novos testes unitários cobrindo extração simples e indexada.
+    4. Novos cenários de demo web com pluck().
+    5. Atualizar documentação com exemplos de uso.
 
 - [ ] **T-046 · P3 · Elevar análise estática do PHPStan para Nível 8 com tipagem completa de iteráveis**
   - Origem: `-assessment` (item 5.1)
@@ -88,6 +89,10 @@
     3. Executar `composer lint` com zero erros reportados.
 
 ## Concluídas recentemente
+
+- [x] **T-040 · P2 · Deduplicar definição e execução nos 15 cenários da demo web** (2026-10-30)
+  - Arquivos: [demo/index.php](../demo/index.php)
+  - Evidência: Removidos os 15 runners LinqPHP duplicados; cada cenário agora compila uma vez e executa o mesmo código exibido no editor, inclusive nas repetições do benchmark; a API dos 15 cenários respondeu com sucesso, código executado idêntico ao padrão e resultados/colunas disponíveis; execução de código customizado validada com 2 linhas; `composer test` (151 testes, 787 asserções), `composer lint`, Pint e `php -l demo/index.php` aprovados.
 
 - [x] **T-039 · P2 · Deduplicar construção de chaves compostas entre `join()` e `groupBy()`** (2026-10-30)
   - Arquivos: [src/LinqPHP.php](../src/LinqPHP.php), [tests/Unit/JoinTest.php](../tests/Unit/JoinTest.php), [tests/Unit/GroupByTest.php](../tests/Unit/GroupByTest.php)
